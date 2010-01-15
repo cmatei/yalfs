@@ -1,0 +1,3 @@
+minime.o: minime.c runtime.h xutil.h
+runtime.o: runtime.c runtime.h xutil.h
+xutil.o: xutil.c

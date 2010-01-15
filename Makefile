@@ -1,0 +1,37 @@
+
+CC		= gcc -Wall -g -O2
+MAKEDEP		= gcc -MM
+
+CFLAGS		= -D_GNU_SOURCE
+INCLUDES	= -I.
+LIBS		=
+
+MINIME_SRC	= minime.c runtime.c xutil.c
+MINIME_OBJ	= $(patsubst %.c,%.o,$(MINIME_SRC))
+
+ALL_SRC		= $(MINIME_SRC)
+
+all: minime
+
+.c.o:
+	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+
+minime: $(MINIME_OBJ)
+	$(CC) -o $@ $^ $(LIBS)
+
+clean:
+	-rm -f minime $(MINIME_OBJ)
+
+tags:
+	-etags *.[ch]
+
+cscope:
+	-scope -q -b -u *.[ch]
+
+dep:	depend
+depend:
+	$(MAKEDEP) $(CFLAGS) $(INCLUDES) $(ALL_SRC) > .depends
+
+.PHONY: clean cscope tags depend
+
+include .depends
