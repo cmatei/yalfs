@@ -20,7 +20,8 @@ object the_empty_list;
 object the_empty_environment;
 object the_user_environment;
 
-object the_truth;
+object the_truth, the_falsity;
+
 object end_of_file;
 
 /*----------------------------------*/
@@ -97,6 +98,10 @@ void lisp_print(object exp)
 		lisp_print_pair(exp);
 		fprintf(output_stream, ")");
 		break;
+
+	case T_BOOLEAN:
+		fprintf(output_stream, is_false(exp) ? "#f" : "#t");
+		break;
 	}
 }
 
@@ -141,7 +146,6 @@ int main(int argc, char **argv)
 			     cons(make_fixnum(30), make_character('Z')))));
 	fprintf(output_stream, "\n");
 
-
 	runtime_stats();
 
 	return 0;
@@ -176,6 +180,12 @@ static void check_sanity()
 
 	assert(caar(o1) == make_fixnum(10));
 	assert(cdar(o1) == make_fixnum(-10));
+
+	assert(is_false(the_falsity));
+	assert(is_true(the_truth));
+
+	assert(is_boolean(the_truth));
+	assert(is_boolean(the_falsity));
 
 #if SAFETY
 	/* this should throw an error when safety is on */

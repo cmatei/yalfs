@@ -1,5 +1,5 @@
 
-CC		= gcc -Wall -g -O2
+CC		= gcc -Wall -g -O0
 MAKEDEP		= gcc -MM
 
 CFLAGS		+= -D_GNU_SOURCE -DSAFETY=1
