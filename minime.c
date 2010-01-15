@@ -13,18 +13,23 @@
 static void check_sanity();
 
 /* these should be packed somewhere */
+
 FILE *input_stream, *output_stream, *error_stream;
 
 object the_empty_list;
 object the_empty_environment;
 object the_user_environment;
 
+object the_truth;
 object end_of_file;
+
+/*----------------------------------*/
+
 
 static jmp_buf err_jump;
 object error(char *msg, object o)
 {
-	printf("%s, object %p\n", msg, o);
+	fprintf(output_stream, "%s, object %p\n", msg, o);
 	longjmp(err_jump, 1);
 	return the_empty_list; /* not reached */
 }

@@ -1,11 +1,16 @@
 
 Object representation
+=====================
 
 We have:
+
+Direct objects:
 
    fixnums
    characters
    pairs
+
+Indirect objects:
 
    booleans
    symbols
@@ -13,53 +18,56 @@ We have:
    byte strings
    vectors
 
-Fixnums are not allocated on the heap and are tagged.
+Direct Objects
+--------------
 
-conses are tagged and are a pointer to two words on the heap.
-
-Everything else is an indirect object. Tagged as indirect, points to
-a structure on the heap which has the type and a variable length.
-
-An indirect object looks like:
-
-type - 1 byte, MSB
-
-The other bytes in the machine word depend on the type, but they
-mostly mean "length". Except for booleans which have the immediate
-value there and no length.
-
-
-Tags are the lowest bits.
-
-00 - fixnum
-01 - ?! characters ?! unicode in raw representation ? utf8 for the BMP ?
-10 - cell
-11 - indirect
-
-
-With raw unicode chars we need to deal with external formats, but
-it is easier to do certain operations (indexing!).
-
-ASCII doesn't sound too bad for a start :-)
+These are objects that look like heap pointers, but aren't really.
+The lowest two bits are a data type tag.
 
 I've tagged fixnums with 00 so addition works without shifts.
 
-Cells should be aligned on at least 32 bit boundaries so the tag can
-be nuked to access the object.
+Tag values:
+
+00 - fixnum
+01 - character (unicode in raw representation ?)
+10 - pair
+11 - indirect
+
+Fixnums and characters are really their own value shifted
+arithmetically to the left.
+
+Pairs are represented as two consecutive words in the heap (the car
+and cdr respectively). The pair object is a pointer to them, but due
+to the tag, it's off by 2 bytes. Note that the heap is aligned at word
+boundaries (4 bytes on 32 bit) so the pair actually points somewhere
+in the middle of the car.
+
+Everything else is an indirect object. Tagged as indirect, points to
+a structure on the heap which has the actual type and a variable length.
+
+Regarding characters, they're a bit waste of space, but at least they
+allow for all unicode, including the astral planes :-)
+
 
 Indirect objects
+----------------
 
-The tag is placed in the MSB of the machine word, in the MSbits (so we
-can reuse the rest).
+An indirect object has at least one word on the heap. This word may
+contain an immediate value (e.g. booleans), or the length of the
+object in words (not including this initial one).
 
-Variable length tag:
+The first bits (LSb) of this word are of course the type tag. The tag
+is not fixed in bit length. The idea is that for certain types, where
+we might need a large length field, we can use the remaining bits in a
+fixnum-like manner.
 
-0  - vectors (so they can be large)
-10 - byte strings (so we can talk big to the outside world)
-110 - strings
+x00 - byte strings
+x01 - vectors
+x10 - strings
+x11 - the others
 
-111.... - smaller objects
 
-11100000 - empty list
-11100001 - symbols
-11100010 - booleans
+11111111 - empty list
+01111111 - booleans
+10111111 - symbols
+00111111 - ...
