@@ -3,11 +3,12 @@ Object representation
 
 We have:
 
-   cons
    fixnums
+   characters
+   pairs
+
    booleans
    symbols
-   characters
    strings
    byte strings
    vectors
@@ -24,8 +25,8 @@ An indirect object looks like:
 type - 1 byte, MSB
 
 The other bytes in the machine word depend on the type, but they
-mostly mean "length". Except for booleans and characters which have
-the immediate value there and no length.
+mostly mean "length". Except for booleans which have the immediate
+value there and no length.
 
 
 Tags are the lowest bits.
@@ -59,5 +60,6 @@ Variable length tag:
 
 111.... - smaller objects
 
-11100000 - symbols
-11100001 - booleans
+11100000 - empty list
+11100001 - symbols
+11100010 - booleans

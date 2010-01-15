@@ -2,7 +2,7 @@
 CC		= gcc -Wall -g -O2
 MAKEDEP		= gcc -MM
 
-CFLAGS		= -D_GNU_SOURCE
+CFLAGS		+= -D_GNU_SOURCE -DSAFETY=1
 INCLUDES	= -I.
 LIBS		=
 
