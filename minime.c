@@ -67,7 +67,7 @@ object make_frame(object vars, object vals)
 static void add_binding_to_frame(object var, object val, object frame)
 {
 	set_car(frame, cons(var, car(frame)));
-	set_cdr(frame, cons(val, car(frame)));
+	set_cdr(frame, cons(val, cdr(frame)));
 }
 
 object extend_environment(object vars, object vals, object base_env)
@@ -162,6 +162,8 @@ object setup_environment()
 
 /* syntax functions */
 
+#define is_variable(exp) is_symbol(exp)
+
 /* (quote exp) */
 #define is_quoted(exp) is_tagged(exp, _quote)
 #define text_of_quotation(exp) cadr(exp)
@@ -171,11 +173,36 @@ object setup_environment()
 #define assignment_variable(exp) cadr(exp)
 #define assignment_value(exp)    caddr(exp)
 
+/* (define v e)
+   (define (v p1 p2 p3 ..) body) */
+#define is_definition(exp) is_tagged(exp, _define)
+
+static object definition_variable(object exp)
+{
+	if (is_symbol(cadr(exp)))
+	    return cadr(exp);
+
+	return caadr(exp);
+}
+
+static object definition_value(object exp)
+{
+	if (is_symbol(cadr(exp)))
+		return caddr(exp);
+
+	// make_lambda(cdadr(exp), cddr(exp))
+	return nil;
+}
+
 object lisp_eval(object exp, object env)
 {
 	/* self evaluating */
 	if (is_self_evaluating(exp)) {
 		return exp;
+	}
+	/* variables */
+	else if (is_variable(exp)) {
+		return lookup_variable_value(exp, env);
 	}
 	/* quote */
 	else if (is_quoted(exp)) {
@@ -183,9 +210,19 @@ object lisp_eval(object exp, object env)
 	}
 	/* assignment */
 	else if (is_assignment(exp)) {
-		return assignment_value(exp);
+		set_variable_value(assignment_variable(exp),
+				   lisp_eval(assignment_value(exp), env),
+				   env);
+		return assignment_variable(exp);
 	}
+	/* definition */
+	else if (is_definition(exp)) {
+		define_variable(definition_variable(exp),
+				lisp_eval(definition_value(exp), env),
+				env);
 
+		return definition_variable(exp);
+	}
 
 	return cons(make_fixnum(1),
 		    cons(exp, nil));
@@ -225,7 +262,7 @@ restart:
 		goto restart;
 	}
 
-	repl(nil);
+	repl(user_environment);
 
 	runtime_stats();
 
@@ -269,6 +306,7 @@ static void check_sanity()
 
 	assert(car(o1) == o);
 	assert(cdr(o1) == o1);
+
 
 	/* booleans */
 	assert(is_false(the_falsity));

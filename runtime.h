@@ -108,7 +108,7 @@ static inline object set_car(object pair, object o)
 		error("Object is not a pair -- SET-CAR!", pair);
 #endif
 
-	((object *)((unsigned long) o - PAIR_TAG))[0] = o;
+	((object *)((unsigned long) pair - PAIR_TAG))[0] = o;
 	return o;			     /* r5rs return value is unspecified */
 }
 
@@ -119,7 +119,7 @@ static inline object set_cdr(object pair, object o)
 		error("Object is not a pair -- SET-CDR!", pair);
 #endif
 
-	((object *)((unsigned long) o - PAIR_TAG))[1] = o;
+	((object *)((unsigned long) pair - PAIR_TAG))[1] = o;
 	return o;			     /* r5rs return value is unspecified */
 }
 
