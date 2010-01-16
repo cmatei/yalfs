@@ -40,9 +40,50 @@ object error(char *msg, object o)
 	return nil; /* not reached */
 }
 
+static int is_tagged(object exp, object tag)
+{
+	if (is_pair(exp) && (car(exp) == tag))
+		return 1;
+
+	return 0;
+}
+
+static int is_self_evaluating(object exp)
+{
+	return  is_boolean(exp) ||
+		is_number(exp)  ||
+		is_string(exp)  ||
+		is_character(exp);
+}
+
+
+/* (quote exp) */
+#define is_quoted(exp) is_tagged(exp, _quote)
+#define text_of_quotation(exp) cadr(exp)
+
+/* (set! var val) */
+#define is_assignment(exp) is_tagged(exp, _set)
+#define assignment_variable(exp) cadr(exp)
+#define assignment_value(exp)    caddr(exp)
+
 object lisp_eval(object exp, object env)
 {
-	return exp;
+	/* self evaluating */
+	if (is_self_evaluating(exp)) {
+		return exp;
+	}
+	/* quote */
+	else if (is_quoted(exp)) {
+		return text_of_quotation(exp);
+	}
+	/* assignment */
+	else if (is_assignment(exp)) {
+		return assignment_value(exp);
+	}
+
+
+	return cons(make_fixnum(1),
+		    cons(exp, nil));
 }
 
 
@@ -50,16 +91,13 @@ void repl(object env)
 {
 	object exp, val;
 
-	do {
-		exp = lisp_read(stdin);
-		//val = lisp_eval(exp, env);
-		val = exp;
+	while ((exp = lisp_read(stdin)) != end_of_file) {
+		val = lisp_eval(exp, env);
 
 		fprintf(output_stream, "=> ");
 		lisp_print(stdout, val);
-
 		fprintf(output_stream, "\n");
-	} while (exp != end_of_file);
+	}
 }
 
 int main(int argc, char **argv)

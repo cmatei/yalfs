@@ -71,3 +71,5 @@ x11 - the others
 01111111 - booleans
 10111111 - symbols
 00111111 - foreign pointer
+11011111 - primitive procedure
+

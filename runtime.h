@@ -17,6 +17,8 @@ static inline int is_fixnum(object o)
 	return (((unsigned long) o & FIXNUM_MASK) == FIXNUM_TAG);
 }
 
+#define is_number is_fixnum
+
 /* FIXME: fix this function if your compiler doesn't do arithmetic shifts */
 static inline long fixnum_value(object o)
 {
@@ -89,6 +91,15 @@ static inline object fast_cdr(object o)
 #define cadr(x) car(cdr((x)))
 #define cdar(x) cdr(car((x)))
 #define cddr(x) cdr(cdr((x)))
+
+#define caaar(x) car(car(car(x)))
+#define caadr(x) car(car(cdr(x)))
+#define cadar(x) car(cdr(car(x)))
+#define caddr(x) car(cdr(cdr(x)))
+#define cdaar(x) cdr(car(car(x)))
+#define cdadr(x) cdr(car(cdr(x)))
+#define cddar(x) cdr(cdr(car(x)))
+#define cdddr(x) cdr(cdr(cdr(x)))
 
 static inline object set_car(object pair, object o)
 {
@@ -267,7 +278,6 @@ static inline int is_boolean(object o)
 		return 0;
 
 	indirect = *(unsigned long *) ((unsigned long) o - INDIRECT_TAG);
-
 	return ((indirect & BOOLEAN_MASK) == BOOLEAN_TAG);
 }
 
@@ -282,7 +292,6 @@ static inline int is_foreign_ptr(object o)
 		return 0;
 
 	indirect = *(unsigned long *) ((unsigned long) o - INDIRECT_TAG);
-
 	return ((indirect & FOREIGN_PTR_MASK) == FOREIGN_PTR_TAG);
 }
 
@@ -297,6 +306,48 @@ static inline void *foreign_ptr_value(object o)
 
 	return (void *) ((unsigned long *) ((unsigned long) o - INDIRECT_TAG)) [1];
 }
+
+#define PRIMITIVE_PROC_TAG  0xDFUL
+#define PRIMITIVE_PROC_MASK 0xFFUL
+
+static inline int is_primitive(object o)
+{
+	unsigned long indirect;
+
+	if (!is_indirect(o))
+		return 0;
+
+	indirect = *(unsigned long *) ((unsigned long) o - INDIRECT_TAG);
+	return ((indirect & PRIMITIVE_PROC_MASK) == PRIMITIVE_PROC_TAG);
+}
+
+typedef object (*primitive_proc)(object);
+
+extern object make_primitive(primitive_proc primitive);
+
+static inline primitive_proc primitive_implementation(object o)
+{
+#if SAFETY
+	if (!is_primitive(o))
+		error("Object is not a primitive procedure -- PRIMITIVE-PROCEDURE", o);
+#endif
+
+	return (primitive_proc) ((unsigned long *) ((unsigned long) o - INDIRECT_TAG)) [1];
+}
+
+static inline object apply_primitive(object proc, object args)
+{
+	primitive_proc pproc;
+
+#if SAFETY
+	if (!is_primitive(proc))
+		error("Object is not a primitive procedure -- APPLY-PRIMITIVE", proc);
+#endif
+
+	pproc = primitive_implementation(proc);
+	return pproc(args);
+}
+
 
 extern object_type type_of(object o);
 

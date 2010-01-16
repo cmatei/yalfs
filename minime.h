@@ -5,7 +5,9 @@ typedef void *object;
 
 typedef enum {
 	T_NIL = 0, T_FIXNUM, T_CHARACTER, T_PAIR, T_BOOLEAN,
-	T_FOREIGN_PTR, T_EOF, T_PORT,
+	T_FOREIGN_PTR,
+	T_PRIMITIVE,
+//T_EOF, T_PORT,
 	T_STRING, T_SYMBOL,
 } object_type;
 

@@ -376,6 +376,9 @@ object lisp_read(FILE *in)
 				lisp_read(in);
 				continue;
 
+			case '<':
+				error("Object cannot be read back -- READ", nil);
+
 			default:
 				error("Unexpected character -- READ", nil);
 			}
@@ -504,5 +507,12 @@ void lisp_print(FILE *out, object exp)
 			fprintf(out, "%c", str[i]);
 		break;
 
+	case T_FOREIGN_PTR:
+		fprintf(out, "#<foreign-pointer %p>", foreign_ptr_value(exp));
+		break;
+
+	case T_PRIMITIVE:
+		fprintf(out, "#<primitive-procedure %p>", primitive_implementation(exp));
+		break;
 	}
 }

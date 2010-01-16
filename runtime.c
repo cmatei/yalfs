@@ -32,6 +32,14 @@ object make_foreign_ptr(void *ptr)
 	return (object) ((unsigned long) (freeptr - 2) | INDIRECT_TAG);
 }
 
+object make_primitive(primitive_proc primitive)
+{
+	*freeptr++ = PRIMITIVE_PROC_TAG;
+	*freeptr++ = (unsigned long) primitive;
+
+	return (object) ((unsigned long) (freeptr - 2) | INDIRECT_TAG);
+}
+
 object make_string(unsigned long length)
 {
 	unsigned long words;
@@ -106,14 +114,17 @@ object_type type_of(object o)
 	if (is_pair(o))
 		return T_PAIR;
 
+	if (is_string(o))
+		return T_STRING;
+
 	if (is_boolean(o))
 		return T_BOOLEAN;
 
 	if (is_foreign_ptr(o))
 		return T_FOREIGN_PTR;
 
-	if (is_string(o))
-		return T_STRING;
+	if (is_primitive(o))
+		return T_PRIMITIVE;
 
 	error("Uknown object type -- TYPE-OF", o);
 	return T_NIL; /* not reached */
