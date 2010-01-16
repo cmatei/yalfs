@@ -194,6 +194,18 @@ static object definition_value(object exp)
 	return nil;
 }
 
+#define is_if(exp) is_tagged(exp, _if)
+#define if_predicate(exp) cadr(exp)
+#define if_consequent(exp) caddr(exp)
+
+static object if_alternate(object exp)
+{
+	if (!is_null(cdddr(exp)))
+		return car(cdddr(exp));
+
+	return the_falsity;
+}
+
 object lisp_eval(object exp, object env)
 {
 	/* self evaluating */
@@ -223,6 +235,15 @@ object lisp_eval(object exp, object env)
 
 		return definition_variable(exp);
 	}
+	/* if */
+	else if (is_if(exp)) {
+		if (is_true(lisp_eval(if_predicate(exp), env))) {
+			return lisp_eval(if_consequent(exp), env);
+		} else {
+			return lisp_eval(if_alternate(exp), env);
+		}
+	}
+
 
 	return cons(make_fixnum(1),
 		    cons(exp, nil));
