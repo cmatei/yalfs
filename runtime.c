@@ -14,14 +14,14 @@ static unsigned long *heap, *freeptr;
 
 static inline object make_the_empty_list()
 {
-	*freeptr = EMPTY_LIST_TAG;
-	return (object) ((unsigned long) freeptr++ | INDIRECT_TAG);
+	*freeptr++ = EMPTY_LIST_TAG;
+	return (object) ((unsigned long) (freeptr - 1) | INDIRECT_TAG);
 }
 
 static inline object make_boolean(int val)
 {
-	*freeptr = BOOLEAN_TAG | (val << BOOLEAN_SHIFT);
-	return (object) ((unsigned long) freeptr++ | INDIRECT_TAG);
+	*freeptr++ = BOOLEAN_TAG | (val << BOOLEAN_SHIFT);
+	return (object) ((unsigned long) (freeptr - 1) | INDIRECT_TAG);
 }
 
 object make_foreign_ptr(void *ptr)
@@ -30,6 +30,26 @@ object make_foreign_ptr(void *ptr)
 	*freeptr++ = (unsigned long) ptr;
 
 	return (object) ((unsigned long) (freeptr - 2) | INDIRECT_TAG);
+}
+
+object make_string(unsigned long length)
+{
+	unsigned long words;
+
+	*freeptr++ = STRING_TAG | (length << STRING_SHIFT);
+
+	/* round to full word */
+	words = (length + sizeof(unsigned long) - 1) / sizeof(unsigned long);
+	freeptr += words;
+
+	return (object) ((unsigned long) (freeptr - words - 1) | INDIRECT_TAG);
+}
+
+object make_string_c(char *str, unsigned long length)
+{
+	object o = make_string(length);
+	memcpy(string_value(o), str, length);
+	return o;
 }
 
 object cons(object car_value, object cdr_value)
@@ -72,6 +92,12 @@ object_type type_of(object o)
 
 	if (is_boolean(o))
 		return T_BOOLEAN;
+
+	if (is_foreign_ptr(o))
+		return T_FOREIGN_PTR;
+
+	if (is_string(o))
+		return T_STRING;
 
 	error("Uknown object type -- TYPE-OF", o);
 	return T_NIL; /* not reached */

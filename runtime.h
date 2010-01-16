@@ -82,6 +82,28 @@ static inline object fast_cdr(object o)
 #define cdar(x) cdr(car((x)))
 #define cddr(x) cdr(cdr((x)))
 
+static inline object set_car(object pair, object o)
+{
+#if SAFETY
+	if (!is_pair(pair))
+		error("Object is not a pair -- SET-CAR!", pair);
+#endif
+
+	((object *)((unsigned long) o - PAIR_TAG))[0] = o;
+	return o;			     /* r5rs return value is unspecified */
+}
+
+static inline object set_cdr(object pair, object o)
+{
+#if SAFETY
+	if (!is_pair(pair))
+		error("Object is not a pair -- SET-CDR!", pair);
+#endif
+
+	((object *)((unsigned long) o - PAIR_TAG))[1] = o;
+	return o;			     /* r5rs return value is unspecified */
+}
+
 
 #define INDIRECT_TAG   3UL
 #define INDIRECT_SHIFT 2UL
@@ -91,6 +113,47 @@ static inline int is_indirect(object o)
 {
 	return (((unsigned long) o & INDIRECT_MASK) == INDIRECT_TAG);
 }
+
+#define STRING_TAG   2UL
+#define STRING_MASK  3UL
+#define STRING_SHIFT 2UL
+
+static inline int is_string(object o)
+{
+	unsigned long indirect;
+
+	if (!is_indirect(o))
+		return 0;
+
+	indirect = *(unsigned long *) ((unsigned long) o - INDIRECT_TAG);
+	return ((indirect & STRING_MASK) == STRING_TAG);
+}
+
+extern object make_string(unsigned long length);
+extern object make_string_c(char *str, unsigned long length);
+
+static inline unsigned long string_length(object o)
+{
+	unsigned long indirect;
+
+#if SAFETY
+	if (!is_string(o))
+		error("Object is not a string -- STRING-LENGTH", o);
+#endif
+	indirect = *(unsigned long *) ((unsigned long) o - INDIRECT_TAG);
+	return (indirect - STRING_TAG) >> STRING_SHIFT;
+}
+
+static inline char *string_value(object o)
+{
+#if SAFETY
+	if (!is_string(o))
+		error("Object is not a string -- STRING-LENGTH", o);
+#endif
+
+	return (char *) ((unsigned long *) ((unsigned long) o - INDIRECT_TAG) + 1);
+}
+
 
 #define EMPTY_LIST_TAG  0xFFUL
 #define EMPTY_LIST_MASK 0xFFUL

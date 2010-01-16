@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
+
 #include <setjmp.h>
 #include <assert.h>
 
@@ -39,75 +41,18 @@ object lisp_eval(object exp, object env)
 	return exp;
 }
 
-static void lisp_print_pair(object pair)
-{
-	object car_obj, cdr_obj;
-
-	car_obj = car(pair);
-	cdr_obj = cdr(pair);
-
-	lisp_print(car_obj);
-
-	if (is_pair(cdr_obj)) {
-		fprintf(output_stream, " ");
-		lisp_print_pair(cdr_obj);
-	} else if (is_null(cdr_obj)) {
-		return;
-	} else {
-		fprintf(output_stream, " . ");
-		lisp_print(cdr_obj);
-	}
-}
-
-void lisp_print(object exp)
-{
-	char c;
-
-	switch (type_of(exp)) {
-	case T_NIL:
-		fprintf(output_stream, "()");
-		break;
-
-	case T_FIXNUM:
-		fprintf(output_stream, "%ld", fixnum_value(exp));
-		break;
-
-	case T_CHARACTER:
-		c = character_value(exp);
-		fprintf(output_stream, "#\\");
-		switch (c) {
-		case '\n':
-			fprintf(output_stream, "newline");
-			break;
-		case ' ':
-			fprintf(output_stream, "space");
-			break;
-		default:
-			fprintf(output_stream, "%c", c);
-		}
-		break;
-
-	case T_PAIR:
-		fprintf(output_stream, "(");
-		lisp_print_pair(exp);
-		fprintf(output_stream, ")");
-		break;
-
-	case T_BOOLEAN:
-		fprintf(output_stream, is_false(exp) ? "#f" : "#t");
-		break;
-	}
-}
 
 void repl(object env)
 {
 	object exp, val;
 
 	do {
-		exp = lisp_read(env);
-		val = lisp_eval(exp, env);
+		exp = lisp_read(stdin);
+		//val = lisp_eval(exp, env);
+		val = exp;
 
-		lisp_print(val);
+		fprintf(output_stream, "=> ");
+		lisp_print(stdout, val);
 
 		fprintf(output_stream, "\n");
 	} while (exp != end_of_file);
@@ -128,7 +73,12 @@ int main(int argc, char **argv)
 		check_sanity();
 	}
 
-	//repl(nil);
+restart:
+	if (setjmp(err_jump)) {
+		goto restart;
+	}
+
+	repl(nil);
 
 	runtime_stats();
 
@@ -167,6 +117,12 @@ static void check_sanity()
 	assert(caar(o1) == make_fixnum(10));
 	assert(cdar(o1) == make_fixnum(-10));
 
+	set_car(o1, o);
+	set_cdr(o1, o1);
+
+	assert(car(o1) == o);
+	assert(cdr(o1) == o1);
+
 	/* booleans */
 	assert(is_false(the_falsity));
 	assert(is_true(the_truth));
@@ -177,6 +133,12 @@ static void check_sanity()
 	/* foreign pointers */
 	assert(is_foreign_ptr(make_foreign_ptr((void *) 0xDEADBEEF)));
 	assert(foreign_ptr_value(make_foreign_ptr((void *) 0xDEADBEEF)) == (void *) 0xDEADBEEF);
+
+	/* strings */
+	assert(string_length(make_string_c("foo", 3)) == 3);
+
+	o = make_string_c("foobarbazooo", 12);
+	assert(strncmp(string_value(o), "foobarbazooo", 12) == 0);
 
 #if SAFETY
 	/* this should throw an error when safety is on */

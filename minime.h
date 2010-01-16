@@ -5,7 +5,7 @@ typedef void *object;
 
 typedef enum {
 	T_NIL = 0, T_FIXNUM, T_CHARACTER, T_PAIR, T_BOOLEAN,
-	T_EOF, T_PORT,
+	T_FOREIGN_PTR, T_EOF, T_PORT,
 	T_STRING, T_SYMBOL,
 } object_type;
 
@@ -26,9 +26,9 @@ extern unsigned long heap_size;
 #include "xutil.h"
 
 
-extern object lisp_read();
+extern object lisp_read(FILE *in);
 extern object lisp_eval(object exp, object env);
-extern void   lisp_print(object exp);
+extern void   lisp_print(FILE *out, object exp);
 
 
 
