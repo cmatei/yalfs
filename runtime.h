@@ -1,20 +1,6 @@
 #ifndef __RUNTIME_H
 #define __RUNTIME_H
 
-typedef void *object;
-
-typedef enum {
-	T_FIXNUM = 0, T_CHARACTER, T_PAIR,
-	T_BOOLEAN, T_EMPTY_LIST,
-} object_type;
-
-extern void runtime_init();
-extern void runtime_stats();
-extern int  runtime_error_catch();
-
-extern object the_empty_list;
-extern object the_falsity;
-extern object the_truth;
 
 #define FIXNUM_TAG   0UL
 #define FIXNUM_SHIFT 2UL
@@ -109,9 +95,9 @@ static inline int is_indirect(object o)
 #define EMPTY_LIST_TAG  0xFFUL
 #define EMPTY_LIST_MASK 0xFFUL
 
-static inline int is_empty_list(object o)
+static inline int is_null(object o)
 {
-	return (o == the_empty_list);
+	return (o == nil);
 }
 
 #define BOOLEAN_TAG   0xEFULL
@@ -141,8 +127,37 @@ static inline int is_boolean(object o)
 	return ((indirect & BOOLEAN_MASK) == BOOLEAN_TAG);
 }
 
+#define FOREIGN_PTR_TAG  0x3FULL
+#define FOREIGN_PTR_MASK 0xFFULL
+
+static inline int is_foreign_ptr(object o)
+{
+	unsigned long indirect;
+
+	if (!is_indirect(o))
+		return 0;
+
+	indirect = *(unsigned long *) ((unsigned long) o - INDIRECT_TAG);
+
+	return ((indirect & FOREIGN_PTR_MASK) == FOREIGN_PTR_TAG);
+}
+
+extern object make_foreign_ptr(void *ptr);
+
+static inline void *foreign_ptr_value(object o)
+{
+#if SAFETY
+	if (!is_foreign_ptr(o))
+		error("Object is not a foreign pointer -- FOREIGN-PTR-VALUE", o);
+#endif
+
+	return (void *) ((unsigned long *) ((unsigned long) o - INDIRECT_TAG)) [1];
+}
 
 extern object_type type_of(object o);
+
+extern void runtime_init();
+extern void runtime_stats();
 
 
 #endif

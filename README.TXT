@@ -70,4 +70,4 @@ x11 - the others
 11111111 - empty list
 01111111 - booleans
 10111111 - symbols
-00111111 - ...
+00111111 - foreign pointer

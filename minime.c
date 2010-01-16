@@ -1,14 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <signal.h>
+#include <ctype.h>
 #include <setjmp.h>
-
 #include <assert.h>
 
-#include "runtime.h"
 #include "minime.h"
-#include "xutil.h"
-
 
 static void check_sanity();
 
@@ -16,11 +12,14 @@ static void check_sanity();
 
 FILE *input_stream, *output_stream, *error_stream;
 
-object the_empty_list;
+object nil; /* the empty list */
 object the_empty_environment;
 object the_user_environment;
 
 object the_truth, the_falsity;
+
+object symbol_table;
+object quote, unquote;
 
 object end_of_file;
 
@@ -32,17 +31,12 @@ object error(char *msg, object o)
 {
 	fprintf(output_stream, "%s, object %p\n", msg, o);
 	longjmp(err_jump, 1);
-	return the_empty_list; /* not reached */
-}
-
-object lisp_read(object env)
-{
-	return the_empty_list;
+	return nil; /* not reached */
 }
 
 object lisp_eval(object exp, object env)
 {
-	return the_empty_list;
+	return exp;
 }
 
 static void lisp_print_pair(object pair)
@@ -57,7 +51,7 @@ static void lisp_print_pair(object pair)
 	if (is_pair(cdr_obj)) {
 		fprintf(output_stream, " ");
 		lisp_print_pair(cdr_obj);
-	} else if (is_empty_list(cdr_obj)) {
+	} else if (is_null(cdr_obj)) {
 		return;
 	} else {
 		fprintf(output_stream, " . ");
@@ -70,7 +64,7 @@ void lisp_print(object exp)
 	char c;
 
 	switch (type_of(exp)) {
-	case T_EMPTY_LIST:
+	case T_NIL:
 		fprintf(output_stream, "()");
 		break;
 
@@ -114,6 +108,8 @@ void repl(object env)
 		val = lisp_eval(exp, env);
 
 		lisp_print(val);
+
+		fprintf(output_stream, "\n");
 	} while (exp != end_of_file);
 }
 
@@ -127,24 +123,12 @@ int main(int argc, char **argv)
 
 	if (setjmp(err_jump)) {
 		printf("Sanity check failed!\n");
+		exit(1);
 	} else {
 		check_sanity();
 	}
 
-	//repl(the_empty_list);
-
-	lisp_print(cons(make_fixnum(10), make_fixnum(-10)));
-	fprintf(output_stream, "\n");
-
-	lisp_print(cons(make_fixnum(10),
-			cons(make_fixnum(20),
-			     cons(make_fixnum(30), the_empty_list))));
-	fprintf(output_stream, "\n");
-
-	lisp_print(cons(make_fixnum(10),
-			cons(make_fixnum(20),
-			     cons(make_fixnum(30), make_character('Z')))));
-	fprintf(output_stream, "\n");
+	//repl(nil);
 
 	runtime_stats();
 
@@ -156,15 +140,17 @@ static void check_sanity()
 {
 	object o, o1;
 
+	/* fixnums */
 	assert(is_fixnum(make_fixnum(1234)));
 	assert(is_fixnum(make_fixnum(-32768)));
 
 	assert(!is_fixnum((object) 1));
 
+	/* characters */
 	assert(is_character(make_character('c')));
-
 	assert(!is_character(make_fixnum(10)));
 
+	/* pairs */
 	assert(is_pair(cons(make_fixnum(10), make_fixnum(20))));
 
 	assert(!is_pair(make_fixnum(1)));
@@ -181,11 +167,16 @@ static void check_sanity()
 	assert(caar(o1) == make_fixnum(10));
 	assert(cdar(o1) == make_fixnum(-10));
 
+	/* booleans */
 	assert(is_false(the_falsity));
 	assert(is_true(the_truth));
 
 	assert(is_boolean(the_truth));
 	assert(is_boolean(the_falsity));
+
+	/* foreign pointers */
+	assert(is_foreign_ptr(make_foreign_ptr((void *) 0xDEADBEEF)));
+	assert(foreign_ptr_value(make_foreign_ptr((void *) 0xDEADBEEF)) == (void *) 0xDEADBEEF);
 
 #if SAFETY
 	/* this should throw an error when safety is on */
