@@ -206,8 +206,13 @@ static object if_alternate(object exp)
 	return the_falsity;
 }
 
+#define make_if(predicate, consequent, alternate) cons(_if, cons(predicate, cons(consequent, cons(alternate, nil))))
+
 object lisp_eval(object exp, object env)
 {
+
+tail_call:
+
 	/* self evaluating */
 	if (is_self_evaluating(exp)) {
 		return exp;
@@ -235,12 +240,14 @@ object lisp_eval(object exp, object env)
 
 		return definition_variable(exp);
 	}
-	/* if */
+	/* if, tail recursive */
 	else if (is_if(exp)) {
 		if (is_true(lisp_eval(if_predicate(exp), env))) {
-			return lisp_eval(if_consequent(exp), env);
+			exp = if_consequent(exp);
+			goto tail_call;
 		} else {
-			return lisp_eval(if_alternate(exp), env);
+			exp = if_alternate(exp);
+			goto tail_call;
 		}
 	}
 
