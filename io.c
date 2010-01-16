@@ -3,6 +3,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include <assert.h>
+
 #include "minime.h"
 
 #define STRING_MIN_BUFFER         128
@@ -20,6 +22,61 @@ static int is_delimiter(int c)
 	return isspace(c) ||
 		c == '('  || c == ')' ||
 		c == '"'  || c == ';';
+}
+
+static int is_special_initial(int c)
+{
+	return strchr("!$%&*/:<=>?^_~", c) ? 1 : 0;
+}
+
+static int is_initial(int c)
+{
+	return isalpha(c) || is_special_initial(c);
+}
+
+static int is_special_subsequent(int c)
+{
+	return strchr("+-.@", c) ? 1 : 0;
+}
+
+static int is_subsequent(int c)
+{
+	return  is_initial(c) || isdigit(c) ||
+		is_special_subsequent(c);
+}
+
+/* this doesn't read the peculiar identifiers, they are scanned in the
+ * main reader body */
+static object read_identifier(FILE *in)
+{
+	object o;
+	int str_len = 0;
+	int str_size = STRING_MIN_BUFFER;
+	char *buffer;
+	int c;
+
+	buffer = xmalloc(str_size);
+
+	c = tolower(fgetc(in));
+	assert(is_initial(c));
+
+	buffer[str_len++] = c;
+
+	while (1) {
+		c = fgetc(in);
+		if (!is_subsequent(c)) {
+			ungetc(c, in);
+			break;
+		}
+
+		/* we're a lower case scheme */
+		buffer[str_len++] = tolower(c);
+	}
+
+	o = make_symbol(buffer, str_len);
+	xfree(buffer);
+
+	return o;
 }
 
 static void peek_expect_delimiter(FILE *in)
@@ -40,9 +97,6 @@ static void expect_string(FILE *in, char *str)
 		str++;
 	}
 }
-
-
-
 
 static object read_character(FILE *in)
 {
@@ -271,6 +325,10 @@ object lisp_read(FILE *in)
 		else if (c == '"') {
 			return read_string(in);
 		}
+		else if (is_initial(c)) {
+			ungetc(c, in);
+			return read_identifier(in);
+		}
 	}
 
 	return 0;
@@ -360,5 +418,14 @@ void lisp_print(FILE *out, object exp)
 		}
 		fprintf(out, "\"");
 		break;
+
+	case T_SYMBOL:
+		str = string_value(symbol_string(exp));
+		len = string_length(symbol_string(exp));
+		for (i = 0; i < len; i++)
+			fprintf(out, "%c", str[i]);
+		fprintf(out, " %p", exp);
+		break;
+
 	}
 }

@@ -20,8 +20,12 @@ object the_user_environment;
 
 object the_truth, the_falsity;
 
-object symbol_table;
-object quote, unquote;
+/* expression keyword symbols */
+object _quote, _lambda, _if, _set, _begin, _cond, _and, _or;
+object _case, _let, _letx, _letrec, _do, _delay, _quasiquote;
+
+/* other syntactic keywords */
+object _else, _implies, _define, _unquote, _unquote_splicing;
 
 object end_of_file;
 
@@ -139,6 +143,13 @@ static void check_sanity()
 
 	o = make_string_c("foobarbazooo", 12);
 	assert(strncmp(string_value(o), "foobarbazooo", 12) == 0);
+
+	/* symbols */
+	assert(make_symbol("foo", 3) == make_symbol("foo", 3));
+
+	assert(string_equal(symbol_string(make_symbol("foo", 3)),
+			    make_string_c("foo", 3)));
+
 
 #if SAFETY
 	/* this should throw an error when safety is on */

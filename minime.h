@@ -13,16 +13,23 @@ typedef enum {
 extern object nil;			     /* the empty list */
 extern object the_falsity, the_truth; 	     /* the boolean values */
 
-extern object symbol_table;
-extern object quote, unquote;
+/* expression keyword symbols */
+extern object _quote, _lambda, _if, _set, _begin, _cond, _and, _or;
+extern object _case, _let, _letx, _letrec, _do, _delay, _quasiquote;
+
+/* other syntactic keywords */
+extern object _else, _implies, _define, _unquote, _unquote_splicing;
+
 extern object end_of_file;
 
-extern object error(char *msg, object o);
 
+
+extern object error(char *msg, object o);
 
 extern unsigned long heap_size;
 
 #include "runtime.h"
+#include "symbols.h"
 #include "xutil.h"
 
 

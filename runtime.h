@@ -42,6 +42,14 @@ static inline char character_value(object o)
 	return (char) ((unsigned long) o >> CHARACTER_SHIFT);
 }
 
+#define EMPTY_LIST_TAG  0xFFUL
+#define EMPTY_LIST_MASK 0xFFUL
+
+static inline int is_null(object o)
+{
+	return (o == nil);
+}
+
 #define PAIR_TAG   2UL
 #define PAIR_MASK  3UL
 
@@ -104,6 +112,26 @@ static inline object set_cdr(object pair, object o)
 	return o;			     /* r5rs return value is unspecified */
 }
 
+static inline unsigned long length(object o)
+{
+	unsigned long len = 0;
+
+	if (o == nil)
+		return 0;
+
+#if SAFETY
+	if (!is_pair(o))
+		error("Object is not a pair -- LENGTH", o);
+#endif
+
+	while (!is_null(o)) {
+		len++;
+		o = cdr(o);
+	}
+
+	return len;
+}
+
 
 #define INDIRECT_TAG   3UL
 #define INDIRECT_SHIFT 2UL
@@ -148,20 +176,59 @@ static inline char *string_value(object o)
 {
 #if SAFETY
 	if (!is_string(o))
-		error("Object is not a string -- STRING-LENGTH", o);
+		error("Object is not a string -- STRING-VALUE", o);
 #endif
 
 	return (char *) ((unsigned long *) ((unsigned long) o - INDIRECT_TAG) + 1);
 }
 
-
-#define EMPTY_LIST_TAG  0xFFUL
-#define EMPTY_LIST_MASK 0xFFUL
-
-static inline int is_null(object o)
+static inline int string_equal(object s1, object s2)
 {
-	return (o == nil);
+#if SAFETY
+	if (!is_string(s1))
+		error("Object is not a string -- STRING=", s1);
+
+	if (!is_string(s2))
+		error("Object is not a string -- STRING=", s2);
+#endif
+
+	return ((string_length(s1) == string_length(s2)) &&
+		(memcmp(string_value(s1), string_value(s2), string_length(s1)) == 0));
 }
+
+#define SYMBOL_TAG  0xBFUL
+#define SYMBOL_MASK 0xFFUL
+
+static inline int is_symbol(object o)
+{
+	unsigned long indirect;
+
+	if (!is_indirect(o))
+		return 0;
+
+	indirect = *(unsigned long *) ((unsigned long) o - INDIRECT_TAG);
+	return ((indirect & SYMBOL_MASK) == SYMBOL_TAG);
+}
+
+extern object make_symbol(char *str, unsigned long len);
+extern object make_symbol_with_string(object o);
+
+static inline object make_symbol_c(char *str)
+{
+	return make_symbol(str, strlen(str));
+}
+
+static inline object symbol_string(object o)
+{
+#if SAFETY
+	if (!is_symbol(o))
+		error("Object is not a symbol -- SYMBOL-STRING", o);
+#endif
+
+	return (object) ((unsigned long *) ((unsigned long) o - INDIRECT_TAG)) [1];
+}
+
+
 
 #define BOOLEAN_TAG   0xEFULL
 #define BOOLEAN_SHIFT 0x08ULL

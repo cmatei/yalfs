@@ -52,6 +52,19 @@ object make_string_c(char *str, unsigned long length)
 	return o;
 }
 
+object make_symbol(char *str, unsigned long len)
+{
+	return symbol(str, len);
+}
+
+object make_symbol_with_string(object o)
+{
+	*freeptr++ = SYMBOL_TAG;
+	*freeptr++ = (unsigned long) o;
+
+	return (object) ((unsigned long) (freeptr - 2) | INDIRECT_TAG);
+}
+
 object cons(object car_value, object cdr_value)
 {
 	*freeptr++ = (unsigned long) car_value;
@@ -80,6 +93,9 @@ object_type type_of(object o)
 {
 	if (is_null(o))
 		return T_NIL;
+
+	if (is_symbol(o))
+		return T_SYMBOL;
 
 	if (is_fixnum(o))
 		return T_FIXNUM;
@@ -113,15 +129,43 @@ void runtime_init()
 	/* make the empty list object */
 	nil = make_the_empty_list();
 
+	/* the booleans */
 	the_falsity = make_boolean(0);
 	the_truth   = make_boolean(1);
 
-	symbol_table = nil;
+	/* uses nil */
+	symbol_table_init();
+
+	/* expression keywords */
+	_quote            = make_symbol_c("quote");
+	_lambda           = make_symbol_c("lambda");
+	_if               = make_symbol_c("if");
+	_set              = make_symbol_c("set!");
+	_begin            = make_symbol_c("if");
+	_cond             = make_symbol_c("cond");
+	_and              = make_symbol_c("and");
+	_or               = make_symbol_c("or");
+	_case             = make_symbol_c("case");
+	_let              = make_symbol_c("let");
+	_letx             = make_symbol_c("let*");
+	_letrec           = make_symbol_c("letrec");
+	_do               = make_symbol_c("do");
+	_quasiquote       = make_symbol_c("quasiquote");
+
+        /* other syntactic keywords */
+	_else             = make_symbol_c("else");
+	_implies          = make_symbol_c("=>");
+	_define           = make_symbol_c("define");
+	_unquote          = make_symbol_c("unquote");
+	_unquote_splicing = make_symbol_c("unquote-splicing");
+
 }
 
 void runtime_stats()
 {
 	printf("Used %zd heap bytes.\n", (freeptr - heap) * sizeof(unsigned long));
+
+	symbol_table_stats();
 }
 
 
