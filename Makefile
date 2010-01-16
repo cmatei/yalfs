@@ -6,7 +6,7 @@ CFLAGS		+= -D_GNU_SOURCE -DSAFETY=1
 INCLUDES	= -I.
 LIBS		=
 
-MINIME_SRC	= minime.c io.c runtime.c symbols.c xutil.c
+MINIME_SRC	= minime.c io.c runtime.c symbols.c primitives.c xutil.c
 MINIME_OBJ	= $(patsubst %.c,%.o,$(MINIME_SRC))
 
 ALL_SRC		= $(MINIME_SRC)

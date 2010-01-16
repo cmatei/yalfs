@@ -14,9 +14,8 @@ static void check_sanity();
 
 FILE *input_stream, *output_stream, *error_stream;
 
-object nil; /* the empty list */
-object the_empty_environment;
-object the_user_environment;
+object nil;				     /* empty list */
+object user_environment;		     /* user-initial-environment */
 
 object the_truth, the_falsity;
 
@@ -56,6 +55,112 @@ static int is_self_evaluating(object exp)
 		is_character(exp);
 }
 
+/* environments */
+object make_frame(object vars, object vals)
+{
+	return cons(vars, vals);
+}
+
+#define frame_variables(frame) car(frame)
+#define frame_values(frame) cdr(frame)
+
+static void add_binding_to_frame(object var, object val, object frame)
+{
+	set_car(frame, cons(var, car(frame)));
+	set_cdr(frame, cons(val, car(frame)));
+}
+
+object extend_environment(object vars, object vals, object base_env)
+{
+	if (length(vars) == length(vals))
+		return cons(make_frame(vars, vals), base_env);
+
+	error("Extend environment has wrong number of args -- EXTEND-ENVIRONMENT", nil);
+	return nil; /* not reached */
+}
+
+#define enclosing_environment(env) cdr(env)
+#define first_frame(env) car(env)
+
+object lookup_variable_value(object var, object env)
+{
+	object frame, vars, vals;
+
+	while (env != nil) {
+		frame = first_frame(env);
+
+		for (vars = frame_variables(frame), vals = frame_values(frame);
+		     !is_null(vars);
+		     vars = cdr(vars), vals = cdr(vals)) {
+
+			if (var == car(vars))
+				return car(vals);
+		}
+
+		env = enclosing_environment(env);
+	}
+
+	error("Unbound variable", var);
+	return nil; 			     /* not reached */
+}
+
+static void set_variable_value(object var, object val, object env)
+{
+	object frame, vars, vals;
+
+	while (env != nil) {
+		frame = first_frame(env);
+
+		for (vars = frame_variables(frame), vals = frame_values(frame);
+		     !is_null(vars);
+		     vars = cdr(vars), vals = cdr(vals)) {
+
+			if (var == car(vars)) {
+				set_car(vals, val);
+				return;
+			}
+		}
+
+		env = enclosing_environment(env);
+	}
+
+	error("Unbound variable -- SET!", var);
+}
+
+static void define_variable(object var, object val, object env)
+{
+	object frame = first_frame(env);
+	object vars, vals;
+
+	for (vars = frame_variables(frame), vals = frame_values(frame);
+	     !is_null(vars);
+	     vars = cdr(vars), vals = cdr(vals)) {
+
+		if (var == car(vars)) {
+			set_car(vals, val);
+			return;
+		}
+	}
+
+	add_binding_to_frame(var, val, frame);
+}
+
+object setup_environment()
+{
+	object initial_env;
+
+	initial_env = extend_environment(primitive_names(),
+					 primitive_objects(),
+					 nil);
+
+	define_variable(make_symbol_c("true"), the_truth, initial_env);
+	define_variable(make_symbol_c("false"), the_falsity, initial_env);
+	define_variable(make_symbol_c("nil"), nil, initial_env);
+
+	return initial_env;
+}
+
+/* syntax functions */
 
 /* (quote exp) */
 #define is_quoted(exp) is_tagged(exp, _quote)

@@ -15,6 +15,8 @@ typedef enum {
 extern object nil;			     /* the empty list */
 extern object the_falsity, the_truth; 	     /* the boolean values */
 
+extern object user_environment;		     /* user-initial-environment */
+
 /* expression keyword symbols */
 extern object _quote, _lambda, _if, _set, _begin, _cond, _and, _or;
 extern object _case, _let, _letx, _letrec, _do, _delay, _quasiquote;
@@ -32,6 +34,7 @@ extern unsigned long heap_size;
 
 #include "runtime.h"
 #include "symbols.h"
+#include "primitives.h"
 #include "xutil.h"
 
 
@@ -39,6 +42,7 @@ extern object lisp_read(FILE *in);
 extern object lisp_eval(object exp, object env);
 extern void   lisp_print(FILE *out, object exp);
 
+extern object setup_environment();
 
 
 

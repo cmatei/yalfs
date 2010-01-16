@@ -170,6 +170,8 @@ void runtime_init()
 	_unquote          = make_symbol_c("unquote");
 	_unquote_splicing = make_symbol_c("unquote-splicing");
 
+	/* user-initial-environment */
+	user_environment = setup_environment();
 }
 
 void runtime_stats()
