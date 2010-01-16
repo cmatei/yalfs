@@ -26,7 +26,7 @@ extern object _else, _implies, _define, _unquote, _unquote_splicing;
 
 extern object end_of_file;
 
-
+extern object _interpreted;
 
 extern object error(char *msg, object o);
 
@@ -41,6 +41,8 @@ extern unsigned long heap_size;
 extern object lisp_read(FILE *in);
 extern object lisp_eval(object exp, object env);
 extern void   lisp_print(FILE *out, object exp);
+
+extern object lisp_apply(object proc, object args);
 
 extern object setup_environment();
 

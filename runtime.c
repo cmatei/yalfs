@@ -152,7 +152,7 @@ void runtime_init()
 	_lambda           = make_symbol_c("lambda");
 	_if               = make_symbol_c("if");
 	_set              = make_symbol_c("set!");
-	_begin            = make_symbol_c("if");
+	_begin            = make_symbol_c("begin");
 	_cond             = make_symbol_c("cond");
 	_and              = make_symbol_c("and");
 	_or               = make_symbol_c("or");
@@ -169,6 +169,9 @@ void runtime_init()
 	_define           = make_symbol_c("define");
 	_unquote          = make_symbol_c("unquote");
 	_unquote_splicing = make_symbol_c("unquote-splicing");
+
+	/* FIXME */
+	_interpreted      = make_symbol_c("interpreted-procedure");
 
 	/* user-initial-environment */
 	user_environment = setup_environment();

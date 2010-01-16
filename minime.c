@@ -28,6 +28,9 @@ object _else, _implies, _define, _unquote, _unquote_splicing;
 
 object end_of_file;
 
+/* quick hack for compound procedures */
+object _interpreted;
+
 /*----------------------------------*/
 
 
@@ -185,13 +188,14 @@ static object definition_variable(object exp)
 	return caadr(exp);
 }
 
+#define make_lambda(parameters, body) cons(_lambda, cons(parameters, body))
+
 static object definition_value(object exp)
 {
 	if (is_symbol(cadr(exp)))
 		return caddr(exp);
-
-	// make_lambda(cdadr(exp), cddr(exp))
-	return nil;
+	else
+		return make_lambda(cdadr(exp), cddr(exp));
 }
 
 #define is_if(exp) is_tagged(exp, _if)
@@ -208,29 +212,127 @@ static object if_alternate(object exp)
 
 #define make_if(predicate, consequent, alternate) cons(_if, cons(predicate, cons(consequent, cons(alternate, nil))))
 
+#define is_cond(exp) is_tagged(exp, _cond)
+
+#define cond_clauses(exp) cdr(exp)
+
+#define cond_predicate(clause) car(clause)
+#define cond_actions(clause) cdr(clause)
+
+#define is_cond_else_clause(clause) (cond_predicate(clause) == _else)
+
+#define cond_to_ifs(exp) expand_cond_clauses(cond_clauses(exp))
+
+#define is_begin(exp) is_tagged(exp, _begin)
+#define begin_actions(exp) cdr(exp)
+#define is_last_exp(exp) is_null(cdr(exp))
+#define first_exp(seq) car(seq)
+#define rest_exps(seq) cdr(seq)
+
+#define make_begin(seq) cons(_begin, seq)
+
+static object sequence_to_exp(object seq)
+{
+	return  is_null(seq) ? seq :
+		is_last_exp(seq) ? first_exp(seq) :
+		make_begin(seq);
+}
+
+static object expand_cond_clauses(object clauses)
+{
+	object first, rest;
+
+	if (is_null(clauses))
+		return the_falsity;
+
+	first = car(clauses);
+	rest  = cdr(clauses);
+
+	if (is_cond_else_clause(first)) {
+		if (is_null(rest)) {
+			return sequence_to_exp(cond_actions(first));
+		} else {
+			error("ELSE clause is not last -- COND->IF", clauses);
+		}
+	} else {
+		return make_if(cond_predicate(first),
+			       sequence_to_exp(cond_actions(first)),
+			       expand_cond_clauses(rest));
+	}
+
+	return nil;			     /* not reached */
+}
+
+
+#define is_lambda(exp) is_tagged(exp, _lambda)
+#define lambda_parameters(exp) cadr(exp)
+#define lambda_body(exp) cddr(exp)
+
+/* a quick hack before I make a proper object */
+#define make_procedure(parameters, body, environment) cons(_interpreted, cons(parameters, cons(body, cons(env, nil))))
+
+#define is_interpreted(p) is_tagged(p, _interpreted)
+
+#define procedure_parameters(p) cadr(p)
+#define procedure_body(p) caddr(p)
+#define procedure_environment(p) car(cdddr(p))
+
+
+#define is_application(exp) is_pair(exp)
+
+#define operator(exp) car(exp)
+#define operands(exp) cdr(exp)
+
+#define first_operand(exps) car(exps)
+#define rest_operands(exps) cdr(exps)
+
+static object list_of_values(object exps, object env)
+{
+	if (is_null(exps))
+		return nil;
+
+	return cons(lisp_eval(first_operand(exps), env),
+		    list_of_values(rest_operands(exps), env));
+}
+
+static void stack_push(object *stackptr, object o)
+{
+	*stackptr = cons(*stackptr, o);
+}
+
+static object stack_pop(object *stackptr)
+{
+	object o = car(stackptr);
+	*stackptr = cdr(stackptr);
+	return o;
+}
+
 object lisp_eval(object exp, object env)
 {
+	object ret = nil;
+	object tail_seq_stack = nil;
+	object actions;
 
 tail_call:
 
 	/* self evaluating */
 	if (is_self_evaluating(exp)) {
-		return exp;
+		ret = exp;
 	}
 	/* variables */
 	else if (is_variable(exp)) {
-		return lookup_variable_value(exp, env);
+		ret = lookup_variable_value(exp, env);
 	}
 	/* quote */
 	else if (is_quoted(exp)) {
-		return text_of_quotation(exp);
+		ret = text_of_quotation(exp);
 	}
 	/* assignment */
 	else if (is_assignment(exp)) {
 		set_variable_value(assignment_variable(exp),
 				   lisp_eval(assignment_value(exp), env),
 				   env);
-		return assignment_variable(exp);
+		ret = assignment_variable(exp);
 	}
 	/* definition */
 	else if (is_definition(exp)) {
@@ -238,7 +340,7 @@ tail_call:
 				lisp_eval(definition_value(exp), env),
 				env);
 
-		return definition_variable(exp);
+		ret = definition_variable(exp);
 	}
 	/* if, tail recursive */
 	else if (is_if(exp)) {
@@ -250,12 +352,87 @@ tail_call:
 			goto tail_call;
 		}
 	}
+	/* lambda */
+	else if (is_lambda(exp)) {
+		ret = make_procedure(lambda_parameters(exp),
+				     lambda_body(exp),
+				     env);
+	}
+	/* begin */
+	else if (is_begin(exp)) {
+		actions = begin_actions(exp);
 
+		if (is_null(actions)) {
+			ret = nil;
+		}
+		else if (is_last_exp(actions)) {
+			exp = car(exp);
+			goto tail_call;	     /* tail call to eval */
+		}
+		else {
+			stack_push(&tail_seq_stack, rest_exps(actions));
+			stack_push(&tail_seq_stack, env);
 
-	return cons(make_fixnum(1),
-		    cons(exp, nil));
+			exp = first_exp(actions);
+
+			goto tail_call;
+		}
+	}
+	/* cond */
+	else if (is_cond(exp)) {
+		exp = cond_to_ifs(exp);
+		goto tail_call;
+	}
+	/* application */
+	else if (is_application(exp)) {
+		ret = lisp_apply(lisp_eval(operator(exp), env),
+				 list_of_values(operands(exp), env));
+	}
+	else
+		error("Unknown expression type -- EVAL", exp);
+
+tail_sequence:
+
+	/* if the tail sequence stack is empty, we're done */
+	if (is_null(tail_seq_stack))
+		return ret;
+
+	env    = stack_pop(&tail_seq_stack);
+	actions = stack_pop(&tail_seq_stack);
+
+	if (is_last_exp(actions)) {
+		exp = first_exp(actions);
+		goto tail_call;
+	} else {
+		stack_push(&tail_seq_stack, rest_exps(actions));
+		stack_push(&tail_seq_stack, env);
+
+		exp = first_exp(actions);
+		goto tail_call;
+	}
+
+	error("This is not reached", nil);
+
 }
 
+object lisp_apply(object procedure, object arguments)
+{
+	if (is_primitive(procedure)) {
+		return apply_primitive(procedure, arguments);
+	} else if (is_interpreted(procedure)) {
+		return lisp_eval(
+			/* transform to sequence */
+			sequence_to_exp(procedure_body(procedure)),
+			extend_environment(procedure_parameters(procedure),
+					   arguments,
+					   procedure_environment(procedure)));
+	}
+
+
+
+	error("Unknown procedure type -- APPLY", procedure);
+	return nil;			     /* not reached */
+}
 
 void repl(object env)
 {

@@ -469,9 +469,13 @@ void lisp_print(FILE *out, object exp)
 		break;
 
 	case T_PAIR:
-		fprintf(out, "(");
-		lisp_print_pair(out, exp);
-		fprintf(out, ")");
+		if (car(exp) == _interpreted)
+			fprintf(out, "#<interpreted-procedure>");
+		else {
+			fprintf(out, "(");
+			lisp_print_pair(out, exp);
+			fprintf(out, ")");
+		}
 		break;
 
 	case T_BOOLEAN:

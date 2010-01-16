@@ -15,7 +15,17 @@ static object lisp_cons(object args)
 
 static object lisp_add1(object args)
 {
-	return nil;
+	long total = 1;
+
+	if (length(args) == 0)
+		error("Invalid number of arguments -- ADD1", args);
+
+	while (!is_null(args)) {
+		total += fixnum_value(car(args));
+		args = cdr(args);
+	}
+
+	return make_fixnum(total);
 }
 
 
