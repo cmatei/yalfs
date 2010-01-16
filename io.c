@@ -399,6 +399,10 @@ object lisp_read(FILE *in)
 			ungetc(c, in);
 			return read_identifier(in);
 		}
+		/* peculiar identifier. FIXME for ... */
+		else if (((c == '+') || c == '-') && is_delimiter(peek(in))) {
+			return make_symbol_c((c == '+' ? "+" : "-"));
+		}
 		/* pair */
 		else if (c == '(') {
 			return read_pair(in);

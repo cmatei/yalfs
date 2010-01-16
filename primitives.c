@@ -13,19 +13,84 @@ static object lisp_cons(object args)
 	return cons(car(args), cadr(args));
 }
 
-static object lisp_add1(object args)
+static object lisp_plus(object args)
 {
-	long total = 1;
-
-	if (length(args) == 0)
-		error("Invalid number of arguments -- ADD1", args);
+	long initial = 0;
 
 	while (!is_null(args)) {
-		total += fixnum_value(car(args));
+		initial += fixnum_value(car(args));
 		args = cdr(args);
 	}
 
-	return make_fixnum(total);
+	return make_fixnum(initial);
+}
+
+static object lisp_minus(object args)
+{
+	long initial;
+
+	if (length(args) < 2)
+		error("Need at least two arguments -- -", args);
+
+	initial = fixnum_value(car(args));
+	args = cdr(args);
+
+	while (!is_null(args)) {
+		initial -= fixnum_value(car(args));
+		args = cdr(args);
+	}
+
+	return make_fixnum(initial);
+}
+
+static object lisp_multiply(object args)
+{
+	long initial = 1;
+
+	while (!is_null(args)) {
+		initial *= fixnum_value(car(args));
+		args = cdr(args);
+	}
+
+	return make_fixnum(initial);
+}
+
+static object lisp_divide(object args)
+{
+	long initial;
+
+	if (length(args) < 2)
+		error("Need at least two arguments -- /", args);
+
+	initial = fixnum_value(car(args));
+	args = cdr(args);
+
+	while (!is_null(args)) {
+		initial /= fixnum_value(car(args));
+		args = cdr(args);
+	}
+
+	return make_fixnum(initial);
+}
+
+static object lisp_eq(object args)
+{
+	object initial;
+
+	if (length(args) < 2)
+		error("Need at least two arguments -- /", args);
+
+	initial = car(args);
+	args = cdr(args);
+
+	while (!is_null(args)) {
+		if (initial != car(args))
+			return the_falsity;
+
+		args = cdr(args);
+	}
+
+	return the_truth;
 }
 
 
@@ -35,7 +100,12 @@ static struct {
 } the_primitives[] = {
 	{ "cons", lisp_cons },
 
-	{ "add1", lisp_add1 },
+	{ "+", lisp_plus },
+	{ "-", lisp_minus },
+	{ "*", lisp_multiply },
+	{ "/", lisp_divide },
+
+	{ "eq?", lisp_eq },
 
 
 	{ NULL, NULL }
