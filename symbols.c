@@ -1,3 +1,5 @@
+/* symbols.c -- Symbol hashtable. Temporary solution */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

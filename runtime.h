@@ -228,7 +228,21 @@ static inline object symbol_string(object o)
 	return (object) ((unsigned long *) ((unsigned long) o - INDIRECT_TAG)) [1];
 }
 
+static inline int is_expression_keyword(object o)
+{
+	return  o == _quote || o == _lambda || o == _if     ||
+		o == _set   || o == _begin  || o == _cond   ||
+		o == _and   || o == _or     || o == _case   ||
+		o == _let   || o == _letx   || o == _letrec ||
+		o == _do    || o == _delay  || o == _quasiquote;
+}
 
+static inline int is_syntactic_keyword(object o)
+{
+	return  o == _else    || o == _implies || o == _define ||
+		o == _unquote || o == _unquote_splicing ||
+		is_expression_keyword(o);
+}
 
 #define BOOLEAN_TAG   0xEFULL
 #define BOOLEAN_SHIFT 0x08ULL

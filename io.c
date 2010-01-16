@@ -17,6 +17,13 @@ static int peek(FILE *in)
 	return c;
 }
 
+static void skip_whitespace(FILE *in)
+{
+	int c;
+	while (isspace(c = fgetc(in)));
+	ungetc(c, in);
+}
+
 static int is_delimiter(int c)
 {
 	return isspace(c) ||
@@ -64,10 +71,14 @@ static object read_identifier(FILE *in)
 
 	while (1) {
 		c = fgetc(in);
-		if (!is_subsequent(c)) {
+
+		if (is_delimiter(c)) {
 			ungetc(c, in);
 			break;
 		}
+
+		if (!is_subsequent(c))
+			error("Symbol has bad name -- READ", nil);
 
 		/* we're a lower case scheme */
 		buffer[str_len++] = tolower(c);
@@ -104,7 +115,7 @@ static object read_character(FILE *in)
 
 	switch (c) {
 	case EOF:
-		error("Unexpected EOF", nil);
+		error("Unexpected EOF -- READ", nil);
 		break;
 
 	case 's':
@@ -188,6 +199,7 @@ static object read_string(FILE *in)
 		}
 	}
 
+	peek_expect_delimiter(in);
 	o = make_string_c(buffer, str_len);
 	xfree(buffer);
 
@@ -261,22 +273,74 @@ static object read_number(FILE *in)
 			continue;
 		}
 
-		if (digits_were_seen && is_delimiter(c))
+		if (digits_were_seen && is_delimiter(c)) {
+			ungetc(c, in);
 			return make_fixnum(number);
+		}
 
 		error("Ill-formed number -- READ", nil);
 	}
 }
 
+object read_pair(FILE *in)
+{
+	object the_car, the_cdr;
+	int c;
+
+	skip_whitespace(in);
+
+	/* the empty list */
+	c = fgetc(in);
+	if (c == ')')
+		return nil;
+	ungetc(c, in);
+
+	the_car = lisp_read(in);
+
+	skip_whitespace(in);
+
+	c = fgetc(in);
+	/* improper list */
+	if (c == '.') {
+		c = fgetc(in);
+		if (!isspace(c))
+			error("Missing delimiter in improper list -- READ", nil);
+
+		the_cdr = lisp_read(in);
+		skip_whitespace(in);
+
+		c = fgetc(in);
+		if (c == ')')
+			return cons(the_car, the_cdr);
+
+		error("Missing parenthesis -- READ", nil);
+	}
+	else {
+		ungetc(c, in);
+		the_cdr = read_pair(in);
+		return cons(the_car, the_cdr);
+	}
+
+	/* notreached */
+	assert(0);
+	return nil;
+}
 
 object lisp_read(FILE *in)
 {
 	int c;
 
 	while ((c = fgetc(in)) != EOF) {
+		/* atmosphere */
 		if (isspace(c)) {
 			continue;
 		}
+		else if (c == ';') {
+			while (c != EOF && c != '\n')
+				c = fgetc(in);
+			continue;
+		}
+		/* characters, booleans or numbers with radix */
 		else if (c == '#') {
 			c = fgetc(in);
 
@@ -316,19 +380,33 @@ object lisp_read(FILE *in)
 				error("Unexpected character -- READ", nil);
 			}
 		}
+		/* number */
 		else if (isdigit(c) ||
 			 ((c == '-') && isdigit(peek(in))) ||
 			 ((c == '+') && isdigit(peek(in)))) {
 			ungetc(c, in);
 			return read_number(in);
 		}
+		/* string */
 		else if (c == '"') {
 			return read_string(in);
 		}
+		/* symbol */
 		else if (is_initial(c)) {
 			ungetc(c, in);
 			return read_identifier(in);
 		}
+		/* pair */
+		else if (c == '(') {
+			return read_pair(in);
+		}
+		/* quote */
+		else if (c == '\'') {
+			return cons(_quote, cons(lisp_read(in), nil));
+		}
+
+		else
+			error("Unexpected character -- READ", nil);
 	}
 
 	return 0;
@@ -424,7 +502,6 @@ void lisp_print(FILE *out, object exp)
 		len = string_length(symbol_string(exp));
 		for (i = 0; i < len; i++)
 			fprintf(out, "%c", str[i]);
-		fprintf(out, " %p", exp);
 		break;
 
 	}
