@@ -376,17 +376,38 @@ pair_fun(cddadr)
 pair_fun(cdddar)
 pair_fun(cddddr)
 
+object lisp_set_car(object args)
+{
+	check_args(2, args, "set-car!");
+
+	if (!is_pair(car(args)))
+		error("Expecting a pair as first argument -- set-car!", args);
+
+	return set_car(car(args), cadr(args));
+}
+
+object lisp_set_cdr(object args)
+{
+	check_args(2, args, "set-cdr!");
+
+	if (!is_pair(car(args)))
+		error("Expecting a pair as first argument -- set-cdr!", args);
+
+	return set_cdr(car(args), cadr(args));
+}
+
 object lisp_nullp(object args)
 {
 	check_args(1, args, "null?");
-
 	return boolean(car(args) == nil);
 }
 
 object lisp_listp(object args)
 {
-
+	check_args(1, args, "list?");
+	return boolean(is_list(car(args)));
 }
+
 
 object lisp_eq(object args)
 {
@@ -448,6 +469,11 @@ static struct {
 	pair_fun_def(cdddar),
 	pair_fun_def(cddddr),
 
+	{ "set-car!",  lisp_set_car       },
+	{ "set-cdr!",  lisp_set_cdr       },
+
+	{ "null?",     lisp_nullp         },
+	{ "list?",     lisp_listp         },
 
         /* Numerical operations */
 	{ "number?",   lisp_numberp       },

@@ -473,9 +473,13 @@ void lisp_print(FILE *out, object exp)
 		break;
 
 	case T_PAIR:
-		fprintf(out, "(");
-		lisp_print_pair(out, exp);
-		fprintf(out, ")");
+		if (is_finite_list(exp, NULL)) {
+			fprintf(out, "(");
+			lisp_print_pair(out, exp);
+			fprintf(out, ")");
+		} else {
+			fprintf(out, "#<unprintable-structure>");
+		}
 		break;
 
 	case T_BOOLEAN:

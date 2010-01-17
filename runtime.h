@@ -162,6 +162,59 @@ static inline unsigned long length(object o)
 }
 
 
+/* This is where we detect cyclic lists, using the tortoise and hare
+ * algorithm */
+static inline int is_finite_list(object o, object *last_el_ptr)
+{
+	object rabbit;
+
+	/* the hare moves twice as fast through the list. If the
+	 * hare meets the tortoise, there is a loop. If the hare
+	 * reaches the end, there is no loop.  o is our tortoise.
+	 */
+	rabbit =  o;
+	while (is_pair(rabbit)) {
+		o = cdr(o);
+		rabbit = cdr(rabbit);
+
+		if (rabbit == o)
+			return 0;
+
+		if (!is_pair(rabbit))
+			break;
+
+		rabbit = cdr(rabbit);
+
+		if (rabbit == o)
+			return 0;
+	}
+
+	if (last_el_ptr != NULL)
+		*last_el_ptr = rabbit;
+
+	return 1;
+}
+
+/*
+  "By definition, all lists have finite length and are terminated by the empty list".
+  The empty list is a list (but not a pair).
+*/
+static inline int is_list(object o)
+{
+	object last_el;
+
+	if (o == nil)
+		return 1;
+
+	if (!is_pair(o))
+		return 0;
+
+	if (is_finite_list(o, &last_el) && (last_el == nil))
+		return 1;
+
+	return 0;
+}
+
 #define INDIRECT_TAG   3UL
 #define INDIRECT_SHIFT 2UL
 #define INDIRECT_MASK  3UL
