@@ -52,7 +52,8 @@ object lisp_equal(object args)
 	return the_truth;
 }
 
-object lisp_decreasing(object args)
+/* < */
+object lisp_increasing(object args)
 {
 	object prec = nil;
 
@@ -67,7 +68,8 @@ object lisp_decreasing(object args)
 	return the_truth;
 }
 
-object lisp_increasing(object args)
+/* > */
+object lisp_decreasing(object args)
 {
 	object prec = nil;
 
@@ -81,6 +83,7 @@ object lisp_increasing(object args)
 	return the_truth;
 }
 
+/* <= */
 object lisp_nondecreasing(object args)
 {
 	object prec = nil;
@@ -95,6 +98,7 @@ object lisp_nondecreasing(object args)
 	return the_truth;
 }
 
+/* >= */
 object lisp_nonincreasing(object args)
 {
 	object prec = nil;
@@ -372,6 +376,17 @@ pair_fun(cddadr)
 pair_fun(cdddar)
 pair_fun(cddddr)
 
+object lisp_nullp(object args)
+{
+	check_args(1, args, "null?");
+
+	return boolean(car(args) == nil);
+}
+
+object lisp_listp(object args)
+{
+
+}
 
 object lisp_eq(object args)
 {
