@@ -170,8 +170,9 @@ void runtime_init()
 	_unquote          = make_symbol_c("unquote");
 	_unquote_splicing = make_symbol_c("unquote-splicing");
 
-	/* FIXME */
+	/* hacks */
 	_interpreted      = make_symbol_c("interpreted-procedure");
+	_break            = make_symbol_c("break");
 
 	/* user-initial-environment */
 	user_environment = setup_environment();

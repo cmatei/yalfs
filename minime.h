@@ -26,7 +26,7 @@ extern object _else, _implies, _define, _unquote, _unquote_splicing;
 
 extern object end_of_file;
 
-extern object _interpreted;
+extern object _interpreted, _break;
 
 extern object error(char *msg, object o);
 

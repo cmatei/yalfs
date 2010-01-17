@@ -30,6 +30,7 @@ object end_of_file;
 
 /* quick hack for compound procedures */
 object _interpreted;
+object _break;
 
 /*----------------------------------*/
 
@@ -37,7 +38,13 @@ object _interpreted;
 static jmp_buf err_jump;
 object error(char *msg, object o)
 {
-	fprintf(output_stream, "%s, object %p\n", msg, o);
+	fprintf(output_stream, "%s, object %p ", msg, o);
+
+	if (is_symbol(o))
+		lisp_print(output_stream, o);
+
+	fprintf(output_stream, "\n");
+
 	longjmp(err_jump, 1);
 	return nil; /* not reached */
 }
@@ -297,14 +304,21 @@ static object list_of_values(object exps, object env)
 
 static void stack_push(object *stackptr, object o)
 {
-	*stackptr = cons(*stackptr, o);
+	*stackptr = cons(o, *stackptr);
 }
 
 static object stack_pop(object *stackptr)
 {
-	object o = car(stackptr);
-	*stackptr = cdr(stackptr);
+	object o = car(*stackptr);
+	*stackptr = cdr(*stackptr);
 	return o;
+}
+
+#define is_breakpoint(exp) is_tagged(exp, _break)
+
+static void breakpoint()
+{
+	/* break here in gdb */
 }
 
 object lisp_eval(object exp, object env)
@@ -312,6 +326,7 @@ object lisp_eval(object exp, object env)
 	object ret = nil;
 	object tail_seq_stack = nil;
 	object actions;
+	object proc, args;
 
 tail_call:
 
@@ -360,42 +375,34 @@ tail_call:
 	}
 	/* begin */
 	else if (is_begin(exp)) {
-		actions = begin_actions(exp);
 
-		if (is_null(actions)) {
-			ret = nil;
-		}
-		else if (is_last_exp(actions)) {
-			exp = car(exp);
-			goto tail_call;	     /* tail call to eval */
-		}
-		else {
-			stack_push(&tail_seq_stack, rest_exps(actions));
-			stack_push(&tail_seq_stack, env);
-
-			exp = first_exp(actions);
-
-			goto tail_call;
-		}
+		goto tail_sequence_entry;
 	}
 	/* cond */
 	else if (is_cond(exp)) {
 		exp = cond_to_ifs(exp);
 		goto tail_call;
 	}
+	/* breakpoint hook */
+	else if (is_breakpoint(exp)) {
+		ret = nil;
+		breakpoint();
+	}
 	/* application */
 	else if (is_application(exp)) {
-		ret = lisp_apply(lisp_eval(operator(exp), env),
-				 list_of_values(operands(exp), env));
+
+		goto apply;
 	}
 	else
 		error("Unknown expression type -- EVAL", exp);
 
-tail_sequence:
+eval_exit:
 
 	/* if the tail sequence stack is empty, we're done */
 	if (is_null(tail_seq_stack))
 		return ret;
+
+//tail_sequence_continue:
 
 	env    = stack_pop(&tail_seq_stack);
 	actions = stack_pop(&tail_seq_stack);
@@ -410,9 +417,54 @@ tail_sequence:
 		exp = first_exp(actions);
 		goto tail_call;
 	}
-
 	error("This is not reached", nil);
 
+tail_sequence_entry:
+
+	actions = begin_actions(exp);
+
+	if (is_null(actions)) {
+		ret = nil;
+	}
+	else if (is_last_exp(actions)) {
+		exp = first_exp(actions);
+		goto tail_call;	     /* tail call to eval */
+	}
+	else {
+		stack_push(&tail_seq_stack, rest_exps(actions));
+		stack_push(&tail_seq_stack, env);
+
+		exp = first_exp(actions);
+
+		goto tail_call;
+	}
+
+	goto eval_exit;
+
+
+apply:
+
+
+	proc = lisp_eval(operator(exp), env);
+	args = list_of_values(operands(exp), env);
+
+
+	if (is_primitive(proc)) {
+		ret = apply_primitive(proc, args);
+		goto eval_exit;
+	}
+	else if (is_interpreted(proc)) {
+		exp = sequence_to_exp(procedure_body(proc));
+		env = extend_environment(procedure_parameters(proc),
+					 args,
+					 procedure_environment(proc));
+
+		goto tail_call;
+	}
+	else
+		error("Unknown procedure type -- APPLY", proc);
+
+	return nil;
 }
 
 object lisp_apply(object procedure, object arguments)
