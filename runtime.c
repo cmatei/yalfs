@@ -40,6 +40,16 @@ object make_primitive(primitive_proc primitive)
 	return (object) ((unsigned long) (freeptr - 2) | INDIRECT_TAG);
 }
 
+object make_procedure(object parameters, object body, object environment)
+{
+	*freeptr++ = PROCEDURE_TAG;
+	*freeptr++ = (unsigned long) parameters;
+	*freeptr++ = (unsigned long) body;
+	*freeptr++ = (unsigned long) environment;
+
+	return (object) ((unsigned long) (freeptr - 4) | INDIRECT_TAG);
+}
+
 object make_string(unsigned long length)
 {
 	unsigned long words;
@@ -126,6 +136,9 @@ object_type type_of(object o)
 	if (is_primitive(o))
 		return T_PRIMITIVE;
 
+	if (is_procedure(o))
+		return T_PROCEDURE;
+
 	error("Uknown object type -- TYPE-OF", o);
 	return T_NIL; /* not reached */
 }
@@ -171,7 +184,6 @@ void runtime_init()
 	_unquote_splicing = make_symbol_c("unquote-splicing");
 
 	/* hacks */
-	_interpreted      = make_symbol_c("interpreted-procedure");
 	_break            = make_symbol_c("break");
 
 	/* user-initial-environment */

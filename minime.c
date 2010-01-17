@@ -28,8 +28,6 @@ object _else, _implies, _define, _unquote, _unquote_splicing;
 
 object end_of_file;
 
-/* quick hack for compound procedures */
-object _interpreted;
 object _break;
 
 /*----------------------------------*/
@@ -275,15 +273,6 @@ static object expand_cond_clauses(object clauses)
 #define lambda_parameters(exp) cadr(exp)
 #define lambda_body(exp) cddr(exp)
 
-/* a quick hack before I make a proper object */
-#define make_procedure(parameters, body, environment) cons(_interpreted, cons(parameters, cons(body, cons(env, nil))))
-
-#define is_interpreted(p) is_tagged(p, _interpreted)
-
-#define procedure_parameters(p) cadr(p)
-#define procedure_body(p) caddr(p)
-#define procedure_environment(p) car(cdddr(p))
-
 
 #define is_application(exp) is_pair(exp)
 
@@ -453,7 +442,7 @@ apply:
 		ret = apply_primitive(proc, args);
 		goto eval_exit;
 	}
-	else if (is_interpreted(proc)) {
+	else if (is_procedure(proc)) {
 		exp = sequence_to_exp(procedure_body(proc));
 		env = extend_environment(procedure_parameters(proc),
 					 args,
@@ -471,7 +460,7 @@ object lisp_apply(object procedure, object arguments)
 {
 	if (is_primitive(procedure)) {
 		return apply_primitive(procedure, arguments);
-	} else if (is_interpreted(procedure)) {
+	} else if (is_procedure(procedure)) {
 		return lisp_eval(
 			/* transform to sequence */
 			sequence_to_exp(procedure_body(procedure)),

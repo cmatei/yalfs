@@ -72,4 +72,5 @@ x11 - the others
 10111111 - symbols
 00111111 - foreign pointer
 11011111 - primitive procedure
+01011111 - interpreted procedure
 

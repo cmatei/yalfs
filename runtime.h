@@ -348,6 +348,53 @@ static inline object apply_primitive(object proc, object args)
 	return pproc(args);
 }
 
+#define PROCEDURE_TAG  0x5FUL
+#define PROCEDURE_MASK 0xFFUL
+
+static inline int is_procedure(object o)
+{
+	unsigned long indirect;
+
+	if (!is_indirect(o))
+		return 0;
+
+	indirect = *(unsigned long *) ((unsigned long) o - INDIRECT_TAG);
+	return ((indirect & PROCEDURE_MASK) == PROCEDURE_TAG);
+}
+
+extern object make_procedure(object parameters, object body, object environment);
+
+static inline object procedure_parameters(object o)
+{
+#if SAFETY
+	if (!is_procedure(o))
+		error("Object is not a procedure -- APPLY", o);
+#endif
+
+	return (object) ((unsigned long *) ((unsigned long) o - INDIRECT_TAG)) [1];
+}
+
+
+static inline object procedure_body(object o)
+{
+#if SAFETY
+	if (!is_procedure(o))
+		error("Object is not a procedure -- APPLY", o);
+#endif
+
+	return (object) ((unsigned long *) ((unsigned long) o - INDIRECT_TAG)) [2];
+}
+
+static inline object procedure_environment(object o)
+{
+#if SAFETY
+	if (!is_procedure(o))
+		error("Object is not a procedure -- APPLY", o);
+#endif
+
+	return (object) ((unsigned long *) ((unsigned long) o - INDIRECT_TAG)) [3];
+}
+
 
 extern object_type type_of(object o);
 

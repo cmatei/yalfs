@@ -473,13 +473,9 @@ void lisp_print(FILE *out, object exp)
 		break;
 
 	case T_PAIR:
-		if (car(exp) == _interpreted)
-			fprintf(out, "#<interpreted-procedure>");
-		else {
-			fprintf(out, "(");
-			lisp_print_pair(out, exp);
-			fprintf(out, ")");
-		}
+		fprintf(out, "(");
+		lisp_print_pair(out, exp);
+		fprintf(out, ")");
 		break;
 
 	case T_BOOLEAN:
@@ -521,6 +517,12 @@ void lisp_print(FILE *out, object exp)
 
 	case T_PRIMITIVE:
 		fprintf(out, "#<primitive-procedure %p>", primitive_implementation(exp));
+		break;
+
+	case T_PROCEDURE:
+		fprintf(out, "#<procedure ");
+		lisp_print(out, procedure_parameters(exp));
+		fprintf(out, ">");
 		break;
 	}
 }
