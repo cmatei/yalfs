@@ -329,24 +329,48 @@ object lisp_cons(object args)
 	return cons(car(args), cadr(args));
 }
 
-object lisp_car(object args)
-{
-	check_args(1, args, "car");
-	if (!is_pair(car(args)))
-		error("Expecting a pair -- car", args);
 
-	return car(car(args));
+
+#define pair_fun(X)					\
+object lisp_##X (object args)			        \
+{						        \
+	check_args(1, args, #X );			\
+	if (!is_pair(car(args)))			\
+                error("Expecting a pair -- " #X, args); \
+							\
+	return  X(car(args));				\
 }
 
-object lisp_cdr(object args)
-{
-	check_args(1, args, "cdr");
-	if (!is_pair(car(args)))
-		error("Expecting a pair -- cdr", args);
-
-	return cdr(car(args));
-}
-
+pair_fun(car)
+pair_fun(cdr)
+pair_fun(caar)
+pair_fun(cadr)
+pair_fun(cdar)
+pair_fun(cddr)
+pair_fun(caaar)
+pair_fun(caadr)
+pair_fun(cadar)
+pair_fun(caddr)
+pair_fun(cdaar)
+pair_fun(cdadr)
+pair_fun(cddar)
+pair_fun(cdddr)
+pair_fun(caaaar)
+pair_fun(caaadr)
+pair_fun(caadar)
+pair_fun(caaddr)
+pair_fun(cadaar)
+pair_fun(cadadr)
+pair_fun(caddar)
+pair_fun(cadddr)
+pair_fun(cdaaar)
+pair_fun(cdaadr)
+pair_fun(cdadar)
+pair_fun(cdaddr)
+pair_fun(cddaar)
+pair_fun(cddadr)
+pair_fun(cdddar)
+pair_fun(cddddr)
 
 
 object lisp_eq(object args)
@@ -369,6 +393,7 @@ object lisp_eq(object args)
 	return the_truth;
 }
 
+#define pair_fun_def(X) { #X, lisp_##X }
 
 static struct {
 	char *name;
@@ -376,8 +401,37 @@ static struct {
 } the_primitives[] = {
 	{ "cons", lisp_cons },
 	{ "pair?", lisp_pairp },
-	{ "car", lisp_car },
-	{ "cdr", lisp_cdr },
+
+	pair_fun_def(car),
+	pair_fun_def(cdr),
+	pair_fun_def(caar),
+	pair_fun_def(cadr),
+	pair_fun_def(cdar),
+	pair_fun_def(cddr),
+	pair_fun_def(caaar),
+	pair_fun_def(caadr),
+	pair_fun_def(cadar),
+	pair_fun_def(caddr),
+	pair_fun_def(cdaar),
+	pair_fun_def(cdadr),
+	pair_fun_def(cddar),
+	pair_fun_def(cdddr),
+	pair_fun_def(caaaar),
+	pair_fun_def(caaadr),
+	pair_fun_def(caadar),
+	pair_fun_def(caaddr),
+	pair_fun_def(cadaar),
+	pair_fun_def(cadadr),
+	pair_fun_def(caddar),
+	pair_fun_def(cadddr),
+	pair_fun_def(cdaaar),
+	pair_fun_def(cdaadr),
+	pair_fun_def(cdadar),
+	pair_fun_def(cdaddr),
+	pair_fun_def(cddaar),
+	pair_fun_def(cddadr),
+	pair_fun_def(cdddar),
+	pair_fun_def(cddddr),
 
 
         /* Numerical operations */
