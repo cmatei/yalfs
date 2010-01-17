@@ -228,9 +228,18 @@ object lisp_multiply(object args)
 object lisp_minus(object args)
 {
 	long initial = 0;
+	long nargs = length(args);
 
-	if (length(args) < 1)
+	if (nargs < 1)
 		error("Expecting at least 1 argument -- -", args);
+
+	if (nargs > 1) {
+		if (!is_fixnum(car(args)))
+			error("Expecting numbers -- -", args);
+
+		initial = fixnum_value(car(args));
+		args = cdr(args);
+	}
 
 	while (!is_null(args)) {
 		if (!is_fixnum(car(args)))
@@ -247,9 +256,18 @@ object lisp_minus(object args)
 object lisp_divide(object args)
 {
 	long initial = 1;
+	long nargs = length(args);
 
-	if (length(args) < 1)
+	if (nargs < 1)
 		error("Expecting at least 1 argument -- /", args);
+
+	if (nargs > 1) {
+		if (!is_fixnum(car(args)))
+			error("Expecting numbers -- /", args);
+
+		initial = fixnum_value(car(args));
+		args = cdr(args);
+	}
 
 	while (!is_null(args)) {
 		if (!is_fixnum(car(args)))
@@ -276,11 +294,15 @@ object lisp_abs(object args)
 		car(args);
 }
 
-/* not returns #t if obj is false, and in scheme only #f is false */
+
+
+/* Booleans */
+
 object lisp_not(object args)
 {
 	check_args(1, args, "not");
 
+        /* not returns #t if obj is false, and in scheme only #f is false */
 	return (car(args) == the_falsity) ? the_truth : the_falsity;
 }
 
@@ -292,11 +314,37 @@ object lisp_booleanp(object args)
 }
 
 
+/* Pairs and lists */
+
+object lisp_pairp(object args)
+{
+	check_args(1, args, "pair?");
+
+	return boolean(is_pair(car(args)));
+}
 
 object lisp_cons(object args)
 {
 	check_args(2, args, "cons");
 	return cons(car(args), cadr(args));
+}
+
+object lisp_car(object args)
+{
+	check_args(1, args, "car");
+	if (!is_pair(car(args)))
+		error("Expecting a pair -- car", args);
+
+	return car(car(args));
+}
+
+object lisp_cdr(object args)
+{
+	check_args(1, args, "cdr");
+	if (!is_pair(car(args)))
+		error("Expecting a pair -- cdr", args);
+
+	return cdr(car(args));
 }
 
 
@@ -327,8 +375,12 @@ static struct {
 	primitive_proc proc;
 } the_primitives[] = {
 	{ "cons", lisp_cons },
+	{ "pair?", lisp_pairp },
+	{ "car", lisp_car },
+	{ "cdr", lisp_cdr },
 
-	/* Numerical operations */
+
+        /* Numerical operations */
 	{ "number?",   lisp_numberp       },
 	{ "integer?",  lisp_integerp      },
 
@@ -362,6 +414,7 @@ static struct {
 
 //	{ "number->string", lisp_number_string },
 //	{ "string->number", lisp_string_number },
+
 
 	/* Booleans */
 	{ "not", lisp_not },

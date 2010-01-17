@@ -105,7 +105,7 @@ static inline object set_car(object pair, object o)
 {
 #if SAFETY
 	if (!is_pair(pair))
-		error("Object is not a pair -- SET-CAR!", pair);
+		error("Object is not a pair -- set-car!", pair);
 #endif
 
 	((object *)((unsigned long) pair - PAIR_TAG))[0] = o;
@@ -116,7 +116,7 @@ static inline object set_cdr(object pair, object o)
 {
 #if SAFETY
 	if (!is_pair(pair))
-		error("Object is not a pair -- SET-CDR!", pair);
+		error("Object is not a pair -- set-cdr!", pair);
 #endif
 
 	((object *)((unsigned long) pair - PAIR_TAG))[1] = o;
@@ -127,12 +127,13 @@ static inline unsigned long length(object o)
 {
 	unsigned long len = 0;
 
+	/* the empty list has length 0, but is not a pair! */
 	if (o == nil)
 		return 0;
 
 #if SAFETY
 	if (!is_pair(o))
-		error("Object is not a pair -- LENGTH", o);
+		error("Object is not a pair -- length", o);
 #endif
 
 	while (!is_null(o)) {
