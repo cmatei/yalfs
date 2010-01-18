@@ -23,6 +23,11 @@ static inline void check_args(long n, object args, char *name)
 	}
 }
 
+static inline int is_last_elt(object lst)
+{
+	return (cdr(lst) == nil);
+}
+
 /* Numerical operations */
 
 object lisp_integerp(object args)
@@ -58,7 +63,7 @@ object lisp_increasing(object args)
 	object prec = nil;
 
 	while (!is_null(args)) {
-		if ((prec != nil) && (fixnum_value(prec) >= fixnum_value(car(args))))
+		if ((prec != nil) && (fixnum_value(car(args)) < fixnum_value(prec)))
 			return the_falsity;
 
 		prec = car(args);
@@ -399,7 +404,7 @@ object lisp_set_cdr(object args)
 object lisp_nullp(object args)
 {
 	check_args(1, args, "null?");
-	return boolean(car(args) == nil);
+	return boolean(is_null(car(args)));
 }
 
 object lisp_listp(object args)
@@ -407,6 +412,200 @@ object lisp_listp(object args)
 	check_args(1, args, "list?");
 	return boolean(is_list(car(args)));
 }
+
+object lisp_list(object args)
+{
+	object head = nil, tail = nil;
+
+	while (!is_null(args)) {
+
+		if (head == nil) {
+			head = tail = cons(car(args), nil);
+		} else {
+			set_cdr(tail, cons(car(args), nil));
+			tail = cdr(tail);
+		}
+
+		args = cdr(args);
+	}
+
+	return head;
+}
+
+object lisp_length(object args)
+{
+	check_args(1, args, "length");
+
+	if (!is_list(car(args)))
+		error("Object is not a proper list -- length", args);
+
+	return make_fixnum(length(car(args)));
+}
+
+object lisp_append(object args)
+{
+	object head = nil, tail = nil, lst;
+
+	if (is_null(args))
+		return nil;
+
+	while (!is_last_elt(args)) {
+
+		if (!is_list(car(args)))
+			error("Expecting lists -- append", car(args));
+
+		lst = car(args);
+		while (!is_null(lst)) {
+
+			if (head == nil) {
+				head = tail = cons(car(lst), nil);
+			} else {
+				set_cdr(tail, cons(car(lst), nil));
+				tail = cdr(tail);
+			}
+
+			lst = cdr(lst);
+		}
+
+		args = cdr(args);
+	}
+
+	if (tail == nil)
+		return car(args);
+	else
+		set_cdr(tail, car(args));
+
+	return head;
+}
+
+object lisp_reverse(object args)
+{
+	object tail = nil;
+	object lst;
+
+	check_args(1, args, "reverse");
+	if (!is_list(car(args)))
+		error("Expecting a list -- reverse", args);
+
+	if (is_null(car(args)))
+		return nil;
+
+	lst = car(args);
+
+	while (!is_last_elt(lst)) {
+		tail = cons(car(lst), tail);
+		lst = cdr(lst);
+	}
+
+	return cons(car(lst), tail);
+}
+
+object lisp_list_tail(object args)
+{
+	object lst;
+	long k;
+
+	check_args(2, args, "list-tail");
+	if (!is_list(car(args)))
+		error("Expecting a list -- list-tail", car(args));
+
+	if (!is_fixnum(cadr(args)))
+		error("Expecting a number -- list-tail", cadr(args));
+
+	k = fixnum_value(cadr(args));
+	if (k < 0)
+		error("Expecting an index integer -- list-tail", cadr(args));
+
+	lst = car(args);
+	while (k > 0) {
+		if (is_null(lst))
+			error("List too short -- list-tail", car(args));
+
+		lst = cdr(lst);
+		k--;
+	}
+
+	return lst;
+}
+
+object lisp_list_ref(object args)
+{
+	object lst;
+
+	lst = lisp_list_tail(args);
+	if (is_null(lst))
+		error("List is empty -- list-ref", car(args));
+
+	return car(lst);
+}
+
+
+object lisp_symbolp(object args)
+{
+	check_args(1, args, "symbol?");
+	return boolean(is_symbol(car(args)));
+}
+
+object lisp_symbol_string(object args)
+{
+	check_args(1, args, "symbol->string");
+	if (!is_symbol(car(args)))
+		error("Object is not a symbol -- symbol->string", car(args));
+
+	return symbol_string(car(args));
+}
+
+object lisp_string_symbol(object args)
+{
+	check_args(1, args, "string->symbol");
+	if (!is_string(car(args)))
+		error("Expecting a string -- string->symbol", car(args));
+
+	return make_symbol_with_string(car(args));
+}
+
+
+object lisp_charp(object args)
+{
+	check_args(1, args, "char?");
+	return boolean(is_character(car(args)));
+}
+
+#define identity(x) (x)
+#define char_fun(lname, cname, operator, casefold)			\
+object cname(object args)					        \
+{									\
+	object prec = nil;						\
+									\
+	while (!is_null(args)) {					\
+		if (!is_character(car(args)))				\
+			error("Expecting characters -- " lname,		\
+			      car(args));				\
+									\
+		if (prec != nil) {					\
+		        if ( casefold(character_value(prec)) operator	\
+			     casefold(character_value(car(args))))	\
+				return the_falsity;			\
+									\
+		}							\
+									\
+		prec = car(args);					\
+		args = cdr(args);					\
+	}								\
+	return the_truth;						\
+}
+
+char_fun("char=?",  lisp_char_equal,               !=, identity)
+char_fun("char<?",  lisp_char_increasing,          >=, identity)
+char_fun("char>?",  lisp_char_decreasing,          <=, identity)
+char_fun("char<=?", lisp_char_non_decreasing,       >, identity)
+char_fun("char>=?", lisp_char_non_increasing,       <, identity)
+
+char_fun("char-ci=?",  lisp_char_ci_equal,          !=, tolower)
+char_fun("char-ci<?",  lisp_char_ci_increasing,     >=, tolower)
+char_fun("char-ci>?",  lisp_char_ci_decreasing,     <=, tolower)
+char_fun("char-ci<=?", lisp_char_ci_non_decreasing,  >, tolower)
+char_fun("char-ci>=?", lisp_char_ci_non_increasing,  <, tolower)
 
 
 object lisp_eq(object args)
@@ -431,10 +630,61 @@ object lisp_eq(object args)
 
 #define pair_fun_def(X) { #X, lisp_##X }
 
+#define char_fun_def(L, C) { L, C }
+
 static struct {
 	char *name;
 	primitive_proc proc;
 } the_primitives[] = {
+
+	/* Equivalence predicates */
+
+
+        /* Numerical operations */
+
+	{ "number?",   lisp_numberp       },
+	{ "integer?",  lisp_integerp      },
+
+	{ "=",         lisp_equal         },
+	{ "<",         lisp_increasing    },
+	{ ">",         lisp_decreasing    },
+	{ "<=",        lisp_nondecreasing },
+	{ ">=",        lisp_nonincreasing },
+
+	{ "zero?",     lisp_zerop         },
+	{ "positive?", lisp_positivep     },
+	{ "negative?", lisp_negativep     },
+	{ "odd?",      lisp_oddp          },
+	{ "evenp?",    lisp_evenp         },
+
+	{ "max",       lisp_max           },
+	{ "min",       lisp_min           },
+
+	{ "+",         lisp_plus          },
+	{ "*",         lisp_multiply      },
+	{ "-",         lisp_minus         },
+	{ "/",         lisp_divide        },
+
+	{ "abs",       lisp_abs           },
+//	{ "quotient",  lisp_quotient },
+//	{ "remainder", lisp_remainder },
+//	{ "modulo",    lisp_modulo },
+
+//	{ "gcd",       lisp_gcd },
+//	{ "lcm",       lisp_lcm },
+
+//	{ "number->string", lisp_number_string },
+//	{ "string->number", lisp_string_number },
+
+
+	/* Booleans */
+
+	{ "not", lisp_not },
+	{ "boolean?", lisp_booleanp },
+
+
+	/* Pairs and lists */
+
 	{ "cons", lisp_cons },
 	{ "pair?", lisp_pairp },
 
@@ -474,46 +724,56 @@ static struct {
 
 	{ "null?",     lisp_nullp         },
 	{ "list?",     lisp_listp         },
-
-        /* Numerical operations */
-	{ "number?",   lisp_numberp       },
-	{ "integer?",  lisp_integerp      },
-
-	{ "=",         lisp_equal         },
-	{ "<",         lisp_increasing    },
-	{ ">",         lisp_decreasing    },
-	{ "<=",        lisp_nondecreasing },
-	{ ">=",        lisp_nonincreasing },
-
-	{ "zero?",     lisp_zerop         },
-	{ "positive?", lisp_positivep     },
-	{ "negative?", lisp_negativep     },
-	{ "odd?",      lisp_oddp          },
-	{ "evenp?",    lisp_evenp         },
-
-	{ "max",       lisp_max           },
-	{ "min",       lisp_min           },
-
-	{ "+",         lisp_plus          },
-	{ "*",         lisp_multiply      },
-	{ "-",         lisp_minus         },
-	{ "/",         lisp_divide        },
-
-	{ "abs",       lisp_abs           },
-//	{ "quotient",  lisp_quotient },
-//	{ "remainder", lisp_remainder },
-//	{ "modulo",    lisp_modulo },
-
-//	{ "gcd",       lisp_gcd },
-//	{ "lcm",       lisp_lcm },
-
-//	{ "number->string", lisp_number_string },
-//	{ "string->number", lisp_string_number },
+	{ "list",      lisp_list          },
+	{ "length",    lisp_length        },
+	{ "append",    lisp_append        },
+	{ "reverse",   lisp_reverse       },
+	{ "list-tail", lisp_list_tail     },
+	{ "list-ref",  lisp_list_ref      },
+//	{ "memq",      lisp_memq          },
+//	{ "memv",      lisp_memv          },
+//	{ "member",    lisp_member        },
+//	{ "assq",      lisp_assq          },
+//	{ "assv",      lisp_assv          },
+//	{ "assoc",     lisp_assoc         },
 
 
-	/* Booleans */
-	{ "not", lisp_not },
-	{ "boolean?", lisp_booleanp },
+	/* Symbols */
+
+	{ "symbol?",        lisp_symbolp       },
+	{ "string->symbol", lisp_string_symbol },
+	{ "symbol->string", lisp_symbol_string },
+
+
+	/* Characters */
+
+	{ "char?",            lisp_charp                  },
+
+	char_fun_def("char=?",     lisp_char_equal),
+	char_fun_def("char<?",     lisp_char_increasing),
+	char_fun_def("char>?",     lisp_char_decreasing),
+	char_fun_def("char<=?",    lisp_char_non_decreasing),
+	char_fun_def("char>=?",    lisp_char_non_increasing),
+
+	char_fun_def("char-ci=?",  lisp_char_ci_equal),
+	char_fun_def("char-ci<?",  lisp_char_ci_increasing),
+	char_fun_def("char-ci>?",  lisp_char_ci_decreasing),
+	char_fun_def("char-ci<=?", lisp_char_ci_non_decreasing),
+	char_fun_def("char-ci>=?", lisp_char_ci_non_increasing),
+
+//	{ "char-alphabetic?", lisp_char_alphabetic        },
+//	{ "char-numeric?",    lisp_char_numeric           },
+//	{ "char-whitespace?", lisp_char_whitespace        },
+//	{ "char-upper-case?", lisp_char_upper_case        },
+//	{ "char-lower-case?", lisp_char_lower_case        },
+//
+//	{ "char->integer",    lisp_char_integer           },
+//	{ "integer->char",    lisp_integer_char           },
+//
+//	{ "char-upcase",      lisp_char_upcase            },
+//	{ "char-downcase",    lisp_char_downcase          },
+
+
 
 	{ "eq?", lisp_eq },
 

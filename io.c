@@ -26,7 +26,7 @@ static void skip_whitespace(FILE *in)
 
 static int is_delimiter(int c)
 {
-	return isspace(c) ||
+	return isspace(c) || c == EOF ||
 		c == '('  || c == ')' ||
 		c == '"'  || c == ';';
 }

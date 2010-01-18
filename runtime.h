@@ -177,9 +177,6 @@ static inline int is_finite_list(object o, object *last_el_ptr)
 		o = cdr(o);
 		rabbit = cdr(rabbit);
 
-		if (rabbit == o)
-			return 0;
-
 		if (!is_pair(rabbit))
 			break;
 

@@ -436,6 +436,22 @@ void repl(object env)
 	}
 }
 
+object eval_string(char *str, object env)
+{
+	object exp, val;
+	FILE *strstream;
+
+	if ((strstream = fmemopen(str, strlen(str), "r")) == NULL)
+		return nil;
+
+	val = nil;
+	while ((exp = lisp_read(strstream)) != end_of_file) {
+		val = lisp_eval(exp, env);
+	}
+
+	return val;
+}
+
 int main(int argc, char **argv)
 {
 	input_stream = stdin;
@@ -524,7 +540,6 @@ static void check_sanity()
 
 	assert(string_equal(symbol_string(make_symbol("foo", 3)),
 			    make_string_c("foo", 3)));
-
 
 #if SAFETY
 	/* this should throw an error when safety is on */
