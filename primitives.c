@@ -102,7 +102,7 @@ object lisp_oddp(object args)
 {
 	check_args(1, args, "oddp?");
 	if (!is_fixnum(car(args)))
-		error("Expecting a number -- oddp?", args);
+		error("Expecting a number -- odd?", args);
 
 	return boolean((fixnum_value(car(args)) % 2) != 0);
 }
@@ -111,7 +111,7 @@ object lisp_evenp(object args)
 {
 	check_args(1, args, "evenp?");
 	if (!is_fixnum(car(args)))
-		error("Expecting a number -- evenp?", args);
+		error("Expecting a number -- even?", args);
 
 	return boolean((fixnum_value(car(args)) % 2) == 0);
 }
@@ -660,7 +660,7 @@ static struct {
 	{ "positive?", lisp_positivep     },
 	{ "negative?", lisp_negativep     },
 	{ "odd?",      lisp_oddp          },
-	{ "evenp?",    lisp_evenp         },
+	{ "even?",     lisp_evenp         },
 
 	{ "max",       lisp_max           },
 	{ "min",       lisp_min           },

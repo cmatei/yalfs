@@ -63,4 +63,6 @@
 (odd?)					;Expecting 1 arguments but was sent 0
 (odd? 1)				; #t
 (odd? -1)				; #t
+(odd? 0)				; #f
 
+(even?)					;Expecting 1 arguments but was sent 0
