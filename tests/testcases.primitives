@@ -66,3 +66,58 @@
 (odd? 0)				; #f
 
 (even?)					;Expecting 1 arguments but was sent 0
+
+(even? 0)				; #t
+(even? 2)				; #t
+(even? 3)				; #f
+(even? -3)				; #f
+
+(even? #f)				;Expecting a number
+
+(max)					;Expecting at least 1 argument
+(max 1)					; 1
+(max 1 2 3 4 5 6 7 8 9 10)		; 10
+(max -1 -10000 10)			; 10
+
+(min)					;Expecting at least 1 argument
+(min 1 2 3 4 5 6 7 8 9 10)		; 1
+(min -10 -9 -8 10 1)			; -10
+
+(+)					; 0
+(+ 0)					; 0
+(+ 1)					; 1
+(+ 1 2 3 -3 -2 -1)			; 0
+(+ 10 10 10)				; 30
+
+(-)					;Expecting at least 1 argument
+(- 0)					; 0
+(- 1)					; -1
+(- -1)					; 1
+(- 10 50)				; -40
+(- -10 -20)				; 10
+
+(*)					; 1
+(* 0)					; 0
+(* 1)					; 1
+(* 10 10)				; 100
+(* -10 -10)				; 100
+(* -10 10)				; -100
+
+(/)					;Expecting at least 1 argument
+(/ 1)					; 1
+(/ 2)					; 0
+(/ 4 2 1)				; 2
+(/ 4 2 -1)				; -2
+(/ -1)					; -1
+(/ -4 -2)				; 2
+(/ -4 2)				; -2
+
+(abs)					;Expecting 1 arguments but was sent 0
+(abs 0)					; 0
+(abs 100)				; 100
+(abs -100)				; 100
+(abs 1 1)				;Expecting 1 arguments but was sent 2
+
+(not #t)				; #f
+(not #f)				; #t
+(not 3)					; #f

@@ -33,7 +33,6 @@ static inline int is_last_elt(object lst)
 object lisp_integerp(object args)
 {
 	check_args(1, args, "integer?");
-
 	return boolean(is_fixnum(car(args)));
 }
 
@@ -235,7 +234,7 @@ object lisp_divide(object args)
 		if (!is_fixnum(car(args)))
 			error("Expecting numbers -- /", args);
 
-		if (lisp_zerop(car(args)) == the_truth)
+		if (fixnum_value(car(args)) == 0)
 			error("Will not divide by zero -- /", args);
 
 		initial /= fixnum_value(car(args));
@@ -635,8 +634,6 @@ object lisp_eq(object args)
 
 #define pair_fun_def(X) { #X, lisp_##X }
 
-#define char_fun_def(L, C) { L, C }
-
 static struct {
 	char *name;
 	primitive_proc proc;
@@ -754,17 +751,17 @@ static struct {
 
 	{ "char?",            lisp_charp                  },
 
-	char_fun_def("char=?",     lisp_char_equal),
-	char_fun_def("char<?",     lisp_char_increasing),
-	char_fun_def("char>?",     lisp_char_decreasing),
-	char_fun_def("char<=?",    lisp_char_non_decreasing),
-	char_fun_def("char>=?",    lisp_char_non_increasing),
+	{ "char=?",           lisp_char_equal             },
+	{ "char<?",           lisp_char_increasing        },
+	{ "char>?",           lisp_char_decreasing        },
+	{ "char<=?",          lisp_char_non_decreasing    },
+	{ "char>=?",          lisp_char_non_increasing    },
 
-	char_fun_def("char-ci=?",  lisp_char_ci_equal),
-	char_fun_def("char-ci<?",  lisp_char_ci_increasing),
-	char_fun_def("char-ci>?",  lisp_char_ci_decreasing),
-	char_fun_def("char-ci<=?", lisp_char_ci_non_decreasing),
-	char_fun_def("char-ci>=?", lisp_char_ci_non_increasing),
+	{ "char-ci=?",        lisp_char_ci_equal          },
+	{ "char-ci<?",        lisp_char_ci_increasing     },
+	{ "char-ci>?",        lisp_char_ci_decreasing     },
+	{ "char-ci<=?",       lisp_char_ci_non_decreasing },
+	{ "char-ci>=?",       lisp_char_ci_non_increasing },
 
 	{ "char-alphabetic?", lisp_char_alphabeticp       },
 	{ "char-numeric?",    lisp_char_numericp          },
