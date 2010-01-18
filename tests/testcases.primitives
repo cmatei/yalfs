@@ -118,6 +118,152 @@
 (abs -100)				; 100
 (abs 1 1)				;Expecting 1 arguments but was sent 2
 
-(not #t)				; #f
 (not #f)				; #t
+(not #t)				; #f
 (not 3)					; #f
+(not '())				; #f
+(not 'nil)				; #f
+
+(boolean? #f)				; #t
+(boolean? #t)				; #t
+(boolean? '())				; #f
+(boolean? 0)				; #f
+
+(list 'a 'b 'c)				; (a b c)
+
+(define x (list 'a 'b 'c))		; x
+(define y x)				; y
+
+y					; (a b c)
+(list? y)				; #t
+(set-cdr! x 4)				; 4
+x					; (a . 4)
+(list? y)				; #f
+
+(set-cdr! x x)				; #<unprintable-structure>
+(list? x)				; #f
+
+(list? '(a b . c))			; #f
+(list? '(a (b . c)))			; #t
+(list? '(a . b))			; #f
+(list? '(a b c . d))			; #f
+(list? 1)				; #f
+(list? '())				; #t
+
+(define x (list 1 2 3))			; x
+(set-cdr! x x)				; #<unprintable-structure>
+(list? x)				; #f
+
+(pair? '())				; #f
+(pair? '(a . b))			; #t
+(pair? '(a b c))			; #t
+
+(cons 'a '())				; (a)
+(cons '(a) '(b c d))			; ((a) b c d)
+(cons "a" '(b c))			; ("a" b c)
+(cons 'a 3)				; (a . 3)
+(cons '(a b) 'c)			; ((a b) . c)
+
+(car '())				;Expecting a pair
+(car '(a b c))				; a
+(car '((a) b c d))			; (a)
+(car '(1 . 2))				; 1
+
+(cdr '())				;Expecting a pair
+(cdr '((a) b c d))			; (b c d)
+(cdr '(1 . 2))				; 2
+
+(define (f) (list 'not-a-constant-list)) ; f
+(define (g) '(constant-list))		 ; g
+
+;; unspecified
+(set-car! (f) 3)			; 3
+
+;; r5rs says this is an error, but i don't have constant lists
+(set-car! (g) 3)			; 3
+
+(caar (list (list 1 2) (list 3 4)))		; 1
+(cadr (list (list 1 2) (list 3 4)))		; (3 4)
+(cdar (list (list 1 2) (list 3 4)))		; (2)
+(cddr (list (list 1 2) (list 3 4)))		; ()
+
+(caaar (list (list (list 1 2) 3 4) 5 6)) ; 1
+(caadr (list (list (list 1 2) 3 4) (list 5) 6)) ; 5
+
+(null? '())				; #t
+
+(null? 1)				; #f
+(null? (cons 1 2))			; #f
+
+(list 'a (+ 3 4) 'c)			; (a 7 c)
+(list)					; ()
+
+(length '(a b c))			; 3
+(length '(a (b) (c d e)))		; 3
+(length '())				; 0
+
+(length #f)				;Object is not a proper list
+
+(append)				; ()
+(append '(x) '(y))			; (x y)
+(append '(a) '(b c d))			; (a b c d)
+(append '(a (b)) '((c)))		; (a (b) (c))
+
+(append '(a b) '(c . d))		; (a b c . d)
+(append '() 'a)				; a
+
+(append '(a b) 'a)			; (a b . a)
+(append '(a b) #f)			; (a b . #f)
+
+(append 3 3)				;Expecting lists
+
+(reverse)				;Expecting 1 arguments but was sent 0
+
+(reverse '(a b c))			; (c b a)
+(reverse '(a (b c) d (e (f))))		; ((e (f)) d (b c) a)
+
+
+(list-tail '() 0)			; ()
+(list-tail '() 1)			;List too short
+(list-tail '() -1)			;Expecting an index integer
+
+(list-tail '(a b c d e) 0)		; (a b c d e)
+(list-tail '(a b c d e) 1)		; (b c d e)
+
+(list-ref '() 0)			;List is empty
+(list-ref '(a b c d e) 3)		; d
+(list-ref '(a b c d . e) 3)		;Expecting a list
+(list-ref '(a b c d e) 6)		;List too short
+
+
+(symbol? 'symbol?)			; #t
+(symbol? '())				; #f
+(symbol? 5)				; #f
+
+(symbol? (car '(a b)))			; #t
+(symbol? 'nil)				; #t
+(symbol? '())				; #f
+(symbol? #f)				; #f
+
+
+(symbol->string 'symbol->string)	; "symbol->string"
+
+(symbol->string 'Martin)		; "martin"
+
+;; note the upcase, since the symbol is not interned by the reader
+(symbol->string (string->symbol "Malvina")) ; "Malvina"
+
+(eq? 'mISSISSIppi 'mississippi)		; #t
+
+;; again, upper case
+(string->symbol "mISSISSIppi")		; mISSISSIppi
+
+;; this is because we're a lowercase scheme, but the string->symbol
+;; produces non-lowercase chars
+(eq? 'bitBlt (string->symbol "bitBlt"))	; #f
+
+(eq? 'JollyWog (string->symbol (symbol->string 'JollyWog))) ; #t
+
+;; i won't be able to read this back! CL puts non-reader symbols
+;; in |K. Harper, M.D.
+(symbol->string (string->symbol "K. Harper, M.D.")) ; "K. Harper, M.D."

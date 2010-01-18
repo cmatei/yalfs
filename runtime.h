@@ -174,8 +174,8 @@ static inline int is_finite_list(object o, object *last_el_ptr)
 	 */
 	rabbit =  o;
 	while (is_pair(rabbit)) {
-		o = cdr(o);
 		rabbit = cdr(rabbit);
+		o = cdr(o);
 
 		if (!is_pair(rabbit))
 			break;

@@ -3,8 +3,9 @@
 
 1					; 1
 -1					; -1
-#xffffffff				; -1
-#xffffff00				; -256
+;only on 32bit
+;#xffffffff				; -1
+;#xffffff00				; -256
 #xffffffffffffff00			; -256
 #x0f					; 15
 #b0101					; 5
@@ -67,6 +68,8 @@
 '(1 (2 . 3))				; (1 (2 . 3))
 '(((a)) b c)				; (((a)) b c)
 '((a) b (c d))				; ((a) b (c d))
+'(a . (b . (c . (d . (e . ())))))	; (a b c d e)
+'(a . (b . (c . d)))			; (a b c . d)
 
 
 ;; variables

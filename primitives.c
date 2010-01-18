@@ -513,7 +513,7 @@ object lisp_string_symbol(object args)
 	if (!is_string(car(args)))
 		error("Expecting a string -- string->symbol", car(args));
 
-	return make_symbol_with_string(car(args));
+	return symbol(string_value(car(args)), string_length(car(args)));
 }
 
 
