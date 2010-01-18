@@ -2,11 +2,17 @@
 ; Numbers
 
 1					; 1
+-1					; -1
+#xffffffff				; -1
+#xffffff00				; -256
+#xffffffffffffff00			; -256
 #x0f					; 15
 #b0101					; 5
 #o077					; 63
 #e1					; 1
 123					; 123
+'2					; 2
+(quote 2)				; 2
 
 ;; Characters
 #\a					; #\a
@@ -19,10 +25,20 @@
 					;Unbound variable
 
 #\A					; #\A
+'#\A					; #\A
 
 ;; symbols
 'a					; a
 'A					; a
+
+;; booleans
+
+#f					; #f
+#t					; #t
+#F					; #f
+#T					; #t
+
+'#f					; #f
 
 ;; strings
 "abc"					; "abc"
@@ -34,8 +50,12 @@
 
 "\n\n"					; "\n\n"
 
+'"a b c"				; "a b c"
 
 ;; pairs and lists
+'()					; ()
+()					;Unknown expression type
+
 '(1 . 2)				; (1 . 2)
 '(a . 1)				; (a . 1)
 '(1 . a)				; (1 . a)
@@ -47,3 +67,60 @@
 '(1 (2 . 3))				; (1 (2 . 3))
 '(((a)) b c)				; (((a)) b c)
 '((a) b (c d))				; ((a) b (c d))
+
+
+;; variables
+(define x 42)				; x
+x					; 42
+(+ x 1)					; 43
+
+;; procedure calls
+(+ 3 4)					; 7
+
+;; lambdas
+(lambda () (if 1 1 2))			; #<procedure ()>
+(lambda (x) (+ x x x))			; #<procedure (x)>
+(lambda (x y z) (+ x y z))		; #<procedure (x y z)>
+
+;; this doesn't work yet but it should be parsed right
+(lambda (x y . z) x)			; #<procedure (x y . z)>
+
+;; if
+
+;; everything, inluding the empty list, is true.
+;; except for false, of course
+(if '() #t #f)				; #t
+(if 'a 'b 'c)				; b
+(if 1 2 3)				; 2
+
+(if 1 (+ 1 2) (+ 1 3))			; 3
+
+(if (+ 1 1) (+ 2 2) (+ 3 3))		; 4
+
+(if #t #t #f)				; #t
+(if #f #t #f)				; #f
+
+;; cond
+(cond (1 (+ 2 2)))			; 4
+(cond (else (+ 1 2)))			; 3
+(cond (#f #f) (#f #t) (else #t))	; #t
+
+(define (false) #f)			; false
+(define (true) #t)			; true
+
+(cond ((false) 1) ((true) 2))		; 2
+(cond ((false) 1) (else #t))		; #t
+(cond ((true) 1) (else 2))		; 1
+
+(cond)					; #f
+(cond (else #t))			; #t
+(cond (#f 1))				; #f
+
+;; sequencing
+(begin)					; ()
+(begin (+ 1 2))				; 3
+(begin (+ 1 2) (+ 2 2))			; 4
+
+
+
+

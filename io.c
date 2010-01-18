@@ -275,7 +275,7 @@ static object read_number(FILE *in)
 
 		if (digits_were_seen && is_delimiter(c)) {
 			ungetc(c, in);
-			return make_fixnum(number);
+			return make_fixnum(sign * number);
 		}
 
 		error("Ill-formed number -- READ", nil);

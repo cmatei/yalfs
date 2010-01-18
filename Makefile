@@ -11,13 +11,14 @@ MINIME_OBJ	= $(patsubst %.c,%.o,$(MINIME_SRC))
 
 ALL_SRC		= $(MINIME_SRC)
 
-all: minime
+all: minime tests
 
 .c.o:
 	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
 minime: $(MINIME_OBJ)
 	$(CC) -o $@ $^ $(LIBS)
+	@echo
 
 clean:
 	-rm -f minime $(MINIME_OBJ)
@@ -32,6 +33,9 @@ dep:	depend
 depend:
 	$(MAKEDEP) $(CFLAGS) $(INCLUDES) $(ALL_SRC) > .depends
 
-.PHONY: clean cscope tags depend
+tests:
+	@cd tests && ./run-tests.pl
+
+.PHONY: clean cscope tags depend tests
 
 include .depends

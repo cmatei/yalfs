@@ -42,81 +42,34 @@ object lisp_numberp(object args)
 	return lisp_integerp(args);
 }
 
-object lisp_equal(object args)
-{
-	object prec = nil;
-
-	while (!is_null(args)) {
-		if ((prec != nil) && (car(args) != prec))
-			return the_falsity;
-
-		prec = car(args);
-		args = cdr(args);
-	}
-
-	return the_truth;
+#define number_fun(lname, cname, op)					\
+object cname(object args)					        \
+{									\
+	object prec = nil;						\
+	object arg;							\
+									\
+	while (!is_null(args)) {					\
+		arg = car(args);					\
+									\
+		if (!is_number(arg))					\
+			error("Expecting numbers -- " lname,	arg);	\
+									\
+		fprintf(stderr, "%ld\n", fixnum_value(arg));		\
+		if ((prec != nil) &&					\
+		    !(fixnum_value(prec) op fixnum_value(arg)))         \
+			return the_falsity;				\
+									\
+		prec = arg;						\
+		args = cdr(args);					\
+	}								\
+	return the_truth;						\
 }
 
-/* < */
-object lisp_increasing(object args)
-{
-	object prec = nil;
-
-	while (!is_null(args)) {
-		if ((prec != nil) && (fixnum_value(car(args)) < fixnum_value(prec)))
-			return the_falsity;
-
-		prec = car(args);
-		args = cdr(args);
-	}
-
-	return the_truth;
-}
-
-/* > */
-object lisp_decreasing(object args)
-{
-	object prec = nil;
-
-	while (!is_null(args)) {
-		if ((prec != nil) && (fixnum_value(prec) <= fixnum_value(car(args))))
-			return the_falsity;
-
-		prec = car(args);
-		args = cdr(args);
-	}
-	return the_truth;
-}
-
-/* <= */
-object lisp_nondecreasing(object args)
-{
-	object prec = nil;
-
-	while (!is_null(args)) {
-		if ((prec != nil) && (fixnum_value(prec) > fixnum_value(car(args))))
-			return the_falsity;
-
-		prec = car(args);
-		args = cdr(args);
-	}
-	return the_truth;
-}
-
-/* >= */
-object lisp_nonincreasing(object args)
-{
-	object prec = nil;
-
-	while (!is_null(args)) {
-		if ((prec != nil) && (fixnum_value(prec) < fixnum_value(car(args))))
-			return the_falsity;
-
-		prec = car(args);
-		args = cdr(args);
-	}
-	return the_truth;
-}
+number_fun("=",  lisp_equal, ==)
+number_fun("<",  lisp_increasing, <)
+number_fun(">",  lisp_decreasing, >)
+number_fun("<=", lisp_nondecreasing, <=)
+number_fun(">=", lisp_nonincreasing, >=)
 
 object lisp_zerop(object args)
 {
