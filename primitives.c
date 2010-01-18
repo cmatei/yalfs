@@ -104,7 +104,7 @@ object lisp_oddp(object args)
 	if (!is_fixnum(car(args)))
 		error("Expecting a number -- oddp?", args);
 
-	return boolean((fixnum_value(car(args)) % 2) == 1);
+	return boolean((fixnum_value(car(args)) % 2) != 0);
 }
 
 object lisp_evenp(object args)

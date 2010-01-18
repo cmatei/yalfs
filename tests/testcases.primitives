@@ -33,3 +33,34 @@
 (<=)					; #t
 (<= 1 0 1 -10)				; #f
 (<= -1000 -500 500)			; #t
+(<= 1 1 -10)				; #f
+
+(>= 10 9 8 7)				; #t
+(>= 10 -10)				; #t
+(>= -10 10)				; #f
+
+(>= 'a)					;Expecting numbers
+
+
+(zero? 0)				; #t
+(zero? #\a)				;Expecting a number
+(zero? 5)				; #f
+(zero? -5)				; #f
+
+(positive?)				;Expecting 1 arguments but was sent 0
+(positive? 1 2)				;Expecting 1 arguments but was sent 2
+(positive? 0)				; #f
+(positive? 1)				; #t
+(positive? -1)				; #f
+
+(negative? 0)				; #f
+(negative? 1)				; #f
+(negative? -1)				; #t
+
+(negative?)				;Expecting 1 arguments but was sent 0
+(negative? 1 2 3)		        ;Expecting 1 arguments but was sent 3
+
+(odd?)					;Expecting 1 arguments but was sent 0
+(odd? 1)				; #t
+(odd? -1)				; #t
+
