@@ -607,6 +607,58 @@ char_fun("char-ci>?",  lisp_char_ci_decreasing,     <=, tolower)
 char_fun("char-ci<=?", lisp_char_ci_non_decreasing,  >, tolower)
 char_fun("char-ci>=?", lisp_char_ci_non_increasing,  <, tolower)
 
+#define char_type_fun(lname, cname, test)	            \
+object cname(object args)			            \
+{							    \
+        check_args(1, args, lname);			    \
+	if (!is_character(car(args)))			    \
+		error("Expecting a character -- " lname,    \
+		      car(args));			    \
+							    \
+	return boolean(test(character_value(car(args))));   \
+}
+
+char_type_fun("char-alphabetic?", lisp_char_alphabeticp, isalpha)
+char_type_fun("char-numeric?",    lisp_char_numericp, isdigit)
+char_type_fun("char-whitespace?", lisp_char_whitespacep, isspace)
+char_type_fun("char-upper-case?", lisp_char_uppercasep, isupper)
+char_type_fun("char-lower-case?", lisp_char_lowercasep, islower)
+
+object lisp_char_integer(object args)
+{
+	check_args(1, args, "char->integer");
+	if (!is_character(car(args)))
+		error("Expecting a character -- char->integer", car(args));
+
+	return make_fixnum(character_value(car(args)));
+}
+
+object lisp_integer_char(object args)
+{
+	check_args(1, args, "integer->char");
+	if (!is_character(car(args)))
+		error("Expecting a character -- integer->char", car(args));
+
+	return make_character(fixnum_value(car(args)));
+}
+
+object lisp_char_upcase(object args)
+{
+	check_args(1, args, "char-upcase");
+	if (!is_character(car(args)))
+		error("Expecting a character -- char-upcase", car(args));
+
+	return make_character(toupper(character_value(car(args))));
+}
+
+object lisp_char_downcase(object args)
+{
+	check_args(1, args, "char-downcase");
+	if (!is_character(car(args)))
+		error("Expecting a character -- char-downcase", car(args));
+
+	return make_character(tolower(character_value(car(args))));
+}
 
 object lisp_eq(object args)
 {
@@ -761,17 +813,17 @@ static struct {
 	char_fun_def("char-ci<=?", lisp_char_ci_non_decreasing),
 	char_fun_def("char-ci>=?", lisp_char_ci_non_increasing),
 
-//	{ "char-alphabetic?", lisp_char_alphabetic        },
-//	{ "char-numeric?",    lisp_char_numeric           },
-//	{ "char-whitespace?", lisp_char_whitespace        },
-//	{ "char-upper-case?", lisp_char_upper_case        },
-//	{ "char-lower-case?", lisp_char_lower_case        },
-//
-//	{ "char->integer",    lisp_char_integer           },
-//	{ "integer->char",    lisp_integer_char           },
-//
-//	{ "char-upcase",      lisp_char_upcase            },
-//	{ "char-downcase",    lisp_char_downcase          },
+	{ "char-alphabetic?", lisp_char_alphabeticp       },
+	{ "char-numeric?",    lisp_char_numericp          },
+	{ "char-whitespace?", lisp_char_whitespacep       },
+	{ "char-upper-case?", lisp_char_uppercasep        },
+	{ "char-lower-case?", lisp_char_lowercasep        },
+
+	{ "char->integer",    lisp_char_integer           },
+	{ "integer->char",    lisp_integer_char           },
+
+	{ "char-upcase",      lisp_char_upcase            },
+	{ "char-downcase",    lisp_char_downcase          },
 
 
 
