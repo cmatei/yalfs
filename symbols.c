@@ -78,15 +78,15 @@ void symbol_table_stats()
 	unsigned long i;
 	unsigned long nel, total = 0;
 
-	printf("Symbol table: %lu buckets\n", symbol_table.nbuckets);
+	fprintf(stderr, "Symbol table: %lu buckets\n", symbol_table.nbuckets);
 
 	for (i = 0; i < symbol_table.nbuckets; i++) {
 		nel = length(symbol_table.buckets[i]);
 		if (nel > 1)
-			printf("    bucket %lu: %lu entries\n", i, nel);
+			fprintf(stderr, "    bucket %lu: %lu entries\n", i, nel);
 
 		total += nel;
 	}
 
-	printf("Number of symbols: %lu\n", total);
+	fprintf(stderr, "Number of symbols: %lu\n", total);
 }

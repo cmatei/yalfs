@@ -433,6 +433,7 @@ void repl(object env)
 		fprintf(output_stream, "=> ");
 		lisp_print(stdout, val);
 		fprintf(output_stream, "\n");
+		fflush(output_stream);
 	}
 }
 

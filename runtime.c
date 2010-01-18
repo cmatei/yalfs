@@ -192,7 +192,7 @@ void runtime_init()
 
 void runtime_stats()
 {
-	printf("Used %zd heap bytes.\n", (freeptr - heap) * sizeof(unsigned long));
+	fprintf(stderr, "Used %zd heap bytes.\n", (freeptr - heap) * sizeof(unsigned long));
 
 	symbol_table_stats();
 }

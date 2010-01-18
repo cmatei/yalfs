@@ -1,0 +1,49 @@
+
+; Numbers
+
+1					; 1
+#x0f					; 15
+#b0101					; 5
+#o077					; 63
+#e1					; 1
+123					; 123
+
+;; Characters
+#\a					; #\a
+#\space					; #\space
+#\SPacE					; #\space
+#\Newline				; #\newline
+
+;; minime doesn't flush input so I get an additional oo unbound error
+#\foo					;Expecting delimiter
+					;Unbound variable
+
+#\A					; #\A
+
+;; symbols
+'a					; a
+'A					; a
+
+;; strings
+"abc"					; "abc"
+"\"a"					; "\"a"
+"\\\"a"					; "\\\"a"
+
+;; i'm escaping single slashes, undefined in r5rs
+"a\a"					; "a\\a"
+
+"\n\n"					; "\n\n"
+
+
+;; pairs and lists
+'(1 . 2)				; (1 . 2)
+'(a . 1)				; (a . 1)
+'(1 . a)				; (1 . a)
+
+'('a . 1)				; ((quote a) . 1)
+'(1 . 'a)				; (1 quote a)
+
+'(1 2 3)				; (1 2 3)
+'(1 (2 . 3))				; (1 (2 . 3))
+'(((a)) b c)				; (((a)) b c)
+'((a) b (c d))				; ((a) b (c d))
