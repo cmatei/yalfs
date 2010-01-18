@@ -588,8 +588,11 @@ object lisp_char_integer(object args)
 object lisp_integer_char(object args)
 {
 	check_args(1, args, "integer->char");
-	if (!is_character(car(args)))
-		error("Expecting a character -- integer->char", car(args));
+	if (!is_fixnum(car(args)))
+		error("Expecting an integer -- integer->char", car(args));
+
+	if (fixnum_value(car(args)) < 0 || fixnum_value(car(args)) > 255)
+		error("Integer out of character range -- integer->char", car(args));
 
 	return make_character(fixnum_value(car(args)));
 }

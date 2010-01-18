@@ -267,3 +267,68 @@ x					; (a . 4)
 ;; i won't be able to read this back! CL puts non-reader symbols
 ;; in |K. Harper, M.D.
 (symbol->string (string->symbol "K. Harper, M.D.")) ; "K. Harper, M.D."
+
+
+(char? #\A)				; #t
+(char? 5)				; #f
+
+;; should i restrict to 2 arguments or more ? mit-scheme does...
+(char=?)				; #t
+(char=? #\a)				; #t
+(char=? #\a #\a)			; #t
+(char=? #\a #\a #\a)			; #t
+(char=? #\a #\b #\a)			; #f
+
+(char<? #\A #\B)			; #t
+(char<? #\A #\B #\B)			; #f
+(char<=? #\A #\B #\B)			; #t
+(char<=? #\B #\A)			; #f
+(char>=? #\C #\C #\B #\A)		; #t
+
+(char<? #\0 #\9)			; #t
+
+(char-ci=? #\a #\A)			; #t
+(char-ci=? #\a #\B)			; #f
+
+(char-ci<? #\A #\b)			; #t
+(char-ci<? #\A #\b #\b)			; #f
+(char-ci<=? #\A #\b #\b)		; #t
+(char-ci<=? #\b #\A)			; #f
+(char-ci>=? #\C #\C #\b #\A)		; #t
+
+(char-alphabetic?)			;Expecting 1 arguments but was sent 0
+(char-alphabetic? #\A)			; #t
+(char-alphabetic? #\5)			; #f
+
+(char-numeric? #\A)			; #f
+(char-numeric? #\4)			; #t
+
+(char-whitespace? #\space)		; #t
+(char-whitespace? #\newline)		; #t
+
+(char-whitespace? #\a)			; #f
+
+(char-upper-case? #\a)			; #f
+(char-upper-case? #\A)			; #t
+
+(char-lower-case? #\a)			; #t
+(char-lower-case? #\A)			; #f
+
+
+(char->integer #\a)			; 97
+(char->integer #\A)			; 65
+
+(integer->char 97)			; #\a
+(integer->char 9999)			;Integer out of character range
+
+(char->integer (integer->char 97))	; 97
+(integer->char (char->integer #\A))	; #\A
+
+(char-upcase #\A)			; #\A
+(char-upcase #\a)			; #\A
+
+(char-upcase #\5)			; #\5
+
+(char-downcase #\a)			; #\a
+(char-downcase #\A)			; #\a
+
