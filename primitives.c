@@ -796,6 +796,150 @@ string_fun("string-ci>?",  lisp_string_ci_decreasing,     >, tolower)
 string_fun("string-ci<=?", lisp_string_ci_nondecreasing, <=, tolower)
 string_fun("string-ci>=?", lisp_string_ci_nonincreasing, >=, tolower)
 
+object lisp_substring(object args)
+{
+	object ret;
+	long start, end;
+
+	check_args(3, args, "substring");
+
+	if (!is_string(car(args)))
+		error("Expecting a string -- substring", car(args));
+
+	if (!is_fixnum(cadr(args)))
+		error("Expecting an integer start index -- substring", cadr(args));
+
+	if (!is_fixnum(caddr(args)))
+		error("Expecting an integer end index -- substring", caddr(args));
+
+	start = fixnum_value(cadr(args));
+	end   = fixnum_value(caddr(args));
+
+	if (start < 0 || start > string_length(car(args)))
+		error("Not a valid start index -- substring", cadr(args));
+
+	if (end < start || end > string_length(car(args)))
+		error("Not a valid end index -- substring", caddr(args));
+
+	ret = make_string(end - start);
+
+	memcpy(string_value(ret),
+	       ((unsigned char *) string_value(car(args))) + start, (end - start));
+
+	return ret;
+}
+
+object lisp_string_append(object args)
+{
+	object tmp = args, string;
+	unsigned long len = 0;
+	unsigned char *ptr;
+
+	/* get total length first */
+	while (!is_null(tmp)) {
+		if (!is_string(car(tmp)))
+			error("Expecting strings -- string-append", car(tmp));
+
+		len += string_length(car(tmp));
+		tmp = cdr(tmp);
+	}
+
+	string = make_string(len);
+	ptr = (unsigned char *) string_value(string);
+
+	/* copy contents */
+	while (!is_null(args)) {
+		tmp = car(args);
+
+		memcpy(ptr, string_value(tmp), string_length(tmp));
+		ptr += string_length(tmp);
+
+		args = cdr(args);
+	}
+
+	return string;
+}
+
+object lisp_string_list(object args)
+{
+	object head = nil, tail = nil;
+	unsigned char *ptr;
+	unsigned long i;
+
+	check_args(1, args, "string->list");
+	if (!is_string(car(args)))
+		error("Expecting a string -- string->list", car(args));
+
+	ptr = (unsigned char *) string_value(car(args));
+	for (i = 0; i < string_length(car(args)); i++) {
+		if (head == nil) {
+			head = cons(make_character(ptr[i]), nil);
+			tail = head;
+		} else {
+			set_cdr(tail, cons(make_character(ptr[i]), nil));
+			tail = cdr(tail);
+		}
+	}
+
+	return head;
+}
+
+object lisp_list_string(object args)
+{
+	object string;
+	unsigned char *ptr;
+
+	check_args(1, args, "list->string");
+	if (!is_list(car(args)))
+		error("Expecting a list -- list->string", car(args));
+
+	string = make_string(length(car(args)));
+	ptr = (unsigned char *) string_value(string);
+
+	args = car(args);
+	while (!is_null(args)) {
+		if (!is_character(car(args)))
+			error("Expecting characters -- list->string", car(args));
+
+		*ptr++ = character_value(car(args));
+
+		args = cdr(args);
+	}
+
+	return string;
+}
+
+object lisp_string_copy(object args)
+{
+	object string;
+
+	check_args(1, args, "string-copy");
+	if (!is_string(car(args)))
+		error("Expecting a string -- string-copy", car(args));
+
+	string = make_string(string_length(car(args)));
+	memcpy(string_value(string), string_value(car(args)),
+	       string_length(car(args)));
+
+	return string;
+}
+
+object lisp_string_fill(object args)
+{
+	check_args(2, args, "string-fill!");
+	if (!is_string(car(args)))
+		error("Expecting a string -- string-fill!", car(args));
+
+	if (!is_character(cadr(args)))
+		error("Expecting a character -- string-fill!", cadr(args));
+
+	memset(string_value(car(args)),
+	       (unsigned char) character_value(cadr(args)),
+	       string_length(car(args)));
+
+	return unspecified;
+}
+
 object lisp_eq(object args)
 {
 	object initial;
@@ -981,6 +1125,13 @@ static struct {
 	{ "string-ci>?",   lisp_string_ci_decreasing      },
 	{ "string-ci<=?",  lisp_string_ci_nondecreasing   },
 	{ "string-ci>=?",  lisp_string_ci_nonincreasing   },
+
+	{ "substring",     lisp_substring                 },
+	{ "string-append", lisp_string_append             },
+	{ "string->list",  lisp_string_list               },
+	{ "list->string",  lisp_list_string               },
+	{ "string-copy",   lisp_string_copy               },
+	{ "string-fill!",  lisp_string_fill               },
 
 
 	{ NULL, NULL }

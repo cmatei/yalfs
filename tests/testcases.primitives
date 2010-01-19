@@ -439,6 +439,45 @@ x					; Ymmutable
 
 (string<=? "aab" "aabc")		; #t
 
+(substring)				;Expecting 3 arguments
+(substring "" 0 0)			; ""
+(substring "" 0 1)			;Not a valid end index
+(substring "a" 1 0)			;Not a valid end index
+(substring "a" 1 1)			; ""
+(substring "a" 0 1)			; "a"
 
+(substring "abcdef" 5 6)		; "f"
+(substring "abcdef" 0 6)		; "abcdef"
+
+(string-append)				; ""
+(string-append "abc")			; "abc"
+(string-length (string-append "abc"))	; 3
+
+(string-append "abc" "def" "ghi")	; "abcdefghi"
+(string-append "abc " "" "  " "\n")	; "abc   \n"
+
+(string->list "")			; ()
+(string->list "abc def")		; (#\a #\b #\c #\space #\d #\e #\f)
+
+(list->string '(#\a #\b #\c))		; "abc"
+(list->string '())			; ""
+
+(string=? (list->string (string->list "abcdef")) "abcdef") ; #t
+
+(string-copy "abc")			; "abc"
+
+;; a fresh copy
+(define x "abc")			; x
+(eq? (string-copy x) x)			; #f
+
+(define x "abcdef")			; x
+x					; "abcdef"
+(string-fill! x #\a)			; ()
+x					; "aaaaaa"
+
+(define x "")				; x
+x					; ""
+(string-fill! x #\a)			; ()
+x					; ""
 
 
