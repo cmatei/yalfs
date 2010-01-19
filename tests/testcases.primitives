@@ -136,11 +136,13 @@
 
 y					; (a b c)
 (list? y)				; #t
-(set-cdr! x 4)				; 4
+;; unspecified
+(set-cdr! x 4)				; ()
 x					; (a . 4)
 (list? y)				; #f
 
-(set-cdr! x x)				; #<unprintable-structure>
+;; unspecified
+(set-cdr! x x)				; ()
 (list? x)				; #f
 
 (list? '(a b . c))			; #f
@@ -151,7 +153,7 @@ x					; (a . 4)
 (list? '())				; #t
 
 (define x (list 1 2 3))			; x
-(set-cdr! x x)				; #<unprintable-structure>
+(set-cdr! x x)				; ()
 (list? x)				; #f
 
 (pair? '())				; #f
@@ -177,10 +179,10 @@ x					; (a . 4)
 (define (g) '(constant-list))		 ; g
 
 ;; unspecified
-(set-car! (f) 3)			; 3
+(set-car! (f) 3)			; ()
 
 ;; r5rs says this is an error, but i don't have constant lists
-(set-car! (g) 3)			; 3
+(set-car! (g) 3)			; ()
 
 (caar (list (list 1 2) (list 3 4)))		; 1
 (cadr (list (list 1 2) (list 3 4)))		; (3 4)
@@ -265,7 +267,7 @@ x					; (a . 4)
 (eq? 'JollyWog (string->symbol (symbol->string 'JollyWog))) ; #t
 
 ;; i won't be able to read this back! CL puts non-reader symbols
-;; in |K. Harper, M.D.
+;; in |K. Harper, M.D.|
 (symbol->string (string->symbol "K. Harper, M.D.")) ; "K. Harper, M.D."
 
 
@@ -331,4 +333,112 @@ x					; (a . 4)
 
 (char-downcase #\a)			; #\a
 (char-downcase #\A)			; #\a
+
+(string? "abc")				; #t
+(string? #f)				; #f
+
+;; meh...
+;; (make-string 4)			; ""
+(string-length (make-string 4))		; 4
+(make-string 4 #\space)			; "    "
+(make-string 2 #\newline)		; "\n\n"
+
+(string)				; ""
+(string #\a #\b #\c)			; "abc"
+
+(define x "aspidistra")			; x
+(string-length x)			; 10
+
+(string-ref x 0)			; #\a
+(string-ref x 9)			; #\a
+(string-ref x 10)			;Not a valid index
+(string-ref x -1)			;Not a valid index
+
+(define x "abcdefghi")			; x
+(string-ref x 0)			; #\a
+
+(string-set!)				;Expecting 3 arguments
+(string-set! 0 0 0)			;Expecting a string
+(string-set! x #f 0)			;Expecting an integer
+(string-set! x 0 'z)			;Expecting a character
+(string-set! x 0 #\z)			; ()
+
+x					; "zbcdefghi"
+(string-set! x 9 #\Z)			;Not a valid index
+(string-set! x 8 #\Z)			; ()
+x					; "zbcdefghZ"
+
+
+(define (f) (make-string 3 #\*))	; f
+(define (g) "***")			; g
+
+(string-set! (f) 0 #\?)			; ()
+
+;; no immutables, sorry, so not an error
+(string-set! (g) 0 #\?)			; ()
+(string-set! (symbol->string 'immutable) 0 #\?) ; ()
+'immutable					; immutable
+
+;; funny and dangerous side effects of mutating symbol strings
+;; these should bomb if symbol-strings ARE immutable
+(define x 'immutable)			; x
+x					; immutable
+;; the immutable ... mutates
+(string-set! (symbol->string x) 0 #\Y)	; ()
+x					; Ymmutable
+(eq? x 'immutable)			; #f
+
+
+;; please test these thoroughly
+(string=?)				;Expecting at least 2 arguments
+(string=? #f #t)			;Expecting strings
+(string=? "aaaa" "aaaa")		; #t
+(string=? "aaaa" "a")			; #f
+
+(string<? "" "")			; #f
+(string>? "" "")			; #f
+(string<=? "" "")			; #t
+(string>=? "" "")			; #t
+
+(string<? "" "a")			; #t
+(string>? "" "a")			; #f
+(string<=? "" "a")			; #t
+(string>=? "" "a")			; #f
+
+(string<? "a" "")			; #f
+(string>? "a" "")			; #t
+(string<=? "a" "")			; #f
+(string>=? "a" "")			; #t
+
+
+(string-ci=? "aAbBxXyY" "AaBbXxYy")	; #t
+
+(string<? "abc" "abc")			; #f
+(string<=? "abc" "abc")			; #t
+(string>=? "abc" "abc")			; #t
+(string>? "abc" "abc")			; #f
+
+(string-ci<? "abc" "ABC")		; #f
+(string-ci<=? "abc" "ABC")		; #t
+(string-ci>=? "abc" "ABC")		; #t
+(string-ci>? "abc" "ABC")		; #f
+
+(string<? "abc" "def" "ghi")		; #t
+(string<? "abc" "def" "")		; #f
+(string<? "abc" "abd" "abe")		; #t
+
+(string<=? "abc" "abd" "abe")		; #t
+(string>=? "abc" "abd" "abe")		; #f
+
+(string<? "aaa" "aa" "a")		; #f
+(string<=? "aaa" "aa" "a")		; #f
+
+
+(string<? "z" "aa")			; #f
+(string>? "z" "aa")			; #t
+
+(string<=? "aab" "aabc")		; #t
+
+
+
 

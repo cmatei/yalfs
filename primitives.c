@@ -7,6 +7,8 @@
 
 #include "minime.h"
 
+#define unspecified nil
+
 #define boolean(c_int) ((c_int) ? the_truth : the_falsity)
 
 static inline void check_args(long n, object args, char *name)
@@ -41,27 +43,26 @@ object lisp_numberp(object args)
 	return lisp_integerp(args);
 }
 
-#define number_fun(lname, cname, op)					\
-object cname(object args)					        \
-{									\
-	object prec = nil;						\
-	object arg;							\
-									\
-	while (!is_null(args)) {					\
-		arg = car(args);					\
-									\
-		if (!is_number(arg))					\
-			error("Expecting numbers -- " lname,	arg);	\
-									\
-		fprintf(stderr, "%ld\n", fixnum_value(arg));		\
-		if ((prec != nil) &&					\
-		    !(fixnum_value(prec) op fixnum_value(arg)))         \
-			return the_falsity;				\
-									\
-		prec = arg;						\
-		args = cdr(args);					\
-	}								\
-	return the_truth;						\
+#define number_fun(LISPNAME, CNAME, OP)                                 \
+object CNAME(object args)                                               \
+{                                                                       \
+        object prec = nil;                                              \
+        object arg;                                                     \
+                                                                        \
+        while (!is_null(args)) {                                        \
+                arg = car(args);                                        \
+                                                                        \
+                if (!is_number(arg))                                    \
+                        error("Expecting numbers -- " LISPNAME, arg);   \
+                                                                        \
+                if ((prec != nil) &&                                    \
+                    !(fixnum_value(prec) OP fixnum_value(arg)))         \
+                        return the_falsity;                             \
+                                                                        \
+                prec = arg;                                             \
+                args = cdr(args);                                       \
+        }                                                               \
+        return the_truth;                                               \
 }
 
 number_fun("=",  lisp_equal, ==)
@@ -263,7 +264,7 @@ object lisp_not(object args)
 {
 	check_args(1, args, "not");
 
-        /* not returns #t if obj is false, and in scheme only #f is false */
+	/* not returns #t if obj is false, and in scheme only #f is false */
 	return (car(args) == the_falsity) ? the_truth : the_falsity;
 }
 
@@ -293,13 +294,13 @@ object lisp_cons(object args)
 
 
 #define pair_fun(X)					\
-object lisp_##X (object args)			        \
-{						        \
+object lisp_##X (object args)				\
+{							\
 	check_args(1, args, #X );			\
 	if (!is_pair(car(args)))			\
-                error("Expecting a pair -- " #X, args); \
+		error("Expecting a pair -- " #X, args); \
 							\
-	return  X(car(args));				\
+	return	X(car(args));				\
 }
 
 pair_fun(car)
@@ -340,7 +341,8 @@ object lisp_set_car(object args)
 	if (!is_pair(car(args)))
 		error("Expecting a pair as first argument -- set-car!", args);
 
-	return set_car(car(args), cadr(args));
+	set_car(car(args), cadr(args));
+	return unspecified;
 }
 
 object lisp_set_cdr(object args)
@@ -350,7 +352,8 @@ object lisp_set_cdr(object args)
 	if (!is_pair(car(args)))
 		error("Expecting a pair as first argument -- set-cdr!", args);
 
-	return set_cdr(car(args), cadr(args));
+	set_cdr(car(args), cadr(args));
+	return unspecified;
 }
 
 object lisp_nullp(object args)
@@ -524,57 +527,62 @@ object lisp_charp(object args)
 }
 
 #define identity(x) (x)
-#define char_fun(lname, cname, operator, casefold)			\
-object cname(object args)					        \
-{									\
-	object prec = nil;						\
-									\
-	while (!is_null(args)) {					\
-		if (!is_character(car(args)))				\
-			error("Expecting characters -- " lname,		\
-			      car(args));				\
-									\
-		if (prec != nil) {					\
-		        if ( casefold(character_value(prec)) operator	\
-			     casefold(character_value(car(args))))	\
-				return the_falsity;			\
-									\
-		}							\
-									\
-		prec = car(args);					\
-		args = cdr(args);					\
-	}								\
-	return the_truth;						\
+#define char_fun(LISPNAME, CNAME, OP, CASEFOLD)                         \
+object CNAME(object args)                                               \
+{                                                                       \
+        object prec = nil, current;                                     \
+        unsigned char p, c;                                             \
+                                                                        \
+        while (!is_null(args)) {                                        \
+                current = car(args);                                    \
+                if (!is_character(current))                             \
+                        error("Expecting characters -- " LISPNAME,      \
+                              current);                                 \
+                                                                        \
+                if (prec != nil) {                                      \
+                        p = CASEFOLD( character_value(prec) );          \
+                        c = CASEFOLD( character_value(current) );       \
+                                                                        \
+                        if (! (p OP c))                                 \
+                                return the_falsity;                     \
+                }                                                       \
+                                                                        \
+                prec = car(args);                                       \
+                args = cdr(args);                                       \
+        }                                                               \
+        return the_truth;                                               \
 }
 
-char_fun("char=?",  lisp_char_equal,               !=, identity)
-char_fun("char<?",  lisp_char_increasing,          >=, identity)
-char_fun("char>?",  lisp_char_decreasing,          <=, identity)
-char_fun("char<=?", lisp_char_non_decreasing,       >, identity)
-char_fun("char>=?", lisp_char_non_increasing,       <, identity)
+char_fun("char=?",     lisp_char_equal,             ==, identity)
+char_fun("char<?",     lisp_char_increasing,         <, identity)
+char_fun("char>?",     lisp_char_decreasing,         >, identity)
+char_fun("char<=?",    lisp_char_non_decreasing,    <=, identity)
+char_fun("char>=?",    lisp_char_non_increasing,    >=, identity)
 
-char_fun("char-ci=?",  lisp_char_ci_equal,          !=, tolower)
-char_fun("char-ci<?",  lisp_char_ci_increasing,     >=, tolower)
-char_fun("char-ci>?",  lisp_char_ci_decreasing,     <=, tolower)
-char_fun("char-ci<=?", lisp_char_ci_non_decreasing,  >, tolower)
-char_fun("char-ci>=?", lisp_char_ci_non_increasing,  <, tolower)
+char_fun("char-ci=?",  lisp_char_ci_equal,          ==, tolower)
+char_fun("char-ci<?",  lisp_char_ci_increasing,      <, tolower)
+char_fun("char-ci>?",  lisp_char_ci_decreasing,      >, tolower)
+char_fun("char-ci<=?", lisp_char_ci_non_decreasing, <=, tolower)
+char_fun("char-ci>=?", lisp_char_ci_non_increasing, >=, tolower)
 
-#define char_type_fun(lname, cname, test)	            \
-object cname(object args)			            \
-{							    \
-        check_args(1, args, lname);			    \
-	if (!is_character(car(args)))			    \
-		error("Expecting a character -- " lname,    \
-		      car(args));			    \
-							    \
-	return boolean(test(character_value(car(args))));   \
+#define char_type_fun(LISPNAME, CNAME, TYPEFUN)                         \
+object CNAME(object args)                                               \
+{                                                                       \
+        object arg;                                                     \
+        check_args(1, args, LISPNAME);                                  \
+        arg = car(args);                                                \
+                                                                        \
+        if (!is_character(arg))                                         \
+                error("Expecting a character -- " LISPNAME, arg);       \
+                                                                        \
+        return boolean(TYPEFUN(character_value(arg)));                  \
 }
 
 char_type_fun("char-alphabetic?", lisp_char_alphabeticp, isalpha)
-char_type_fun("char-numeric?",    lisp_char_numericp, isdigit)
+char_type_fun("char-numeric?",    lisp_char_numericp,    isdigit)
 char_type_fun("char-whitespace?", lisp_char_whitespacep, isspace)
-char_type_fun("char-upper-case?", lisp_char_uppercasep, isupper)
-char_type_fun("char-lower-case?", lisp_char_lowercasep, islower)
+char_type_fun("char-upper-case?", lisp_char_uppercasep,  isupper)
+char_type_fun("char-lower-case?", lisp_char_lowercasep,  islower)
 
 object lisp_char_integer(object args)
 {
@@ -615,6 +623,179 @@ object lisp_char_downcase(object args)
 	return make_character(tolower(character_value(car(args))));
 }
 
+object lisp_stringp(object args)
+{
+	check_args(1, args, "string?");
+	return boolean(is_string(car(args)));
+}
+
+object lisp_make_string(object args)
+{
+	unsigned long nargs = length(args);
+	object o;
+
+	if (nargs < 1 || nargs > 2)
+		error("Expecting 1 or 2 arguments -- make-string", car(args));
+
+	if (!is_fixnum(car(args)) || fixnum_value(car(args)) < 0)
+		error("Expecting a non-negative integer -- make-string", car(args));
+
+	o = make_string((unsigned long) fixnum_value(car(args)));
+
+	if (nargs == 2) {
+		if (!is_character(cadr(args)))
+			error("Expecting a character -- make-string", cadr(args));
+
+		memset(string_value(o), character_value(cadr(args)), fixnum_value(car(args)));
+	} else {
+		memset(string_value(o), 0, fixnum_value(car(args)));
+	}
+
+	return o;
+}
+
+object lisp_string(object args)
+{
+	unsigned long nargs = length(args);
+	object o;
+	char *p;
+
+	o = make_string(nargs);
+	p = string_value(o);
+
+	while (!is_null(args)) {
+		if (!is_character(car(args)))
+			error("Expecting characters -- string", car(args));
+
+		*p++ = character_value(car(args));
+		args = cdr(args);
+	}
+
+	return o;
+}
+
+object lisp_string_length(object args)
+{
+	check_args(1, args, "string-length");
+	if (!is_string(car(args)))
+		error("Expecting a string -- string-length", car(args));
+
+	return make_fixnum(string_length(car(args)));
+}
+
+object lisp_string_ref(object args)
+{
+	object string, k;
+	long pos;
+
+	check_args(2, args, "string-ref");
+
+	if (!is_string((string = car(args))))
+		error("Expecting a string -- string-ref", string);
+
+	if (!is_fixnum((k = cadr(args))))
+		error("Expecting an integer -- string-ref", k);
+
+	pos = fixnum_value(k);
+	if (pos < 0 || pos >= string_length(string))
+		error("Not a valid index -- string-ref", k);
+
+	return make_character(* ((char *) string_value(string) + pos));
+
+}
+
+object lisp_string_set(object args)
+{
+	object string, k, chr;
+	long pos;
+	check_args(3, args, "string-set!");
+
+	if (!is_string((string = car(args))))
+		error("Expecting a string -- string-set!", string);
+
+	if (!is_fixnum((k = cadr(args))))
+		error("Expecting an integer -- string-set!", k);
+
+	pos = fixnum_value(k);
+	if (pos < 0 || pos >= string_length(string))
+		error("Not a valid index -- string-set!", k);
+
+	if (!is_character((chr = caddr(args))))
+		error("Expecting a character -- string-set!", chr);
+
+	*((char *) string_value(string) + pos) = character_value(chr);
+	return unspecified;
+}
+
+#define identity(x) (x)
+#define string_fun(LISPNAME, CNAME, OP, CASEFOLD)                       \
+object CNAME(object args)                                               \
+{                                                                       \
+        object prec, current;                                           \
+        unsigned long preclen, curlen, complen;                         \
+        unsigned char *pptr, *cptr;                                     \
+        unsigned char p, c;                                             \
+        unsigned long i;                                                \
+                                                                        \
+        if (length(args) < 2)                                           \
+                error("Expecting at least 2 arguments -- " LISPNAME,    \
+                      args);                                            \
+                                                                        \
+        if (!is_string(prec = car(args)))                               \
+                error("Expecting strings -- " LISPNAME, prec);          \
+                                                                        \
+        preclen = string_length(prec);                                  \
+                                                                        \
+        args = cdr(args);                                               \
+        while (!is_null(args)) {                                        \
+                                                                        \
+                if (!is_string(current = car(args)))                    \
+                        error("Expecting strings -- " LISPNAME,         \
+                              current);                                 \
+                                                                        \
+                curlen = string_length(current);                        \
+                                                                        \
+                pptr = (unsigned char *) string_value(prec);            \
+                cptr = (unsigned char *) string_value(current);         \
+                                                                        \
+                complen = MIN(preclen, curlen);                         \
+                for (i = 0; i < complen; i++) {                         \
+                        p = CASEFOLD( pptr[i] );                        \
+                        c = CASEFOLD( cptr[i] );                        \
+                                                                        \
+                        if (p == c)                                     \
+                                continue;                               \
+                                                                        \
+                        if (! (p OP c))                                 \
+                                return the_falsity;                     \
+                                                                        \
+                        goto next_arg;                                  \
+                }                                                       \
+                                                                        \
+                if (! (preclen OP curlen))                              \
+                        return the_falsity;                             \
+        next_arg:                                                       \
+                                                                        \
+                prec = current;                                         \
+                args = cdr(args);                                       \
+        }                                                               \
+                                                                        \
+        return the_truth;                                               \
+}
+
+
+string_fun("string=?",     lisp_string_equalp,           ==, identity)
+string_fun("string<?",     lisp_string_increasing,        <, identity)
+string_fun("string>?",     lisp_string_decreasing,        >, identity)
+string_fun("string<=?",    lisp_string_nondecreasing,    <=, identity)
+string_fun("string>=?",    lisp_string_nonincreasing,    >=, identity)
+
+string_fun("string-ci=?",  lisp_string_ci_equalp,        ==, tolower)
+string_fun("string-ci<?",  lisp_string_ci_increasing,     <, tolower)
+string_fun("string-ci>?",  lisp_string_ci_decreasing,     >, tolower)
+string_fun("string-ci<=?", lisp_string_ci_nondecreasing, <=, tolower)
+string_fun("string-ci>=?", lisp_string_ci_nonincreasing, >=, tolower)
+
 object lisp_eq(object args)
 {
 	object initial;
@@ -644,6 +825,7 @@ static struct {
 
 	/* Equivalence predicates */
 
+	{ "eq?", lisp_eq },
 
         /* Numerical operations */
 
@@ -779,8 +961,26 @@ static struct {
 	{ "char-downcase",    lisp_char_downcase          },
 
 
+	/* Strings */
 
-	{ "eq?", lisp_eq },
+	{ "string?",       lisp_stringp                   },
+	{ "make-string",   lisp_make_string               },
+	{ "string",        lisp_string                    },
+	{ "string-length", lisp_string_length             },
+	{ "string-ref",    lisp_string_ref                },
+	{ "string-set!",   lisp_string_set                },
+
+	{ "string=?",      lisp_string_equalp             },
+	{ "string<?",      lisp_string_increasing         },
+	{ "string>?",      lisp_string_decreasing         },
+	{ "string<=?",     lisp_string_nondecreasing      },
+	{ "string>=?",     lisp_string_nonincreasing      },
+
+	{ "string-ci=?",   lisp_string_ci_equalp          },
+	{ "string-ci<?",   lisp_string_ci_increasing      },
+	{ "string-ci>?",   lisp_string_ci_decreasing      },
+	{ "string-ci<=?",  lisp_string_ci_nondecreasing   },
+	{ "string-ci>=?",  lisp_string_ci_nonincreasing   },
 
 
 	{ NULL, NULL }
