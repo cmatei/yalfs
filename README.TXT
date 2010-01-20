@@ -53,8 +53,8 @@ Indirect objects
 ----------------
 
 An indirect object has at least one word on the heap. This word may
-contain an immediate value (e.g. booleans), or the length of the
-object in words (not including this initial one).
+contain an immediate value (e.g. the two booleans), or the length of
+the object in words (not including this initial one).
 
 The first bits (LSb) of this word are of course the type tag. The tag
 is not fixed in bit length. The idea is that for certain types, where
