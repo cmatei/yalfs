@@ -124,6 +124,11 @@ x					; 42
 (begin (+ 1 2))				; 3
 (begin (+ 1 2) (+ 2 2))			; 4
 
+;; quasiquotation (quoted because they can't be currently evaluated)
+'`a					; (quasiquote a)
+'`'`'(foo bar baz)			; (quasiquote (quote (quasiquote (quote (foo bar baz)))))
+'`'`'(foo bar ,baz)			; (quasiquote (quote (quasiquote (quote (foo bar (unquote baz))))))
+
 
 
 

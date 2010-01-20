@@ -295,6 +295,35 @@ x					; (a . 4)
 (list-ref '(a b c d . e) 3)		;Expecting a list
 (list-ref '(a b c d e) 6)		;List too short
 
+(memq 'a '(a b c))			; (a b c)
+(memq 'b '(a b c))			; (b c)
+(memq 'a '(b c d))			; #f
+(memq (list 'a) '(b (a) c))		; #f
+
+;; unspecified
+(memq 101 '(100 101 102))		; (101 102)
+
+;; specified
+(memv 101 '(100 101 102))		; (101 102)
+
+
+(member (list 'a) '(b (a) c))		; ((a) c)
+(member '(b 2) '((a 1) (b 2) (c 3)))	; ((b 2) (c 3))
+
+(define e '((a 1) (b 2) (c 3)))		; e
+(assq 'a e)				; (a 1)
+(assq 'b e)				; (b 2)
+(assq 'd e)				; #f
+(assq (list 'a) '(((a)) ((b)) ((c))))	; #f
+
+(assoc (list 'a) '(((a)) ((b)) ((c))))	; ((a))
+
+;; unspecified
+(assq 5 '((2 3) (5 7) (11 13)))		; (5 7)
+
+;; specified
+(assv 5 '((2 3) (5 7) (11 13)))		; (5 7)
+
 
 (symbol? 'symbol?)			; #t
 (symbol? '())				; #f

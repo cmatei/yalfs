@@ -411,7 +411,18 @@ object lisp_read(FILE *in)
 		else if (c == '\'') {
 			return cons(_quote, cons(lisp_read(in), nil));
 		}
-
+		/* quasiquote */
+		else if (c == '`') {
+			return cons(_quasiquote, cons(lisp_read(in), nil));
+		}
+		/* unquote & unquote-splicing */
+		else if (c == ',') {
+			if (peek(in) == '@') {
+				c = fgetc(in);
+				return cons(_unquote_splicing, cons(lisp_read(in), nil));
+			} else
+				return cons(_unquote, cons(lisp_read(in), nil));
+		}
 		else
 			error("Unexpected character -- READ", nil);
 	}

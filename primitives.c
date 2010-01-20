@@ -10,7 +10,6 @@
 #include "minime.h"
 
 #define unspecified nil
-
 #define boolean(c_int) ((c_int) ? the_truth : the_falsity)
 
 static inline void check_args(long n, object args, char *name)
@@ -31,6 +30,67 @@ static inline int is_last_elt(object lst)
 {
 	return (cdr(lst) == nil);
 }
+
+
+
+static int is_eq(object o1, object o2)
+{
+	return (o1 == o2);
+}
+
+static int is_eqv(object o1, object o2)
+{
+	/* In the current implementation, eqv? is the same as eq?
+	   FIXME: This will need revisiting if I add floats as indirect
+	   objects.
+	 */
+
+	return (o1 == o2);
+
+	/* eqv? returns #t if:
+
+	   - o1 and o2 are both #t or both #f
+	   - o1 and o2 are both symbols and
+	     (string=? (symbol->string o1)
+	               (symbol->string o2)) => #t
+	   - o1 and o2 are both numbers and =
+	   - o1 and o2 are both characters and char=?
+	   - o1 and o2 are both the empty list
+	   - o1 and o2 are pairs, vectors or strings that denote the
+	     same location in the store
+	   - o1 and o2 are procedures whose location tags are equal
+
+	*/
+}
+
+static int is_string_equal(object o1, object o2)
+{
+	if (o1 == o2)
+		return 1;
+
+	if (string_length(o1) != string_length(o2))
+		return 0;
+
+	if (memcmp(string_value(o1), string_value(o2), string_length(o1)) == 0)
+		return 1;
+
+	return 0;
+}
+
+static int is_equal(object o1, object o2)
+{
+	if (is_string(o1) && is_string(o2))
+		return is_string_equal(o1, o2);
+
+	if (is_pair(o1) && is_pair(o2))
+		return  is_equal(car(o1), car(o2)) &&
+			is_equal(cdr(o1), cdr(o2));
+
+	return is_eqv(o1, o2);
+}
+
+
+
 
 /* Numerical operations */
 
@@ -585,6 +645,61 @@ object lisp_list_ref(object args)
 	return car(lst);
 }
 
+#define member_fun(LISPNAME, CNAME, TESTFUN)			\
+object CNAME(object args)		                        \
+{								\
+        object o, lst;						\
+	check_args(2, args, LISPNAME);				\
+							        \
+	o = car(args);					        \
+	lst = cadr(args);				        \
+							        \
+	if (!is_list(lst))					\
+		error("Expecting a list -- " LISPNAME, lst);	\
+								\
+	while (!is_null(lst)) {					\
+	        if ( TESTFUN(o, car(lst)) )			\
+			return lst;				\
+								\
+		lst = cdr(lst);					\
+	}							\
+								\
+	return the_falsity;					\
+}
+
+member_fun("memq",   lisp_memq,   is_eq)
+member_fun("memv",   lisp_memv,   is_eqv)
+member_fun("member", lisp_member, is_equal)
+
+#define assoc_fun(LISPNAME, CNAME, TESTFUN)	                \
+object CNAME(object args)                                       \
+{								\
+        object o, lst, pair;					\
+	check_args(2, args, LISPNAME);				\
+								\
+	o = car(args);						\
+	lst = cadr(args);					\
+								\
+	if (!is_list(lst))					\
+		error("Expecting an alist -- " LISPNAME, lst);	\
+								\
+	while (!is_null(lst)) {					\
+	        pair = car(lst);				\
+		if (!is_pair(pair))				\
+			error("Expecting an alist -- "		\
+			      LISPNAME, cadr(args));		\
+								\
+		if ( TESTFUN(o, car(pair)) )			\
+			return pair;				\
+								\
+		lst = cdr(lst);					\
+	}							\
+	return the_falsity;					\
+}
+
+assoc_fun("assq",  lisp_assq,     is_eq)
+assoc_fun("assv",  lisp_assv,    is_eqv)
+assoc_fun("assoc", lisp_assoc, is_equal)
 
 object lisp_charp(object args)
 {
@@ -862,6 +977,7 @@ string_fun("string-ci>?",  lisp_string_ci_decreasing,     >, tolower)
 string_fun("string-ci<=?", lisp_string_ci_nondecreasing, <=, tolower)
 string_fun("string-ci>=?", lisp_string_ci_nonincreasing, >=, tolower)
 
+
 object lisp_substring(object args)
 {
 	object ret;
@@ -1041,7 +1157,7 @@ object lisp_eq(object args)
 	args = cdr(args);
 
 	while (!is_null(args)) {
-		if (initial != car(args))
+		if (!is_eq(initial, car(args)))
 			return the_falsity;
 
 		args = cdr(args);
@@ -1050,30 +1166,6 @@ object lisp_eq(object args)
 	return the_truth;
 }
 
-static int is_eqv(object o1, object o2)
-{
-	/* In the current implementation, eqv? is the same as eq?
-	   FIXME: This will need revisiting if I add floats as indirect
-	   objects.
-	 */
-
-	return (o1 == o2);
-
-	/* eqv? returns #t if:
-
-	   - o1 and o2 are both #t or both #f
-	   - o1 and o2 are both symbols and
-	     (string=? (symbol->string o1)
-	               (symbol->string o2)) => #t
-	   - o1 and o2 are both numbers and =
-	   - o1 and o2 are both characters and char=?
-	   - o1 and o2 are both the empty list
-	   - o1 and o2 are pairs, vectors or strings that denote the
-	     same location in the store
-	   - o1 and o2 are procedures whose location tags are equal
-
-	*/
-}
 
 object lisp_eqv(object args)
 {
@@ -1083,37 +1175,12 @@ object lisp_eqv(object args)
 }
 
 
-static int is_string_equal(object o1, object o2)
-{
-	if (o1 == o2)
-		return 1;
-
-	if (string_length(o1) != string_length(o2))
-		return 0;
-
-	if (memcmp(string_value(o1), string_value(o2), string_length(o1)) == 0)
-		return 1;
-
-	return 0;
-}
-
-static int is_equalp(object o1, object o2)
-{
-	if (is_string(o1) && is_string(o2))
-		return is_string_equal(o1, o2);
-
-	if (is_pair(o1) && is_pair(o2))
-		return  is_equalp(car(o1), car(o2)) &&
-			is_equalp(cdr(o1), cdr(o2));
-
-	return is_eqv(o1, o2);
-}
 
 object lisp_equalp(object args)
 {
 	check_args(2, args, "equal?");
 
-	return boolean(is_equalp(car(args), cadr(args)));
+	return boolean(is_equal(car(args), cadr(args)));
 
 	/* Equal? recursively compares the contents of pairs, vectors,
 	   and strings, applying eqv? on othe objects such as numbers
@@ -1234,12 +1301,12 @@ static struct {
 	{ "reverse",   lisp_reverse       },
 	{ "list-tail", lisp_list_tail     },
 	{ "list-ref",  lisp_list_ref      },
-//	{ "memq",      lisp_memq          },
-//	{ "memv",      lisp_memv          },
-//	{ "member",    lisp_member        },
-//	{ "assq",      lisp_assq          },
-//	{ "assv",      lisp_assv          },
-//	{ "assoc",     lisp_assoc         },
+	{ "memq",      lisp_memq          },
+	{ "memv",      lisp_memv          },
+	{ "member",    lisp_member        },
+	{ "assq",      lisp_assq          },
+	{ "assv",      lisp_assv          },
+	{ "assoc",     lisp_assoc         },
 
 
 	/* Symbols */
