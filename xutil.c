@@ -10,7 +10,7 @@ void *
 xmalloc(size_t size)
 {
 	void *p = malloc(size);
-	
+
 	if (p == NULL) {
 		FATAL("malloc failed at %p\n", __builtin_return_address(0));
 	}
@@ -25,6 +25,18 @@ xrealloc(void *ptr, size_t size)
 
 	if (p == NULL) {
 		FATAL("realloc failed at %p\n", __builtin_return_address(0));
+	}
+
+	return p;
+}
+
+void *
+xcalloc(size_t nmemb, size_t size)
+{
+	void *p = calloc(nmemb, size);
+
+	if (p == NULL) {
+		FATAL("calloc failed at %p\n", __builtin_return_address(0));
 	}
 
 	return p;
@@ -55,7 +67,7 @@ xstrdup(const char *s)
 }
 
 
-int 
+int
 xstrlen(const char *s)
 {
 	if (s == NULL)

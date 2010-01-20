@@ -463,6 +463,10 @@ static inline object procedure_environment(object o)
 	return (object) ((unsigned long *) ((unsigned long) o - INDIRECT_TAG)) [3];
 }
 
+static inline int is_anykind_procedure(object o)
+{
+	return is_primitive(o) || is_procedure(o);
+}
 
 extern object_type type_of(object o);
 

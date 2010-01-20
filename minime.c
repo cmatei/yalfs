@@ -404,25 +404,6 @@ tail_call:
 	return ret;
 }
 
-object lisp_apply(object procedure, object arguments)
-{
-	if (is_primitive(procedure)) {
-		return apply_primitive(procedure, arguments);
-	} else if (is_procedure(procedure)) {
-		return lisp_eval(
-			/* transform to sequence */
-			sequence_to_exp(procedure_body(procedure)),
-			extend_environment(procedure_parameters(procedure),
-					   arguments,
-					   procedure_environment(procedure)));
-	}
-
-
-
-	error("Unknown procedure type -- APPLY", procedure);
-	return nil;			     /* not reached */
-}
-
 void repl(object env)
 {
 	object exp, val;

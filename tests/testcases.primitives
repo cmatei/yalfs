@@ -118,6 +118,64 @@
 (abs -100)				; 100
 (abs 1 1)				;Expecting 1 arguments but was sent 2
 
+(quotient 0 3)				; 0
+(quotient 3 0)				;Will not divide by zero
+
+(quotient 6 2)				; 3
+(quotient 6 -2)				; -3
+(quotient -6 -2)			; 3
+(quotient -6 2)				; -3
+
+(modulo 13 4)				; 1
+(remainder 13 4)			; 1
+
+(modulo -13 4)				; 3
+(remainder -13 4)			; -1
+
+(modulo 13 -4)				; -3
+(remainder 13 -4)			; 1
+
+(modulo -13 -4)				; -1
+(remainder -13 -4)			; -1
+
+(define (f n1 n2) (= n1 (+ (* n2 (quotient n1 n2)) (remainder n1 n2)))) ; f
+
+(f 13 4)				; #t
+(f -13 4)				; #t
+(f -13 -4)				; #t
+(f 13 -4)				; #t
+
+(number->string)			;Expecting 1 or 2 arguments
+
+;; fail these so I remember it's not implemented
+(number->string  2  2)			; "10"
+(number->string  8  8)			; "10"
+(number->string 16 16)			; "10"
+
+;;(number->string 255 16)			; "ff"
+;;(number->string -255 16)		; "-ff"
+
+(number->string 0)			; "0"
+(number->string 255)			; "255"
+(number->string -255)			; "-255"
+
+(string->number "255")			; 255
+(string->number "-255")			; -255
+(string->number "11111111" 2)		; 255
+(string->number "-11111111" 2)		; -255
+(string->number "377" 8)		; 255
+(string->number "-377" 8)		; -255
+(string->number "ff" 16)		; 255
+(string->number "-ff" 16)		; -255
+
+(string->number "1010" 2)		; 10
+
+(eq? (string->number (number->string -10)) -10) ; #t
+
+(string->number "foo")			; #f
+(string->number "123a")			; #f
+
+
 (not #f)				; #t
 (not #t)				; #f
 (not 3)					; #f
@@ -374,19 +432,17 @@ x					; "zbcdefghZ"
 
 (string-set! (f) 0 #\?)			; ()
 
-;; no immutables, sorry, so not an error
+;; no immutable strings, sorry, so not an error
 (string-set! (g) 0 #\?)			; ()
 (string-set! (symbol->string 'immutable) 0 #\?) ; ()
 'immutable					; immutable
 
-;; funny and dangerous side effects of mutating symbol strings
 ;; these should bomb if symbol-strings ARE immutable
 (define x 'immutable)			; x
 x					; immutable
-;; the immutable ... mutates
 (string-set! (symbol->string x) 0 #\Y)	; ()
-x					; Ymmutable
-(eq? x 'immutable)			; #f
+x					; immutable
+(eq? x 'immutable)			; #t
 
 
 ;; please test these thoroughly
@@ -479,5 +535,79 @@ x					; "aaaaaa"
 x					; ""
 (string-fill! x #\a)			; ()
 x					; ""
+
+
+;; Equality predicates
+
+(eq? 'a 'a)				; #t
+
+;; unspecified
+(eq? '(a) '(a))				; #f
+
+(eq? (list 'a) (list 'a))		; #f
+
+;; unspecified
+(eq? "a" "a")				; #f
+(eq? "" "")				; #f
+
+(eq? '() '())				; #t
+
+;; unspecified
+(eq? 2 2)				; #t
+(eq? #\A #\A)				; #t
+
+(eq? car car)				; #t
+
+(define x '(a))				; x
+(eq? x x)				; #t
+
+(define p (lambda (x) x))		; p
+(eq? p p)				; #t
+
+
+(eqv? 'a 'a)				; #t
+(eqv? 'a 'b)				; #f
+(eqv? 2 2)				; #t
+(eqv? #f 'nil)				; #f
+
+(eqv? (lambda () 1) (lambda () 2))	; #f
+
+;; symbol->string should return a copy of the string, so you cannot
+;; really mutate a symbol once created.
+;;
+;; Since I'm checking for symbol-string equality when creating a
+;; symbol object, I will never have 2 symbols with the same
+;; symbol-string, which I guess is the whole point.
+;;
+;; The wording in R5RS is confusing wrt eqv?
+
+;; symbol "side-effects"
+(define x (string->symbol "abcdef"))	; x
+(define y 'xxxxxx)			; y
+(string-fill! (symbol->string x) #\x)	; ()
+
+(eqv? x y)				; #f
+
+;; what the above failure means is that symbol->string
+;; should return a copy.
+(eq? (symbol->string x) (symbol->string x)) ; #f
+
+(equal? 'a 'a)				; #t
+(equal? '(a) '(a))			; #t
+(equal? '(a (b) c) '(a (b) c))		; #t
+(equal? "abc" "abc")			; #t
+(equal? 2 2)				; #t
+
+;; unspecified
+(equal? (lambda (x) x) (lambda (y) y))	; #f
+
+
+(procedure? car)			; #t
+(procedure? 'car)			; #f
+
+(procedure? (lambda (x) (* x x)))	; #t
+(procedure? '(lambda (x) (* x x)))	; #f
+
+;; (call-with-current-continuation procedure?) ; #t
 
 

@@ -1,7 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include <assert.h>
 
@@ -65,11 +67,11 @@ object CNAME(object args)                                               \
         return the_truth;                                               \
 }
 
-number_fun("=",  lisp_equal, ==)
-number_fun("<",  lisp_increasing, <)
-number_fun(">",  lisp_decreasing, >)
-number_fun("<=", lisp_nondecreasing, <=)
-number_fun(">=", lisp_nonincreasing, >=)
+number_fun("=",  lisp_number_equal,         ==)
+number_fun("<",  lisp_number_increasing,     <)
+number_fun(">",  lisp_number_decreasing,     >)
+number_fun("<=", lisp_number_nondecreasing, <=)
+number_fun(">=", lisp_number_nonincreasing, >=)
 
 object lisp_zerop(object args)
 {
@@ -256,6 +258,95 @@ object lisp_abs(object args)
 		car(args);
 }
 
+#define number_idiv_fun(LISPNAME, CNAME, OP)                            \
+object CNAME(object args)                                               \
+{                                                                       \
+	long n1, n2;							\
+									\
+	check_args(2, args, LISPNAME);					\
+	if (!is_fixnum(car(args)) || !is_fixnum(cadr(args)))		\
+		error("Expecting 2 integer arguments --" LISPNAME,	\
+		      args);						\
+									\
+	n1 = fixnum_value(car(args));					\
+	n2 = fixnum_value(cadr(args));					\
+									\
+	if (n2 == 0)							\
+		error("Will not divide by zero -- " LISPNAME, args);	\
+									\
+	return make_fixnum( OP );					\
+}
+
+/* there is some implementation-defined variation in C here ... */
+number_idiv_fun("quotient",  lisp_quotient,  (n1 / n2))
+number_idiv_fun("remainder", lisp_remainder, (n1 % n2))
+number_idiv_fun("modulo",    lisp_modulo,    ((n1 % n2 + n2) % n2))
+
+
+object lisp_number_string(object args)
+{
+	char buffer[64];
+	long nargs, radix = 10;
+
+	nargs = length(args);
+	if (nargs < 1 || nargs > 2)
+		error("Expecting 1 or 2 arguments -- number->string", args);
+
+	if (!is_fixnum(car(args)))
+		error("Expecting an integer -- number->string", car(args));
+
+	if (nargs == 2) {
+		if (!is_fixnum(cadr(args)))
+			error("Expecting an integer radix -- number->string", cadr(args));
+
+		radix = fixnum_value(cadr(args));
+		if (radix != 10)
+			error("Unsupported radix -- number->string", cadr(args));
+	}
+
+	snprintf(buffer, 64, "%ld", fixnum_value(car(args)));
+	return make_string_c(buffer, strlen(buffer));
+}
+
+object lisp_string_number(object args)
+{
+	char *str, *endptr;
+	long nargs, radix = 10;
+	long val;
+
+	nargs = length(args);
+	if (nargs < 1 || nargs > 2)
+		error("Expecting 1 or 2 arguments -- number->string", args);
+
+	if (!is_string(car(args)))
+		error("Expecting a string -- number->string", car(args));
+
+	if (nargs == 2) {
+		if (!is_fixnum(cadr(args)))
+			error("Expecting an integer radix -- number->string", cadr(args));
+		radix = fixnum_value(cadr(args));
+
+		if (radix != 2 && radix != 8 && radix != 10 && radix != 16)
+			error("Unsupported radix -- number->string", cadr(args));
+	}
+
+	str = xcalloc(1, string_length(car(args)) + 1);
+	memcpy(str, string_value(car(args)), string_length(car(args)));
+
+	/* yuck :-) */
+	errno = 0;
+	val = strtol(str, &endptr, radix);
+	if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN))
+	    || (errno != 0 && val == 0)
+	    || (endptr == str)
+	    || (*endptr != 0)) {
+		xfree(str);
+		return the_falsity;
+	}
+	xfree(str);
+
+	return make_fixnum(val);
+}
 
 
 /* Booleans */
@@ -492,31 +583,6 @@ object lisp_list_ref(object args)
 		error("List is empty -- list-ref", car(args));
 
 	return car(lst);
-}
-
-
-object lisp_symbolp(object args)
-{
-	check_args(1, args, "symbol?");
-	return boolean(is_symbol(car(args)));
-}
-
-object lisp_symbol_string(object args)
-{
-	check_args(1, args, "symbol->string");
-	if (!is_symbol(car(args)))
-		error("Object is not a symbol -- symbol->string", car(args));
-
-	return symbol_string(car(args));
-}
-
-object lisp_string_symbol(object args)
-{
-	check_args(1, args, "string->symbol");
-	if (!is_string(car(args)))
-		error("Expecting a string -- string->symbol", car(args));
-
-	return symbol(string_value(car(args)), string_length(car(args)));
 }
 
 
@@ -940,6 +1006,30 @@ object lisp_string_fill(object args)
 	return unspecified;
 }
 
+object lisp_symbolp(object args)
+{
+	check_args(1, args, "symbol?");
+	return boolean(is_symbol(car(args)));
+}
+
+object lisp_symbol_string(object args)
+{
+	check_args(1, args, "symbol->string");
+	if (!is_symbol(car(args)))
+		error("Object is not a symbol -- symbol->string", car(args));
+
+	return lisp_string_copy(cons(symbol_string(car(args)), nil));
+}
+
+object lisp_string_symbol(object args)
+{
+	check_args(1, args, "string->symbol");
+	if (!is_string(car(args)))
+		error("Expecting a string -- string->symbol", car(args));
+
+	return symbol(string_value(car(args)), string_length(car(args)));
+}
+
 object lisp_eq(object args)
 {
 	object initial;
@@ -960,6 +1050,55 @@ object lisp_eq(object args)
 	return the_truth;
 }
 
+object lisp_eqv(object args)
+{
+	object o1, o2;
+	check_args(2, args, "eqv?");
+
+	o1 = car(args);	o2 = cadr(args);
+
+	/* In the current implementation, eqv? is the same as eq?
+	   FIXME: This will need revisiting if I add floats as indirect
+	   objects.
+	 */
+
+	return boolean(o1 == o2);
+
+	/* eqv? returns #t if:
+
+	   - o1 and o2 are both #t or both #f
+	   - o1 and o2 are both symbols and
+	     (string=? (symbol->string o1)
+	               (symbol->string o2)) => #t
+	   - o1 and o2 are both numbers and =
+	   - o1 and o2 are both characters and char=?
+	   - o1 and o2 are both the empty list
+	   - o1 and o2 are pairs, vectors or strings that denote the
+	     same location in the store
+	   - o1 and o2 are procedures whose location tags are equal
+
+	*/
+}
+
+object lisp_equalp(object args)
+{
+	return the_falsity;
+
+	/* Equal? recursively compares the contents of pairs, vectors,
+	   and strings, applying eqv? on othe objects such as numbers
+	   and symbols. A rule of thumb is that objects are equal? if
+	   they print the same. Equal? may fail to terminate if its
+	   arguments are circular data structures. */
+
+}
+
+object lisp_procedurep(object args)
+{
+	check_args(1, args, "procedure?");
+	return boolean(is_anykind_procedure(car(args)));
+}
+
+
 #define pair_fun_def(X) { #X, lisp_##X }
 
 static struct {
@@ -969,18 +1108,20 @@ static struct {
 
 	/* Equivalence predicates */
 
-	{ "eq?", lisp_eq },
+	{ "eq?",       lisp_eq            },
+	{ "eqv?",      lisp_eqv           },
+	{ "equal?",    lisp_equalp        },
 
         /* Numerical operations */
 
 	{ "number?",   lisp_numberp       },
 	{ "integer?",  lisp_integerp      },
 
-	{ "=",         lisp_equal         },
-	{ "<",         lisp_increasing    },
-	{ ">",         lisp_decreasing    },
-	{ "<=",        lisp_nondecreasing },
-	{ ">=",        lisp_nonincreasing },
+	{ "=",         lisp_number_equal         },
+	{ "<",         lisp_number_increasing    },
+	{ ">",         lisp_number_decreasing    },
+	{ "<=",        lisp_number_nondecreasing },
+	{ ">=",        lisp_number_nonincreasing },
 
 	{ "zero?",     lisp_zerop         },
 	{ "positive?", lisp_positivep     },
@@ -997,15 +1138,16 @@ static struct {
 	{ "/",         lisp_divide        },
 
 	{ "abs",       lisp_abs           },
-//	{ "quotient",  lisp_quotient },
-//	{ "remainder", lisp_remainder },
-//	{ "modulo",    lisp_modulo },
+	{ "quotient",  lisp_quotient },
+	{ "remainder", lisp_remainder },
+	{ "modulo",    lisp_modulo },
 
+	/* math is hard, let's go shopping */
 //	{ "gcd",       lisp_gcd },
 //	{ "lcm",       lisp_lcm },
 
-//	{ "number->string", lisp_number_string },
-//	{ "string->number", lisp_string_number },
+	{ "number->string", lisp_number_string },
+	{ "string->number", lisp_string_number },
 
 
 	/* Booleans */
@@ -1133,6 +1275,10 @@ static struct {
 	{ "string-copy",   lisp_string_copy               },
 	{ "string-fill!",  lisp_string_fill               },
 
+
+	/* Control features */
+
+	{ "procedure?",    lisp_procedurep                },
 
 	{ NULL, NULL }
 };
