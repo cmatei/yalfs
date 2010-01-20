@@ -83,7 +83,7 @@ void symbol_table_stats()
 	for (i = 0; i < symbol_table.nbuckets; i++) {
 		nel = length(symbol_table.buckets[i]);
 		if (nel > 1) {
-			fprintf(stderr, "    bucket %lu: %lu entries, ", i, nel);
+			fprintf(stderr, "    bucket %lu: %lu entries ", i, nel);
 			lisp_print(stderr, symbol_table.buckets[i]);
 			fprintf(stderr, "\n");
 		}

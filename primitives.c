@@ -1050,19 +1050,14 @@ object lisp_eq(object args)
 	return the_truth;
 }
 
-object lisp_eqv(object args)
+static int is_eqv(object o1, object o2)
 {
-	object o1, o2;
-	check_args(2, args, "eqv?");
-
-	o1 = car(args);	o2 = cadr(args);
-
 	/* In the current implementation, eqv? is the same as eq?
 	   FIXME: This will need revisiting if I add floats as indirect
 	   objects.
 	 */
 
-	return boolean(o1 == o2);
+	return (o1 == o2);
 
 	/* eqv? returns #t if:
 
@@ -1080,9 +1075,45 @@ object lisp_eqv(object args)
 	*/
 }
 
+object lisp_eqv(object args)
+{
+	check_args(2, args, "eqv?");
+
+	return boolean(is_eqv(car(args), cadr(args)));
+}
+
+
+static int is_string_equal(object o1, object o2)
+{
+	if (o1 == o2)
+		return 1;
+
+	if (string_length(o1) != string_length(o2))
+		return 0;
+
+	if (memcmp(string_value(o1), string_value(o2), string_length(o1)) == 0)
+		return 1;
+
+	return 0;
+}
+
+static int is_equalp(object o1, object o2)
+{
+	if (is_string(o1) && is_string(o2))
+		return is_string_equal(o1, o2);
+
+	if (is_pair(o1) && is_pair(o2))
+		return  is_equalp(car(o1), car(o2)) &&
+			is_equalp(cdr(o1), cdr(o2));
+
+	return is_eqv(o1, o2);
+}
+
 object lisp_equalp(object args)
 {
-	return the_falsity;
+	check_args(2, args, "equal?");
+
+	return boolean(is_equalp(car(args), cadr(args)));
 
 	/* Equal? recursively compares the contents of pairs, vectors,
 	   and strings, applying eqv? on othe objects such as numbers

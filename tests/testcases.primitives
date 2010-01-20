@@ -598,6 +598,9 @@ x					; ""
 (equal? "abc" "abc")			; #t
 (equal? 2 2)				; #t
 
+(equal? '((("abc" . "def") 2) 3) '((("abc" . "def") 2) 3)) ; #t
+(equal? '((("abc" . "def") 2) 3) '((("abc" . "xxx") 2) 3)) ; #f
+
 ;; unspecified
 (equal? (lambda (x) x) (lambda (y) y))	; #f
 
