@@ -640,6 +640,16 @@ x					; ""
 (procedure? (lambda (x) (* x x)))	; #t
 (procedure? '(lambda (x) (* x x)))	; #f
 
+;; I'd wish :-)
 ;; (call-with-current-continuation procedure?) ; #t
 
+(procedure? apply)			; #t
+(apply)					;Expecting at least 1 argument
+(apply +)				; 0
 
+(apply + (list 1 2 3))			; 6
+(apply + 1 2)				;Last argument must be a list
+(apply + 1 2 (list 3))			; 6
+(apply equal? (list 1 2 3) (list (list 1 2 3))) ; #t
+
+(apply * 1 2 3 4 5 (cons 6 nil))	; 720

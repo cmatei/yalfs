@@ -42,7 +42,8 @@ extern object lisp_read(FILE *in);
 extern object lisp_eval(object exp, object env);
 extern void   lisp_print(FILE *out, object exp);
 
-extern object lisp_apply(object proc, object args);
+/* a fake */
+extern object lisp_apply(object args);
 
 extern object setup_environment();
 

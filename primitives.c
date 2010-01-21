@@ -1377,6 +1377,7 @@ static struct {
 	/* Control features */
 
 	{ "procedure?",    lisp_procedurep                },
+	{ "apply",         lisp_apply                     },
 
 	{ NULL, NULL }
 };

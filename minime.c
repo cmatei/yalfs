@@ -291,6 +291,56 @@ static object list_of_values(object exps, object env)
 		    list_of_values(rest_operands(exps), env));
 }
 
+static object list_of_apply_values(object exps, object env)
+{
+	object head = nil, tail = nil;
+	object o;
+
+	if (is_null(exps))
+		return nil;
+
+	while (!is_last_exp(exps)) {
+
+		o = cons(lisp_eval(first_operand(exps), env), nil);
+
+		if (head == nil) {
+			head = tail = o;
+		} else {
+			set_cdr(tail, o);
+			tail = cdr(tail);
+		}
+
+		exps = cdr(exps);
+	}
+
+	if (!is_null(exps)) {
+		o = lisp_eval(first_operand(exps), env);
+
+		if (!is_list(o))
+			error("Last argument must be a list -- APPLY", o);
+
+		if (head == nil)
+			head = o;
+		else
+			set_cdr(tail, o);
+	}
+
+	return head;
+}
+
+/* this is never called */
+object lisp_apply(object args)
+{
+	fprintf(stderr, "internal error\n");
+	exit(1);
+}
+
+static int is_apply_primitive(object proc)
+{
+	return (is_primitive(proc) &&
+		primitive_implementation(proc) == lisp_apply);
+}
+
 #define is_breakpoint(exp) is_tagged(exp, _break)
 static void breakpoint()
 {
@@ -299,7 +349,6 @@ static void breakpoint()
 
 object lisp_eval(object exp, object env)
 {
-	object ret = nil;
 	object actions;
 	object proc, args;
 
@@ -307,22 +356,22 @@ tail_call:
 
 	/* self evaluating */
 	if (is_self_evaluating(exp)) {
-		ret = exp;
+		return exp;
 	}
 	/* variables */
 	else if (is_variable(exp)) {
-		ret = lookup_variable_value(exp, env);
+		return lookup_variable_value(exp, env);
 	}
 	/* quote */
 	else if (is_quoted(exp)) {
-		ret = text_of_quotation(exp);
+		return text_of_quotation(exp);
 	}
 	/* assignment */
 	else if (is_assignment(exp)) {
 		set_variable_value(assignment_variable(exp),
 				   lisp_eval(assignment_value(exp), env),
 				   env);
-		ret = assignment_variable(exp);
+		return assignment_variable(exp);
 	}
 	/* definition */
 	else if (is_definition(exp)) {
@@ -330,7 +379,7 @@ tail_call:
 				lisp_eval(definition_value(exp), env),
 				env);
 
-		ret = definition_variable(exp);
+		return definition_variable(exp);
 	}
 	/* if, tail recursive */
 	else if (is_if(exp)) {
@@ -342,7 +391,7 @@ tail_call:
 	}
 	/* lambda */
 	else if (is_lambda(exp)) {
-		ret = make_procedure(lambda_parameters(exp),
+		return make_procedure(lambda_parameters(exp),
 				     lambda_body(exp),
 				     env);
 	}
@@ -363,7 +412,7 @@ tail_call:
 			actions = rest_exps(actions);
 		}
 
-		ret = nil;
+		return nil;
 	}
 	/* cond */
 	else if (is_cond(exp)) {
@@ -372,20 +421,32 @@ tail_call:
 	}
 	/* breakpoint hook */
 	else if (is_breakpoint(exp)) {
-		ret = nil;
+		return nil;
 		breakpoint();
 	}
 	/* application */
 	else if (is_application(exp)) {
 
 		proc = lisp_eval(operator(exp), env);
-		args = list_of_values(operands(exp), env);
 
+		/* primitive apply is somewhat special */
+		if (is_apply_primitive(proc)) {
+
+			if (length(operands(exp)) < 1)
+				error("Expecting at least 1 argument -- APPLY", exp);
+
+			proc = lisp_eval(car(operands(exp)), env);
+			args = list_of_apply_values(cdr(operands(exp)), env);
+		}
+		else {
+			args = list_of_values(operands(exp), env);
+		}
 
 		if (is_primitive(proc)) {
-			ret = apply_primitive(proc, args);
+			return apply_primitive(proc, args);
 		}
 		else if (is_procedure(proc)) {
+
 			exp = sequence_to_exp(procedure_body(proc));
 			env = extend_environment(procedure_parameters(proc),
 						 args,
@@ -401,7 +462,8 @@ tail_call:
 	else
 		error("Unknown expression type -- EVAL", exp);
 
-	return ret;
+	/* not reached */
+	return nil;
 }
 
 void repl(object env)
