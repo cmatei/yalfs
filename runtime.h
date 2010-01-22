@@ -535,7 +535,7 @@ static inline void set_port_closed(object o)
 	set_port_flags(o, PORT_FLAG_CLOSED | get_port_flags(o));
 }
 
-static FILE *port_implementation(object o)
+static inline FILE *port_implementation(object o)
 {
 #if SAFETY
 	if (!is_port(o))

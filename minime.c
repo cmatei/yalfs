@@ -8,11 +8,7 @@
 
 #include "minime.h"
 
-static void check_sanity();
-
 /* these should be packed somewhere */
-
-FILE *input_stream, *output_stream, *error_stream;
 
 object nil;				     /* empty list */
 object user_environment;		     /* user-initial-environment */
@@ -27,26 +23,18 @@ object _case, _let, _letx, _letrec, _do, _delay, _quasiquote;
 object _else, _implies, _define, _unquote, _unquote_splicing;
 
 object end_of_file;
-object current_input_port, current_output_port;
+
+object current_input_port;
+object current_output_port;
+object current_error_port;
 
 object _break;
+object result_prompt;
 
 /*----------------------------------*/
 
 
-static jmp_buf err_jump;
-object error(char *msg, object o)
-{
-	fprintf(output_stream, "%s, object %p ", msg, o);
-
-	if (is_symbol(o))
-		lisp_print(output_stream, o);
-
-	fprintf(output_stream, "\n");
-
-	longjmp(err_jump, 1);
-	return nil; /* not reached */
-}
+jmp_buf err_jump;
 
 static int is_tagged(object exp, object tag)
 {
@@ -471,13 +459,13 @@ void repl(object env)
 {
 	object exp, val;
 
-	while ((exp = lisp_read(stdin)) != end_of_file) {
+	while ((exp = io_read(current_input_port)) != end_of_file) {
+
 		val = lisp_eval(exp, env);
 
-		fprintf(output_stream, "=> ");
-		lisp_print(stdout, val);
-		fprintf(output_stream, "\n");
-		fflush(output_stream);
+		io_display(result_prompt, current_output_port);
+		io_write(val, current_output_port);
+		io_newline(current_output_port);
 	}
 }
 
@@ -499,18 +487,7 @@ object eval_string(char *str, object env)
 
 int main(int argc, char **argv)
 {
-	input_stream = stdin;
-	output_stream = stdout;
-	error_stream = stderr;
-
 	runtime_init();
-
-	if (setjmp(err_jump)) {
-		printf("Sanity check failed!\n");
-		exit(1);
-	} else {
-		check_sanity();
-	}
 
 restart:
 	if (setjmp(err_jump)) {
@@ -525,6 +502,7 @@ restart:
 }
 
 
+#if 0
 static void check_sanity()
 {
 	object o, o1;
@@ -586,8 +564,6 @@ static void check_sanity()
 	assert(string_equal(symbol_string(make_symbol("foo", 3)),
 			    make_string_c("foo", 3)));
 
-#if SAFETY
-	/* this should throw an error when safety is on */
-//	car(make_fixnum(10));
-#endif
 }
+
+#endif

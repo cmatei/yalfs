@@ -1303,6 +1303,23 @@ object lisp_close_output_port(object args)
 	return unspecified;
 }
 
+object lisp_newline(object args)
+{
+	object port = current_output_port;
+	long nargs;
+
+	nargs = length(args);
+	if (nargs > 1)
+		error("Expecting at most 1 argument -- newline", args);
+
+	port = car(args);
+	if (!is_output_port(port))
+		error("Expecting an output port -- newline", port);
+
+	io_newline(port);
+
+	return unspecified;
+}
 
 #define pair_fun_def(X) { #X, lisp_##X }
 
@@ -1502,6 +1519,10 @@ static struct {
 
 	{ "close-input-port",    lisp_close_input_port    },
 	{ "close-output-port",   lisp_close_output_port   },
+
+//	{ "write",         lisp_write                     },
+//	{ "display",       lisp_display                   },
+//	{ "newline",       lisp_newline                   },
 
 
 	{ NULL, NULL }

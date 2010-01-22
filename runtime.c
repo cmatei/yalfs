@@ -109,7 +109,7 @@ object cons(object car_value, object cdr_value)
 object safe_car(object o)
 {
 	if (!is_pair(o))
-		return error("Object is not a pair -- CAR", o);
+		error("Object is not a pair -- CAR", o);
 
 	return fast_car(o);
 }
@@ -117,7 +117,7 @@ object safe_car(object o)
 object safe_cdr(object o)
 {
 	if (!is_pair(o))
-		return error("Object is not a pair -- CDR", o);
+		error("Object is not a pair -- CDR", o);
 
 	return fast_cdr(o);
 }
@@ -182,8 +182,12 @@ void runtime_init()
 	/* uses nil */
 	symbol_table_init();
 
-	current_input_port  = make_port(stdin, PORT_TYPE_INPUT);
+	current_input_port  = make_port(stdin,  PORT_TYPE_INPUT);
 	current_output_port = make_port(stdout, PORT_TYPE_OUTPUT);
+//	current_error_port  = make_port(stderr, PORT_TYPE_OUTPUT);
+	current_error_port  = current_output_port;
+
+	result_prompt = make_string_c("=> ", 3);
 
 	/* expression keywords */
 	_quote            = make_symbol_c("quote");

@@ -4,9 +4,15 @@
 FILE *open_file(char *filename, char *mode);
 int   close_file(FILE *file);
 
-int peek_char(FILE *in);
-int read_char(FILE *in);
+/* Input */
+extern object io_read(object port);
+extern object io_read_char(object port);
+extern object io_peek_char(object port);
 
-int write_char(int c, FILE *out);
+/* Output */
+extern void   io_write(object obj, object port);
+extern void   io_display(object obj, object port);
+extern void   io_newline(object port);
+extern void   io_write_char(object chr, object port);
 
 #endif

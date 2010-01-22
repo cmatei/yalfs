@@ -84,7 +84,7 @@ void symbol_table_stats()
 		nel = length(symbol_table.buckets[i]);
 		if (nel > 1) {
 			fprintf(stderr, "    bucket %lu: %lu entries ", i, nel);
-			lisp_print(stderr, symbol_table.buckets[i]);
+			lisp_print(symbol_table.buckets[i], stderr);
 			fprintf(stderr, "\n");
 		}
 

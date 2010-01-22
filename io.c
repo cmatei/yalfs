@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <setjmp.h>
 
 #include <assert.h>
 
@@ -15,22 +16,11 @@ FILE *open_file(char *filename, char *mode)
 	return fopen(filename, mode);
 }
 
-int peek_char(FILE *in)
+static int peek_char(FILE *in)
 {
 	int c = fgetc(in);
 	ungetc(c, in);
 	return c;
-}
-
-int read_char(FILE *in)
-{
-	int c = fgetc(in);
-	return c;
-}
-
-int write_char(int c, FILE *out)
-{
-	return fputc(c, out);
 }
 
 int close_file(FILE *file)
@@ -454,27 +444,30 @@ object lisp_read(FILE *in)
 
 
 
-static void lisp_print_pair(FILE *out, object pair)
+
+static void write_pair(object pair, FILE *out)
 {
 	object car_obj, cdr_obj;
 
 	car_obj = car(pair);
 	cdr_obj = cdr(pair);
 
-	lisp_print(out, car_obj);
+	lisp_print(car_obj, out);
 
 	if (is_pair(cdr_obj)) {
 		fprintf(out, " ");
-		lisp_print_pair(out, cdr_obj);
-	} else if (is_null(cdr_obj)) {
+		write_pair(cdr_obj, out);
+	}
+	else if (is_null(cdr_obj)) {
 		return;
-	} else {
+	}
+	else {
 		fprintf(out, " . ");
-		lisp_print(out, cdr_obj);
+		lisp_print(cdr_obj, out);
 	}
 }
 
-void lisp_print(FILE *out, object exp)
+void lisp_print(object exp, FILE *out)
 {
 	unsigned long i, len;
 	char c;
@@ -507,7 +500,7 @@ void lisp_print(FILE *out, object exp)
 	case T_PAIR:
 		if (is_finite_list(exp, NULL)) {
 			fprintf(out, "(");
-			lisp_print_pair(out, exp);
+			write_pair(exp, out);
 			fprintf(out, ")");
 		} else {
 			fprintf(out, "#<unprintable-structure>");
@@ -557,7 +550,7 @@ void lisp_print(FILE *out, object exp)
 
 	case T_PROCEDURE:
 		fprintf(out, "#<procedure ");
-		lisp_print(out, procedure_parameters(exp));
+		lisp_print(procedure_parameters(exp), out);
 		fprintf(out, ">");
 		break;
 
@@ -571,4 +564,110 @@ void lisp_print(FILE *out, object exp)
 			port_implementation(exp));
 		break;
 	}
+}
+
+static void display_pair(object pair, FILE *out)
+{
+	object car_obj, cdr_obj;
+
+	car_obj = car(pair);
+	cdr_obj = cdr(pair);
+
+	lisp_display(car_obj, out);
+
+	if (is_pair(cdr_obj)) {
+		fprintf(out, " ");
+		display_pair(cdr_obj, out);
+	}
+	else if (is_null(cdr_obj)) {
+		return;
+	}
+	else {
+		fprintf(out, " . ");
+		lisp_display(cdr_obj, out);
+	}
+
+}
+
+void lisp_display(object exp, FILE *out)
+{
+
+	switch (type_of(exp)) {
+
+	case T_STRING:
+		fwrite(string_value(exp), 1, string_length(exp), out);
+		break;
+
+	case T_CHARACTER:
+		fputc(character_value(exp), out);
+		break;
+
+	case T_PAIR:
+		if (is_finite_list(exp, NULL)) {
+			fprintf(out, "(");
+			display_pair(exp, out);
+			fprintf(out, ")");
+		} else {
+			fprintf(out, "#<unprintable-structure>");
+		}
+		break;
+
+	default:
+		lisp_print(exp, out);
+		break;
+	}
+}
+
+
+object io_read(object port)
+{
+	return lisp_read(port_implementation(port));
+}
+
+object io_read_char(object port)
+{
+	int c = fgetc(port_implementation(port));
+
+	return (c == EOF) ? end_of_file : make_character(c);
+}
+
+object io_peek_char(object port)
+{
+	int c = peek_char(port_implementation(port));
+
+	return (c == EOF) ? end_of_file : make_character(c);
+}
+
+void io_write(object obj, object port)
+{
+	lisp_print(obj, port_implementation(port));
+}
+
+void io_display(object obj, object port)
+{
+	lisp_display(obj, port_implementation(port));
+}
+
+void io_newline(object port)
+{
+	fputc('\n', port_implementation(port));
+	fflush(port_implementation(port));
+}
+
+void io_write_char(object chr, object port)
+{
+	fputc(character_value(chr), port_implementation(port));
+}
+
+
+extern jmp_buf err_jump;
+void error(char *msg, object o)
+{
+	fprintf(port_implementation(current_error_port), "%s, ", msg);
+
+	io_write(o, current_error_port);
+
+	io_newline(current_error_port);
+
+	longjmp(err_jump, 1);
 }
