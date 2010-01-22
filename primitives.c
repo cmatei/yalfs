@@ -1227,6 +1227,82 @@ object lisp_current_output_port(object args)
 	return current_output_port;
 }
 
+static object open_file_as_port(object filename, unsigned long port_type)
+{
+	char *name;
+	unsigned long namelen;
+	FILE *f;
+
+	namelen = string_length(filename);
+
+	name = xmalloc(namelen + 1);
+	memcpy(name, string_value(filename), namelen);
+	name[namelen] = 0;
+
+	if ((f = open_file(name, (port_type == PORT_TYPE_INPUT) ? "r" : "w+")) == NULL) {
+		xfree(name);
+		error("Cannot open file -- open-file-as-port", filename);
+	}
+
+	xfree(name);
+
+	return make_port(f, port_type);
+}
+
+object lisp_open_input_file(object args)
+{
+	check_args(1, args, "open-input-file");
+	if (!is_string(car(args)))
+		error("Expecting a string -- open-input-file", car(args));
+
+	return open_file_as_port(car(args), PORT_TYPE_INPUT);
+}
+
+object lisp_open_output_file(object args)
+{
+	check_args(1, args, "open-output-file");
+	if (!is_string(car(args)))
+		error("Expecting a string -- open-output-file", car(args));
+
+	return open_file_as_port(car(args), PORT_TYPE_OUTPUT);
+}
+
+static void close_port(object port)
+{
+	if (!is_port_closed(port)) {
+		close_file(port_implementation(port));
+		set_port_closed(port);
+	}
+}
+
+object lisp_close_input_port(object args)
+{
+	object port;
+	check_args(1, args, "close-input-port");
+
+	port = car(args);
+	if (!is_input_port(port))
+		error("Expecting an input port -- close-input-port", port);
+
+	close_port(port);
+
+	return unspecified;
+}
+
+object lisp_close_output_port(object args)
+{
+	object port;
+	check_args(1, args, "close-output-port");
+
+	port = car(args);
+	if (!is_output_port(port))
+		error("Expecting an output port -- close-output-port", port);
+
+	close_port(port);
+
+	return unspecified;
+}
+
 
 #define pair_fun_def(X) { #X, lisp_##X }
 
@@ -1418,8 +1494,14 @@ static struct {
 	{ "input-port?",   lisp_input_portp               },
 	{ "output-port?",  lisp_output_portp              },
 
-	{ "current-input-port", lisp_current_input_port   },
+	{ "current-input-port",  lisp_current_input_port  },
 	{ "current-output-port", lisp_current_output_port },
+
+	{ "open-input-file",     lisp_open_input_file     },
+	{ "open-output-file",    lisp_open_output_file    },
+
+	{ "close-input-port",    lisp_close_input_port    },
+	{ "close-output-port",   lisp_close_output_port   },
 
 
 	{ NULL, NULL }

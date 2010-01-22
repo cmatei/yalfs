@@ -10,6 +10,11 @@
 #define STRING_MIN_BUFFER         128
 #define STRING_REALLOC_INCREMENT 1024
 
+FILE *open_file(char *filename, char *mode)
+{
+	return fopen(filename, mode);
+}
+
 int peek_char(FILE *in)
 {
 	int c = fgetc(in);
@@ -21,6 +26,16 @@ int read_char(FILE *in)
 {
 	int c = fgetc(in);
 	return c;
+}
+
+int write_char(int c, FILE *out)
+{
+	return fputc(c, out);
+}
+
+int close_file(FILE *file)
+{
+	return fclose(file);
 }
 
 static void skip_whitespace(FILE *in)

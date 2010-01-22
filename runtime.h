@@ -488,6 +488,8 @@ static inline int is_port(object o)
 	return ((indirect & PORT_MASK) == PORT_TAG);
 }
 
+extern object make_port(FILE *in, unsigned long port_type);
+
 static inline int is_input_port(object o)
 {
 #if SAFETY
@@ -521,6 +523,18 @@ static inline void set_port_flags(object o, unsigned long flags)
 	*flagsptr = (*flagsptr & ~PORT_FLAGS_MASK) | (flags & PORT_FLAGS_MASK);
 }
 
+/* unsafe */
+static inline int is_port_closed(object o)
+{
+	return get_port_flags(o) & PORT_FLAG_CLOSED;
+}
+
+/* unsafe */
+static inline void set_port_closed(object o)
+{
+	set_port_flags(o, PORT_FLAG_CLOSED | get_port_flags(o));
+}
+
 static FILE *port_implementation(object o)
 {
 #if SAFETY
@@ -530,10 +544,6 @@ static FILE *port_implementation(object o)
 
 	return (FILE *) ((unsigned long *) ((unsigned long) o - INDIRECT_TAG)) [2];
 }
-
-
-extern object make_input_port(FILE *in);
-extern object make_output_port(FILE *out);
 
 #define END_OF_FILE_TAG  0x1FUL
 #define END_OF_FILE_MASK 0xFFUL

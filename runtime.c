@@ -24,20 +24,11 @@ static inline object make_the_eof()
 	return (object) ((unsigned long) (freeptr - 1) | INDIRECT_TAG);
 }
 
-object make_input_port(FILE *in)
+object make_port(FILE *in, unsigned long port_type)
 {
 	*freeptr++ = PORT_TAG;
-	*freeptr++ = PORT_TYPE_INPUT;
+	*freeptr++ = (port_type & PORT_TYPE_MASK);
 	*freeptr++ = (unsigned long) in;
-
-	return (object) ((unsigned long) (freeptr - 3) | INDIRECT_TAG);
-}
-
-object make_output_port(FILE *out)
-{
-	*freeptr++ = PORT_TAG;
-	*freeptr++ = PORT_TYPE_OUTPUT;
-	*freeptr++ = (unsigned long) out;
 
 	return (object) ((unsigned long) (freeptr - 3) | INDIRECT_TAG);
 }
@@ -191,8 +182,8 @@ void runtime_init()
 	/* uses nil */
 	symbol_table_init();
 
-	current_input_port  = make_input_port(stdin);
-	current_output_port = make_output_port(stdout);
+	current_input_port  = make_port(stdin, PORT_TYPE_INPUT);
+	current_output_port = make_port(stdout, PORT_TYPE_OUTPUT);
 
 	/* expression keywords */
 	_quote            = make_symbol_c("quote");
