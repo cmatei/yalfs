@@ -1196,6 +1196,12 @@ object impl_procedurep(object args)
 	return boolean(is_anykind_procedure(car(args)));
 }
 
+object impl_interaction_environment(object args)
+{
+	check_args(0, args, "interaction-environment");
+	return user_environment;
+}
+
 
 object impl_eofp(object args)
 {
@@ -1227,35 +1233,13 @@ object impl_current_output_port(object args)
 	return current_output_port;
 }
 
-static object open_file_as_port(object filename, unsigned long port_type)
-{
-	char *name;
-	unsigned long namelen;
-	FILE *f;
-
-	namelen = string_length(filename);
-
-	name = xmalloc(namelen + 1);
-	memcpy(name, string_value(filename), namelen);
-	name[namelen] = 0;
-
-	if ((f = open_file(name, (port_type == PORT_TYPE_INPUT) ? "r" : "w+")) == NULL) {
-		xfree(name);
-		error("Cannot open file -- open-file-as-port", filename);
-	}
-
-	xfree(name);
-
-	return make_port(f, port_type);
-}
-
 object impl_open_input_file(object args)
 {
 	check_args(1, args, "open-input-file");
 	if (!is_string(car(args)))
 		error("Expecting a string -- open-input-file", car(args));
 
-	return open_file_as_port(car(args), PORT_TYPE_INPUT);
+	return io_file_as_port(car(args), PORT_TYPE_INPUT);
 }
 
 object impl_open_output_file(object args)
@@ -1264,7 +1248,7 @@ object impl_open_output_file(object args)
 	if (!is_string(car(args)))
 		error("Expecting a string -- open-output-file", car(args));
 
-	return open_file_as_port(car(args), PORT_TYPE_OUTPUT);
+	return io_file_as_port(car(args), PORT_TYPE_OUTPUT);
 }
 
 static void close_port(object port)
@@ -1437,6 +1421,17 @@ object impl_write_char(object args)
 		error("Expecting an output port -- write-char", port);
 
 	io_write_char(car(args), port);
+
+	return unspecified;
+}
+
+object impl_load(object args)
+{
+	check_args(1, args, "load");
+	if (!is_string(car(args)))
+		error("Expecting a string -- load", car(args));
+
+	io_load(car(args));
 
 	return unspecified;
 }
@@ -1622,17 +1617,27 @@ static struct {
 
 	{ "procedure?",    impl_procedurep                },
 	{ "apply",         lisp_apply                     },
+//	{ "map",           impl_map                       },
+//	{ "for-each",      impl_for_each                  },
+//	{ "force",         impl_force                     },
+//      { "delay",         impl_delay                     },
+//	{ "eval",          impl_eval                      },
 
+	{ "interaction-environment", impl_interaction_environment },
 
 	/* I/O */
 
-	{ "eof-object?",   impl_eofp                      },
+//	{ "call-with-input-file",  impl_call_w_input_file  },
+//	{ "call-with-output-file", impl_call_w_output_file },
 
 	{ "input-port?",   impl_input_portp               },
 	{ "output-port?",  impl_output_portp              },
 
 	{ "current-input-port",  impl_current_input_port  },
 	{ "current-output-port", impl_current_output_port },
+
+//	{ "with-input-from-file", impl_w_input_file       },
+//	{ "with-output-to-file",  impl_w_output_file      },
 
 	{ "open-input-file",     impl_open_input_file     },
 	{ "open-output-file",    impl_open_output_file    },
@@ -1643,11 +1648,19 @@ static struct {
 	{ "read",          impl_read                      },
 	{ "read-char",     impl_read_char                 },
 	{ "peek-char",     impl_peek_char                 },
+
+	{ "eof-object?",   impl_eofp                      },
+//	{ "char-ready?",   impl_char_readyp               },
+
 	{ "write",         impl_write                     },
 	{ "display",       impl_display                   },
 	{ "newline",       impl_newline                   },
 	{ "write-char",    impl_write_char                },
 
+
+	/* System interface */
+
+	{ "load",          impl_load                      },
 
 	{ NULL, NULL }
 };

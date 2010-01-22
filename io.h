@@ -4,6 +4,8 @@
 FILE *open_file(char *filename, char *mode);
 int   close_file(FILE *file);
 
+
+
 /* Input */
 extern object io_read(object port);
 extern object io_read_char(object port);
@@ -14,5 +16,9 @@ extern void   io_write(object obj, object port);
 extern void   io_display(object obj, object port);
 extern void   io_newline(object port);
 extern void   io_write_char(object chr, object port);
+
+/* System interface */
+extern object io_file_as_port(object filename, unsigned long port_type);
+extern void   io_load(object filename);
 
 #endif

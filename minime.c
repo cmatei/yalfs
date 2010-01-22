@@ -410,8 +410,8 @@ tail_call:
 	}
 	/* breakpoint hook */
 	else if (is_breakpoint(exp)) {
-		return nil;
 		breakpoint();
+		return nil;
 	}
 	/* application */
 	else if (is_application(exp)) {
@@ -455,34 +455,18 @@ tail_call:
 	return nil;
 }
 
-void repl(object env)
+void lisp_repl(object input_port, object output_port, object env)
 {
 	object exp, val;
 
-	while ((exp = io_read(current_input_port)) != end_of_file) {
+	while ((exp = io_read(input_port)) != end_of_file) {
 
 		val = lisp_eval(exp, env);
 
-		io_display(result_prompt, current_output_port);
-		io_write(val, current_output_port);
-		io_newline(current_output_port);
+		io_display(result_prompt, output_port);
+		io_write(val, output_port);
+		io_newline(output_port);
 	}
-}
-
-object eval_string(char *str, object env)
-{
-	object exp, val;
-	FILE *strstream;
-
-	if ((strstream = fmemopen(str, strlen(str), "r")) == NULL)
-		return nil;
-
-	val = nil;
-	while ((exp = lisp_read(strstream)) != end_of_file) {
-		val = lisp_eval(exp, env);
-	}
-
-	return val;
 }
 
 int main(int argc, char **argv)
@@ -494,7 +478,7 @@ restart:
 		goto restart;
 	}
 
-	repl(user_environment);
+	lisp_repl(current_input_port, current_output_port, user_environment);
 
 	runtime_stats();
 

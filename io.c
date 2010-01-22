@@ -28,6 +28,7 @@ int close_file(FILE *file)
 	return fclose(file);
 }
 
+
 static void skip_whitespace(FILE *in)
 {
 	int c;
@@ -619,6 +620,28 @@ void lisp_display(object exp, FILE *out)
 }
 
 
+object io_file_as_port(object filename, unsigned long port_type)
+{
+	char *name;
+	unsigned long namelen;
+	FILE *f;
+
+	namelen = string_length(filename);
+
+	name = xmalloc(namelen + 1);
+	memcpy(name, string_value(filename), namelen);
+	name[namelen] = 0;
+
+	if ((f = open_file(name, (port_type == PORT_TYPE_INPUT) ? "r" : "w+")) == NULL) {
+		xfree(name);
+		error("Cannot open file -- io-file-as-port", filename);
+	}
+
+	xfree(name);
+
+	return make_port(f, port_type);
+}
+
 object io_read(object port)
 {
 	return lisp_read(port_implementation(port));
@@ -659,6 +682,13 @@ void io_write_char(object chr, object port)
 	fputc(character_value(chr), port_implementation(port));
 }
 
+void io_load(object filename)
+{
+	object in;
+
+	in = io_file_as_port(filename, PORT_TYPE_INPUT);
+	lisp_repl(in, current_output_port, user_environment);
+}
 
 extern jmp_buf err_jump;
 void error(char *msg, object o)
