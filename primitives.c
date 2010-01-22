@@ -94,15 +94,15 @@ static int is_equal(object o1, object o2)
 
 /* Numerical operations */
 
-object lisp_integerp(object args)
+object impl_integerp(object args)
 {
 	check_args(1, args, "integer?");
 	return boolean(is_fixnum(car(args)));
 }
 
-object lisp_numberp(object args)
+object impl_numberp(object args)
 {
-	return lisp_integerp(args);
+	return impl_integerp(args);
 }
 
 #define number_fun(LISPNAME, CNAME, OP)                                 \
@@ -127,13 +127,13 @@ object CNAME(object args)                                               \
         return the_truth;                                               \
 }
 
-number_fun("=",  lisp_number_equal,         ==)
-number_fun("<",  lisp_number_increasing,     <)
-number_fun(">",  lisp_number_decreasing,     >)
-number_fun("<=", lisp_number_nondecreasing, <=)
-number_fun(">=", lisp_number_nonincreasing, >=)
+number_fun("=",  impl_number_equal,         ==)
+number_fun("<",  impl_number_increasing,     <)
+number_fun(">",  impl_number_decreasing,     >)
+number_fun("<=", impl_number_nondecreasing, <=)
+number_fun(">=", impl_number_nonincreasing, >=)
 
-object lisp_zerop(object args)
+object impl_zerop(object args)
 {
 	check_args(1, args, "zero?");
 	if (!is_fixnum(car(args)))
@@ -142,7 +142,7 @@ object lisp_zerop(object args)
 	return boolean(fixnum_value(car(args)) == 0);
 }
 
-object lisp_positivep(object args)
+object impl_positivep(object args)
 {
 	check_args(1, args, "positive?");
 	if (!is_fixnum(car(args)))
@@ -151,7 +151,7 @@ object lisp_positivep(object args)
 	return boolean(fixnum_value(car(args)) > 0);
 }
 
-object lisp_negativep(object args)
+object impl_negativep(object args)
 {
 	check_args(1, args, "negative?");
 	if (!is_fixnum(car(args)))
@@ -160,7 +160,7 @@ object lisp_negativep(object args)
 	return boolean(fixnum_value(car(args)) < 0);
 }
 
-object lisp_oddp(object args)
+object impl_oddp(object args)
 {
 	check_args(1, args, "oddp?");
 	if (!is_fixnum(car(args)))
@@ -169,7 +169,7 @@ object lisp_oddp(object args)
 	return boolean((fixnum_value(car(args)) % 2) != 0);
 }
 
-object lisp_evenp(object args)
+object impl_evenp(object args)
 {
 	check_args(1, args, "evenp?");
 	if (!is_fixnum(car(args)))
@@ -178,7 +178,7 @@ object lisp_evenp(object args)
 	return boolean((fixnum_value(car(args)) % 2) == 0);
 }
 
-object lisp_max(object args)
+object impl_max(object args)
 {
 	object max = nil;
 
@@ -198,7 +198,7 @@ object lisp_max(object args)
 	return max;
 }
 
-object lisp_min(object args)
+object impl_min(object args)
 {
 	object min = nil;
 
@@ -219,7 +219,7 @@ object lisp_min(object args)
 }
 
 
-object lisp_plus(object args)
+object impl_plus(object args)
 {
 	long initial = 0;
 
@@ -234,7 +234,7 @@ object lisp_plus(object args)
 	return make_fixnum(initial);
 }
 
-object lisp_multiply(object args)
+object impl_multiply(object args)
 {
 	long initial = 1;
 
@@ -249,7 +249,7 @@ object lisp_multiply(object args)
 	return make_fixnum(initial);
 }
 
-object lisp_minus(object args)
+object impl_minus(object args)
 {
 	long initial = 0;
 	long nargs = length(args);
@@ -277,7 +277,7 @@ object lisp_minus(object args)
 }
 
 
-object lisp_divide(object args)
+object impl_divide(object args)
 {
 	long initial = 1;
 	long nargs = length(args);
@@ -307,7 +307,7 @@ object lisp_divide(object args)
 	return make_fixnum(initial);
 }
 
-object lisp_abs(object args)
+object impl_abs(object args)
 {
 	check_args(1, args, "abs");
 	if (!is_fixnum(car(args)))
@@ -338,12 +338,12 @@ object CNAME(object args)                                               \
 }
 
 /* there is some implementation-defined variation in C here ... */
-number_idiv_fun("quotient",  lisp_quotient,  (n1 / n2))
-number_idiv_fun("remainder", lisp_remainder, (n1 % n2))
-number_idiv_fun("modulo",    lisp_modulo,    ((n1 % n2 + n2) % n2))
+number_idiv_fun("quotient",  impl_quotient,  (n1 / n2))
+number_idiv_fun("remainder", impl_remainder, (n1 % n2))
+number_idiv_fun("modulo",    impl_modulo,    ((n1 % n2 + n2) % n2))
 
 
-object lisp_number_string(object args)
+object impl_number_string(object args)
 {
 	char buffer[64];
 	long nargs, radix = 10;
@@ -368,7 +368,7 @@ object lisp_number_string(object args)
 	return make_string_c(buffer, strlen(buffer));
 }
 
-object lisp_string_number(object args)
+object impl_string_number(object args)
 {
 	char *str, *endptr;
 	long nargs, radix = 10;
@@ -411,7 +411,7 @@ object lisp_string_number(object args)
 
 /* Booleans */
 
-object lisp_not(object args)
+object impl_not(object args)
 {
 	check_args(1, args, "not");
 
@@ -419,7 +419,7 @@ object lisp_not(object args)
 	return (car(args) == the_falsity) ? the_truth : the_falsity;
 }
 
-object lisp_booleanp(object args)
+object impl_booleanp(object args)
 {
 	check_args(1, args, "boolean?");
 
@@ -429,14 +429,14 @@ object lisp_booleanp(object args)
 
 /* Pairs and lists */
 
-object lisp_pairp(object args)
+object impl_pairp(object args)
 {
 	check_args(1, args, "pair?");
 
 	return boolean(is_pair(car(args)));
 }
 
-object lisp_cons(object args)
+object impl_cons(object args)
 {
 	check_args(2, args, "cons");
 	return cons(car(args), cadr(args));
@@ -445,7 +445,7 @@ object lisp_cons(object args)
 
 
 #define pair_fun(X)					\
-object lisp_##X (object args)				\
+object impl_##X (object args)				\
 {							\
 	check_args(1, args, #X );			\
 	if (!is_pair(car(args)))			\
@@ -485,7 +485,7 @@ pair_fun(cddadr)
 pair_fun(cdddar)
 pair_fun(cddddr)
 
-object lisp_set_car(object args)
+object impl_set_car(object args)
 {
 	check_args(2, args, "set-car!");
 
@@ -496,7 +496,7 @@ object lisp_set_car(object args)
 	return unspecified;
 }
 
-object lisp_set_cdr(object args)
+object impl_set_cdr(object args)
 {
 	check_args(2, args, "set-cdr!");
 
@@ -507,19 +507,19 @@ object lisp_set_cdr(object args)
 	return unspecified;
 }
 
-object lisp_nullp(object args)
+object impl_nullp(object args)
 {
 	check_args(1, args, "null?");
 	return boolean(is_null(car(args)));
 }
 
-object lisp_listp(object args)
+object impl_listp(object args)
 {
 	check_args(1, args, "list?");
 	return boolean(is_list(car(args)));
 }
 
-object lisp_list(object args)
+object impl_list(object args)
 {
 	object head = nil, tail = nil;
 
@@ -538,7 +538,7 @@ object lisp_list(object args)
 	return head;
 }
 
-object lisp_length(object args)
+object impl_length(object args)
 {
 	check_args(1, args, "length");
 
@@ -548,7 +548,7 @@ object lisp_length(object args)
 	return make_fixnum(length(car(args)));
 }
 
-object lisp_append(object args)
+object impl_append(object args)
 {
 	object head = nil, tail = nil, lst;
 
@@ -584,7 +584,7 @@ object lisp_append(object args)
 	return head;
 }
 
-object lisp_reverse(object args)
+object impl_reverse(object args)
 {
 	object tail = nil;
 	object lst;
@@ -606,7 +606,7 @@ object lisp_reverse(object args)
 	return cons(car(lst), tail);
 }
 
-object lisp_list_tail(object args)
+object impl_list_tail(object args)
 {
 	object lst;
 	long k;
@@ -634,11 +634,11 @@ object lisp_list_tail(object args)
 	return lst;
 }
 
-object lisp_list_ref(object args)
+object impl_list_ref(object args)
 {
 	object lst;
 
-	lst = lisp_list_tail(args);
+	lst = impl_list_tail(args);
 	if (is_null(lst))
 		error("List is empty -- list-ref", car(args));
 
@@ -667,9 +667,9 @@ object CNAME(object args)		                        \
 	return the_falsity;					\
 }
 
-member_fun("memq",   lisp_memq,   is_eq)
-member_fun("memv",   lisp_memv,   is_eqv)
-member_fun("member", lisp_member, is_equal)
+member_fun("memq",   impl_memq,   is_eq)
+member_fun("memv",   impl_memv,   is_eqv)
+member_fun("member", impl_member, is_equal)
 
 #define assoc_fun(LISPNAME, CNAME, TESTFUN)	                \
 object CNAME(object args)                                       \
@@ -697,11 +697,11 @@ object CNAME(object args)                                       \
 	return the_falsity;					\
 }
 
-assoc_fun("assq",  lisp_assq,     is_eq)
-assoc_fun("assv",  lisp_assv,    is_eqv)
-assoc_fun("assoc", lisp_assoc, is_equal)
+assoc_fun("assq",  impl_assq,     is_eq)
+assoc_fun("assv",  impl_assv,    is_eqv)
+assoc_fun("assoc", impl_assoc, is_equal)
 
-object lisp_charp(object args)
+object impl_charp(object args)
 {
 	check_args(1, args, "char?");
 	return boolean(is_character(car(args)));
@@ -734,17 +734,17 @@ object CNAME(object args)                                               \
         return the_truth;                                               \
 }
 
-char_fun("char=?",     lisp_char_equal,             ==, identity)
-char_fun("char<?",     lisp_char_increasing,         <, identity)
-char_fun("char>?",     lisp_char_decreasing,         >, identity)
-char_fun("char<=?",    lisp_char_non_decreasing,    <=, identity)
-char_fun("char>=?",    lisp_char_non_increasing,    >=, identity)
+char_fun("char=?",     impl_char_equal,             ==, identity)
+char_fun("char<?",     impl_char_increasing,         <, identity)
+char_fun("char>?",     impl_char_decreasing,         >, identity)
+char_fun("char<=?",    impl_char_non_decreasing,    <=, identity)
+char_fun("char>=?",    impl_char_non_increasing,    >=, identity)
 
-char_fun("char-ci=?",  lisp_char_ci_equal,          ==, tolower)
-char_fun("char-ci<?",  lisp_char_ci_increasing,      <, tolower)
-char_fun("char-ci>?",  lisp_char_ci_decreasing,      >, tolower)
-char_fun("char-ci<=?", lisp_char_ci_non_decreasing, <=, tolower)
-char_fun("char-ci>=?", lisp_char_ci_non_increasing, >=, tolower)
+char_fun("char-ci=?",  impl_char_ci_equal,          ==, tolower)
+char_fun("char-ci<?",  impl_char_ci_increasing,      <, tolower)
+char_fun("char-ci>?",  impl_char_ci_decreasing,      >, tolower)
+char_fun("char-ci<=?", impl_char_ci_non_decreasing, <=, tolower)
+char_fun("char-ci>=?", impl_char_ci_non_increasing, >=, tolower)
 
 #define char_type_fun(LISPNAME, CNAME, TYPEFUN)                         \
 object CNAME(object args)                                               \
@@ -759,13 +759,13 @@ object CNAME(object args)                                               \
         return boolean(TYPEFUN(character_value(arg)));                  \
 }
 
-char_type_fun("char-alphabetic?", lisp_char_alphabeticp, isalpha)
-char_type_fun("char-numeric?",    lisp_char_numericp,    isdigit)
-char_type_fun("char-whitespace?", lisp_char_whitespacep, isspace)
-char_type_fun("char-upper-case?", lisp_char_uppercasep,  isupper)
-char_type_fun("char-lower-case?", lisp_char_lowercasep,  islower)
+char_type_fun("char-alphabetic?", impl_char_alphabeticp, isalpha)
+char_type_fun("char-numeric?",    impl_char_numericp,    isdigit)
+char_type_fun("char-whitespace?", impl_char_whitespacep, isspace)
+char_type_fun("char-upper-case?", impl_char_uppercasep,  isupper)
+char_type_fun("char-lower-case?", impl_char_lowercasep,  islower)
 
-object lisp_char_integer(object args)
+object impl_char_integer(object args)
 {
 	check_args(1, args, "char->integer");
 	if (!is_character(car(args)))
@@ -774,7 +774,7 @@ object lisp_char_integer(object args)
 	return make_fixnum(character_value(car(args)));
 }
 
-object lisp_integer_char(object args)
+object impl_integer_char(object args)
 {
 	check_args(1, args, "integer->char");
 	if (!is_fixnum(car(args)))
@@ -786,7 +786,7 @@ object lisp_integer_char(object args)
 	return make_character(fixnum_value(car(args)));
 }
 
-object lisp_char_upcase(object args)
+object impl_char_upcase(object args)
 {
 	check_args(1, args, "char-upcase");
 	if (!is_character(car(args)))
@@ -795,7 +795,7 @@ object lisp_char_upcase(object args)
 	return make_character(toupper(character_value(car(args))));
 }
 
-object lisp_char_downcase(object args)
+object impl_char_downcase(object args)
 {
 	check_args(1, args, "char-downcase");
 	if (!is_character(car(args)))
@@ -804,13 +804,13 @@ object lisp_char_downcase(object args)
 	return make_character(tolower(character_value(car(args))));
 }
 
-object lisp_stringp(object args)
+object impl_stringp(object args)
 {
 	check_args(1, args, "string?");
 	return boolean(is_string(car(args)));
 }
 
-object lisp_make_string(object args)
+object impl_make_string(object args)
 {
 	unsigned long nargs = length(args);
 	object o;
@@ -835,7 +835,7 @@ object lisp_make_string(object args)
 	return o;
 }
 
-object lisp_string(object args)
+object impl_string(object args)
 {
 	unsigned long nargs = length(args);
 	object o;
@@ -855,7 +855,7 @@ object lisp_string(object args)
 	return o;
 }
 
-object lisp_string_length(object args)
+object impl_string_length(object args)
 {
 	check_args(1, args, "string-length");
 	if (!is_string(car(args)))
@@ -864,7 +864,7 @@ object lisp_string_length(object args)
 	return make_fixnum(string_length(car(args)));
 }
 
-object lisp_string_ref(object args)
+object impl_string_ref(object args)
 {
 	object string, k;
 	long pos;
@@ -885,7 +885,7 @@ object lisp_string_ref(object args)
 
 }
 
-object lisp_string_set(object args)
+object impl_string_set(object args)
 {
 	object string, k, chr;
 	long pos;
@@ -965,20 +965,20 @@ object CNAME(object args)                                               \
 }
 
 
-string_fun("string=?",     lisp_string_equalp,           ==, identity)
-string_fun("string<?",     lisp_string_increasing,        <, identity)
-string_fun("string>?",     lisp_string_decreasing,        >, identity)
-string_fun("string<=?",    lisp_string_nondecreasing,    <=, identity)
-string_fun("string>=?",    lisp_string_nonincreasing,    >=, identity)
+string_fun("string=?",     impl_string_equalp,           ==, identity)
+string_fun("string<?",     impl_string_increasing,        <, identity)
+string_fun("string>?",     impl_string_decreasing,        >, identity)
+string_fun("string<=?",    impl_string_nondecreasing,    <=, identity)
+string_fun("string>=?",    impl_string_nonincreasing,    >=, identity)
 
-string_fun("string-ci=?",  lisp_string_ci_equalp,        ==, tolower)
-string_fun("string-ci<?",  lisp_string_ci_increasing,     <, tolower)
-string_fun("string-ci>?",  lisp_string_ci_decreasing,     >, tolower)
-string_fun("string-ci<=?", lisp_string_ci_nondecreasing, <=, tolower)
-string_fun("string-ci>=?", lisp_string_ci_nonincreasing, >=, tolower)
+string_fun("string-ci=?",  impl_string_ci_equalp,        ==, tolower)
+string_fun("string-ci<?",  impl_string_ci_increasing,     <, tolower)
+string_fun("string-ci>?",  impl_string_ci_decreasing,     >, tolower)
+string_fun("string-ci<=?", impl_string_ci_nondecreasing, <=, tolower)
+string_fun("string-ci>=?", impl_string_ci_nonincreasing, >=, tolower)
 
 
-object lisp_substring(object args)
+object impl_substring(object args)
 {
 	object ret;
 	long start, end;
@@ -1011,7 +1011,7 @@ object lisp_substring(object args)
 	return ret;
 }
 
-object lisp_string_append(object args)
+object impl_string_append(object args)
 {
 	object tmp = args, string;
 	unsigned long len = 0;
@@ -1042,7 +1042,7 @@ object lisp_string_append(object args)
 	return string;
 }
 
-object lisp_string_list(object args)
+object impl_string_list(object args)
 {
 	object head = nil, tail = nil;
 	unsigned char *ptr;
@@ -1066,7 +1066,7 @@ object lisp_string_list(object args)
 	return head;
 }
 
-object lisp_list_string(object args)
+object impl_list_string(object args)
 {
 	object string;
 	unsigned char *ptr;
@@ -1091,7 +1091,7 @@ object lisp_list_string(object args)
 	return string;
 }
 
-object lisp_string_copy(object args)
+object impl_string_copy(object args)
 {
 	object string;
 
@@ -1106,7 +1106,7 @@ object lisp_string_copy(object args)
 	return string;
 }
 
-object lisp_string_fill(object args)
+object impl_string_fill(object args)
 {
 	check_args(2, args, "string-fill!");
 	if (!is_string(car(args)))
@@ -1122,22 +1122,22 @@ object lisp_string_fill(object args)
 	return unspecified;
 }
 
-object lisp_symbolp(object args)
+object impl_symbolp(object args)
 {
 	check_args(1, args, "symbol?");
 	return boolean(is_symbol(car(args)));
 }
 
-object lisp_symbol_string(object args)
+object impl_symbol_string(object args)
 {
 	check_args(1, args, "symbol->string");
 	if (!is_symbol(car(args)))
 		error("Object is not a symbol -- symbol->string", car(args));
 
-	return lisp_string_copy(cons(symbol_string(car(args)), nil));
+	return impl_string_copy(cons(symbol_string(car(args)), nil));
 }
 
-object lisp_string_symbol(object args)
+object impl_string_symbol(object args)
 {
 	check_args(1, args, "string->symbol");
 	if (!is_string(car(args)))
@@ -1146,7 +1146,7 @@ object lisp_string_symbol(object args)
 	return symbol(string_value(car(args)), string_length(car(args)));
 }
 
-object lisp_eq(object args)
+object impl_eq(object args)
 {
 	object initial;
 
@@ -1167,7 +1167,7 @@ object lisp_eq(object args)
 }
 
 
-object lisp_eqv(object args)
+object impl_eqv(object args)
 {
 	check_args(2, args, "eqv?");
 
@@ -1176,7 +1176,7 @@ object lisp_eqv(object args)
 
 
 
-object lisp_equalp(object args)
+object impl_equalp(object args)
 {
 	check_args(2, args, "equal?");
 
@@ -1190,38 +1190,38 @@ object lisp_equalp(object args)
 
 }
 
-object lisp_procedurep(object args)
+object impl_procedurep(object args)
 {
 	check_args(1, args, "procedure?");
 	return boolean(is_anykind_procedure(car(args)));
 }
 
 
-object lisp_eofp(object args)
+object impl_eofp(object args)
 {
 	check_args(1, args, "eof-object?");
 	return boolean(is_end_of_file(car(args)));
 }
 
-object lisp_input_portp(object args)
+object impl_input_portp(object args)
 {
 	check_args(1, args, "input-port?");
 	return boolean(is_input_port(car(args)));
 }
 
-object lisp_output_portp(object args)
+object impl_output_portp(object args)
 {
 	check_args(1, args, "output-port?");
 	return boolean(is_output_port(car(args)));
 }
 
-object lisp_current_input_port(object args)
+object impl_current_input_port(object args)
 {
 	check_args(0, args, "current-input-port");
 	return current_input_port;
 }
 
-object lisp_current_output_port(object args)
+object impl_current_output_port(object args)
 {
 	check_args(0, args, "current-output-port");
 	return current_output_port;
@@ -1249,7 +1249,7 @@ static object open_file_as_port(object filename, unsigned long port_type)
 	return make_port(f, port_type);
 }
 
-object lisp_open_input_file(object args)
+object impl_open_input_file(object args)
 {
 	check_args(1, args, "open-input-file");
 	if (!is_string(car(args)))
@@ -1258,7 +1258,7 @@ object lisp_open_input_file(object args)
 	return open_file_as_port(car(args), PORT_TYPE_INPUT);
 }
 
-object lisp_open_output_file(object args)
+object impl_open_output_file(object args)
 {
 	check_args(1, args, "open-output-file");
 	if (!is_string(car(args)))
@@ -1275,7 +1275,7 @@ static void close_port(object port)
 	}
 }
 
-object lisp_close_input_port(object args)
+object impl_close_input_port(object args)
 {
 	object port;
 	check_args(1, args, "close-input-port");
@@ -1289,7 +1289,7 @@ object lisp_close_input_port(object args)
 	return unspecified;
 }
 
-object lisp_close_output_port(object args)
+object impl_close_output_port(object args)
 {
 	object port;
 	check_args(1, args, "close-output-port");
@@ -1303,7 +1303,101 @@ object lisp_close_output_port(object args)
 	return unspecified;
 }
 
-object lisp_newline(object args)
+object impl_read(object args)
+{
+	object port = current_input_port;
+	long nargs;
+
+	nargs = length(args);
+	if (nargs > 1)
+		error("Expecting at most 1 argument -- read", args);
+
+	if (nargs == 1)
+		port = car(args);
+
+	if (!is_input_port(port))
+		error("Expecting an input port -- read", port);
+
+	return io_read(port);
+}
+
+object impl_read_char(object args)
+{
+	object port = current_input_port;
+	long nargs;
+
+	nargs = length(args);
+	if (nargs > 1)
+		error("Expecting at most 1 argument -- read-char", args);
+
+	if (nargs == 1)
+		port = car(args);
+
+	if (!is_input_port(port))
+		error("Expecting an input port -- read-char", port);
+
+	return io_read_char(port);
+}
+
+object impl_peek_char(object args)
+{
+	object port = current_input_port;
+	long nargs;
+
+	nargs = length(args);
+	if (nargs > 1)
+		error("Expecting at most 1 argument -- peek-char", args);
+
+	if (nargs == 1)
+		port = car(args);
+
+	if (!is_input_port(port))
+		error("Expecting an input port -- peek-char", port);
+
+	return io_peek_char(port);
+}
+
+object impl_write(object args)
+{
+	object port = current_output_port;
+	long nargs;
+
+	nargs = length(args);
+	if (nargs < 1 || nargs > 2)
+		error("Expecting at least 1, at most 2 arguments -- write", args);
+
+	if (nargs == 2)
+		port = cadr(args);
+
+	if (!is_output_port(port))
+		error("Expecting an output port -- write", port);
+
+	io_write(car(args), port);
+
+	return unspecified;
+}
+
+object impl_display(object args)
+{
+	object port = current_output_port;
+	long nargs;
+
+	nargs = length(args);
+	if (nargs < 1 || nargs > 2)
+		error("Expecting at least 1, at most 2 arguments -- display", args);
+
+	if (nargs == 2)
+		port = cadr(args);
+
+	if (!is_output_port(port))
+		error("Expecting an output port -- display", port);
+
+	io_display(car(args), port);
+
+	return unspecified;
+}
+
+object impl_newline(object args)
 {
 	object port = current_output_port;
 	long nargs;
@@ -1312,7 +1406,9 @@ object lisp_newline(object args)
 	if (nargs > 1)
 		error("Expecting at most 1 argument -- newline", args);
 
-	port = car(args);
+	if (nargs == 1)
+		port = car(args);
+
 	if (!is_output_port(port))
 		error("Expecting an output port -- newline", port);
 
@@ -1321,7 +1417,31 @@ object lisp_newline(object args)
 	return unspecified;
 }
 
-#define pair_fun_def(X) { #X, lisp_##X }
+object impl_write_char(object args)
+{
+	object port = current_output_port;
+	long nargs;
+
+
+	nargs = length(args);
+	if (nargs < 1 || nargs > 2)
+		error("Expecting at least 1, at most 2 arguments -- write-char", args);
+
+	if (nargs == 2)
+		port = cadr(args);
+
+	if (!is_character(car(args)))
+		error("Expecting a character -- write-char", car(args));
+
+	if (!is_output_port(port))
+		error("Expecting an output port -- write-char", port);
+
+	io_write_char(car(args), port);
+
+	return unspecified;
+}
+
+#define pair_fun_def(X) { #X, impl_##X }
 
 static struct {
 	char *name;
@@ -1330,58 +1450,58 @@ static struct {
 
 	/* Equivalence predicates */
 
-	{ "eq?",       lisp_eq            },
-	{ "eqv?",      lisp_eqv           },
-	{ "equal?",    lisp_equalp        },
+	{ "eq?",       impl_eq            },
+	{ "eqv?",      impl_eqv           },
+	{ "equal?",    impl_equalp        },
 
         /* Numerical operations */
 
-	{ "number?",   lisp_numberp       },
-	{ "integer?",  lisp_integerp      },
+	{ "number?",   impl_numberp       },
+	{ "integer?",  impl_integerp      },
 
-	{ "=",         lisp_number_equal         },
-	{ "<",         lisp_number_increasing    },
-	{ ">",         lisp_number_decreasing    },
-	{ "<=",        lisp_number_nondecreasing },
-	{ ">=",        lisp_number_nonincreasing },
+	{ "=",         impl_number_equal         },
+	{ "<",         impl_number_increasing    },
+	{ ">",         impl_number_decreasing    },
+	{ "<=",        impl_number_nondecreasing },
+	{ ">=",        impl_number_nonincreasing },
 
-	{ "zero?",     lisp_zerop         },
-	{ "positive?", lisp_positivep     },
-	{ "negative?", lisp_negativep     },
-	{ "odd?",      lisp_oddp          },
-	{ "even?",     lisp_evenp         },
+	{ "zero?",     impl_zerop         },
+	{ "positive?", impl_positivep     },
+	{ "negative?", impl_negativep     },
+	{ "odd?",      impl_oddp          },
+	{ "even?",     impl_evenp         },
 
-	{ "max",       lisp_max           },
-	{ "min",       lisp_min           },
+	{ "max",       impl_max           },
+	{ "min",       impl_min           },
 
-	{ "+",         lisp_plus          },
-	{ "*",         lisp_multiply      },
-	{ "-",         lisp_minus         },
-	{ "/",         lisp_divide        },
+	{ "+",         impl_plus          },
+	{ "*",         impl_multiply      },
+	{ "-",         impl_minus         },
+	{ "/",         impl_divide        },
 
-	{ "abs",       lisp_abs           },
-	{ "quotient",  lisp_quotient },
-	{ "remainder", lisp_remainder },
-	{ "modulo",    lisp_modulo },
+	{ "abs",       impl_abs           },
+	{ "quotient",  impl_quotient },
+	{ "remainder", impl_remainder },
+	{ "modulo",    impl_modulo },
 
 	/* math is hard, let's go shopping */
-//	{ "gcd",       lisp_gcd },
-//	{ "lcm",       lisp_lcm },
+//	{ "gcd",       impl_gcd },
+//	{ "lcm",       impl_lcm },
 
-	{ "number->string", lisp_number_string },
-	{ "string->number", lisp_string_number },
+	{ "number->string", impl_number_string },
+	{ "string->number", impl_string_number },
 
 
 	/* Booleans */
 
-	{ "not", lisp_not },
-	{ "boolean?", lisp_booleanp },
+	{ "not", impl_not },
+	{ "boolean?", impl_booleanp },
 
 
 	/* Pairs and lists */
 
-	{ "cons", lisp_cons },
-	{ "pair?", lisp_pairp },
+	{ "cons", impl_cons },
+	{ "pair?", impl_pairp },
 
 	pair_fun_def(car),
 	pair_fun_def(cdr),
@@ -1414,115 +1534,119 @@ static struct {
 	pair_fun_def(cdddar),
 	pair_fun_def(cddddr),
 
-	{ "set-car!",  lisp_set_car       },
-	{ "set-cdr!",  lisp_set_cdr       },
+	{ "set-car!",  impl_set_car       },
+	{ "set-cdr!",  impl_set_cdr       },
 
-	{ "null?",     lisp_nullp         },
-	{ "list?",     lisp_listp         },
-	{ "list",      lisp_list          },
-	{ "length",    lisp_length        },
-	{ "append",    lisp_append        },
-	{ "reverse",   lisp_reverse       },
-	{ "list-tail", lisp_list_tail     },
-	{ "list-ref",  lisp_list_ref      },
-	{ "memq",      lisp_memq          },
-	{ "memv",      lisp_memv          },
-	{ "member",    lisp_member        },
-	{ "assq",      lisp_assq          },
-	{ "assv",      lisp_assv          },
-	{ "assoc",     lisp_assoc         },
+	{ "null?",     impl_nullp         },
+	{ "list?",     impl_listp         },
+	{ "list",      impl_list          },
+	{ "length",    impl_length        },
+	{ "append",    impl_append        },
+	{ "reverse",   impl_reverse       },
+	{ "list-tail", impl_list_tail     },
+	{ "list-ref",  impl_list_ref      },
+	{ "memq",      impl_memq          },
+	{ "memv",      impl_memv          },
+	{ "member",    impl_member        },
+	{ "assq",      impl_assq          },
+	{ "assv",      impl_assv          },
+	{ "assoc",     impl_assoc         },
 
 
 	/* Symbols */
 
-	{ "symbol?",        lisp_symbolp       },
-	{ "string->symbol", lisp_string_symbol },
-	{ "symbol->string", lisp_symbol_string },
+	{ "symbol?",        impl_symbolp       },
+	{ "string->symbol", impl_string_symbol },
+	{ "symbol->string", impl_symbol_string },
 
 
 	/* Characters */
 
-	{ "char?",            lisp_charp                  },
+	{ "char?",            impl_charp                  },
 
-	{ "char=?",           lisp_char_equal             },
-	{ "char<?",           lisp_char_increasing        },
-	{ "char>?",           lisp_char_decreasing        },
-	{ "char<=?",          lisp_char_non_decreasing    },
-	{ "char>=?",          lisp_char_non_increasing    },
+	{ "char=?",           impl_char_equal             },
+	{ "char<?",           impl_char_increasing        },
+	{ "char>?",           impl_char_decreasing        },
+	{ "char<=?",          impl_char_non_decreasing    },
+	{ "char>=?",          impl_char_non_increasing    },
 
-	{ "char-ci=?",        lisp_char_ci_equal          },
-	{ "char-ci<?",        lisp_char_ci_increasing     },
-	{ "char-ci>?",        lisp_char_ci_decreasing     },
-	{ "char-ci<=?",       lisp_char_ci_non_decreasing },
-	{ "char-ci>=?",       lisp_char_ci_non_increasing },
+	{ "char-ci=?",        impl_char_ci_equal          },
+	{ "char-ci<?",        impl_char_ci_increasing     },
+	{ "char-ci>?",        impl_char_ci_decreasing     },
+	{ "char-ci<=?",       impl_char_ci_non_decreasing },
+	{ "char-ci>=?",       impl_char_ci_non_increasing },
 
-	{ "char-alphabetic?", lisp_char_alphabeticp       },
-	{ "char-numeric?",    lisp_char_numericp          },
-	{ "char-whitespace?", lisp_char_whitespacep       },
-	{ "char-upper-case?", lisp_char_uppercasep        },
-	{ "char-lower-case?", lisp_char_lowercasep        },
+	{ "char-alphabetic?", impl_char_alphabeticp       },
+	{ "char-numeric?",    impl_char_numericp          },
+	{ "char-whitespace?", impl_char_whitespacep       },
+	{ "char-upper-case?", impl_char_uppercasep        },
+	{ "char-lower-case?", impl_char_lowercasep        },
 
-	{ "char->integer",    lisp_char_integer           },
-	{ "integer->char",    lisp_integer_char           },
+	{ "char->integer",    impl_char_integer           },
+	{ "integer->char",    impl_integer_char           },
 
-	{ "char-upcase",      lisp_char_upcase            },
-	{ "char-downcase",    lisp_char_downcase          },
+	{ "char-upcase",      impl_char_upcase            },
+	{ "char-downcase",    impl_char_downcase          },
 
 
 	/* Strings */
 
-	{ "string?",       lisp_stringp                   },
-	{ "make-string",   lisp_make_string               },
-	{ "string",        lisp_string                    },
-	{ "string-length", lisp_string_length             },
-	{ "string-ref",    lisp_string_ref                },
-	{ "string-set!",   lisp_string_set                },
+	{ "string?",       impl_stringp                   },
+	{ "make-string",   impl_make_string               },
+	{ "string",        impl_string                    },
+	{ "string-length", impl_string_length             },
+	{ "string-ref",    impl_string_ref                },
+	{ "string-set!",   impl_string_set                },
 
-	{ "string=?",      lisp_string_equalp             },
-	{ "string<?",      lisp_string_increasing         },
-	{ "string>?",      lisp_string_decreasing         },
-	{ "string<=?",     lisp_string_nondecreasing      },
-	{ "string>=?",     lisp_string_nonincreasing      },
+	{ "string=?",      impl_string_equalp             },
+	{ "string<?",      impl_string_increasing         },
+	{ "string>?",      impl_string_decreasing         },
+	{ "string<=?",     impl_string_nondecreasing      },
+	{ "string>=?",     impl_string_nonincreasing      },
 
-	{ "string-ci=?",   lisp_string_ci_equalp          },
-	{ "string-ci<?",   lisp_string_ci_increasing      },
-	{ "string-ci>?",   lisp_string_ci_decreasing      },
-	{ "string-ci<=?",  lisp_string_ci_nondecreasing   },
-	{ "string-ci>=?",  lisp_string_ci_nonincreasing   },
+	{ "string-ci=?",   impl_string_ci_equalp          },
+	{ "string-ci<?",   impl_string_ci_increasing      },
+	{ "string-ci>?",   impl_string_ci_decreasing      },
+	{ "string-ci<=?",  impl_string_ci_nondecreasing   },
+	{ "string-ci>=?",  impl_string_ci_nonincreasing   },
 
-	{ "substring",     lisp_substring                 },
-	{ "string-append", lisp_string_append             },
-	{ "string->list",  lisp_string_list               },
-	{ "list->string",  lisp_list_string               },
-	{ "string-copy",   lisp_string_copy               },
-	{ "string-fill!",  lisp_string_fill               },
+	{ "substring",     impl_substring                 },
+	{ "string-append", impl_string_append             },
+	{ "string->list",  impl_string_list               },
+	{ "list->string",  impl_list_string               },
+	{ "string-copy",   impl_string_copy               },
+	{ "string-fill!",  impl_string_fill               },
 
 
 	/* Control features */
 
-	{ "procedure?",    lisp_procedurep                },
+	{ "procedure?",    impl_procedurep                },
 	{ "apply",         lisp_apply                     },
 
 
 	/* I/O */
 
-	{ "eof-object?",   lisp_eofp                      },
+	{ "eof-object?",   impl_eofp                      },
 
-	{ "input-port?",   lisp_input_portp               },
-	{ "output-port?",  lisp_output_portp              },
+	{ "input-port?",   impl_input_portp               },
+	{ "output-port?",  impl_output_portp              },
 
-	{ "current-input-port",  lisp_current_input_port  },
-	{ "current-output-port", lisp_current_output_port },
+	{ "current-input-port",  impl_current_input_port  },
+	{ "current-output-port", impl_current_output_port },
 
-	{ "open-input-file",     lisp_open_input_file     },
-	{ "open-output-file",    lisp_open_output_file    },
+	{ "open-input-file",     impl_open_input_file     },
+	{ "open-output-file",    impl_open_output_file    },
 
-	{ "close-input-port",    lisp_close_input_port    },
-	{ "close-output-port",   lisp_close_output_port   },
+	{ "close-input-port",    impl_close_input_port    },
+	{ "close-output-port",   impl_close_output_port   },
 
-//	{ "write",         lisp_write                     },
-//	{ "display",       lisp_display                   },
-//	{ "newline",       lisp_newline                   },
+	{ "read",          impl_read                      },
+	{ "read-char",     impl_read_char                 },
+	{ "peek-char",     impl_peek_char                 },
+	{ "write",         impl_write                     },
+	{ "display",       impl_display                   },
+	{ "newline",       impl_newline                   },
+	{ "write-char",    impl_write_char                },
 
 
 	{ NULL, NULL }
