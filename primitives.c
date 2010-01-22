@@ -1197,6 +1197,37 @@ object lisp_procedurep(object args)
 }
 
 
+object lisp_eofp(object args)
+{
+	check_args(1, args, "eof-object?");
+	return boolean(is_end_of_file(car(args)));
+}
+
+object lisp_input_portp(object args)
+{
+	check_args(1, args, "input-port?");
+	return boolean(is_input_port(car(args)));
+}
+
+object lisp_output_portp(object args)
+{
+	check_args(1, args, "output-port?");
+	return boolean(is_output_port(car(args)));
+}
+
+object lisp_current_input_port(object args)
+{
+	check_args(0, args, "current-input-port");
+	return current_input_port;
+}
+
+object lisp_current_output_port(object args)
+{
+	check_args(0, args, "current-output-port");
+	return current_output_port;
+}
+
+
 #define pair_fun_def(X) { #X, lisp_##X }
 
 static struct {
@@ -1378,6 +1409,18 @@ static struct {
 
 	{ "procedure?",    lisp_procedurep                },
 	{ "apply",         lisp_apply                     },
+
+
+	/* I/O */
+
+	{ "eof-object?",   lisp_eofp                      },
+
+	{ "input-port?",   lisp_input_portp               },
+	{ "output-port?",  lisp_output_portp              },
+
+	{ "current-input-port", lisp_current_input_port   },
+	{ "current-output-port", lisp_current_output_port },
+
 
 	{ NULL, NULL }
 };

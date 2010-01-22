@@ -653,3 +653,13 @@ x					; ""
 (apply equal? (list 1 2 3) (list (list 1 2 3))) ; #t
 
 (apply * 1 2 3 4 5 (cons 6 nil))	; 720
+
+
+(current-input-port)			; #<input-port
+(current-output-port)			; #<output-port
+
+(input-port? (current-input-port))	; #t
+(input-port? (current-output-port))	; #f
+
+(output-port? (current-output-port))	; #t
+(output-port? (current-input-port))	; #f

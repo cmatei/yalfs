@@ -18,6 +18,30 @@ static inline object make_the_empty_list()
 	return (object) ((unsigned long) (freeptr - 1) | INDIRECT_TAG);
 }
 
+static inline object make_the_eof()
+{
+	*freeptr++ = END_OF_FILE_TAG;
+	return (object) ((unsigned long) (freeptr - 1) | INDIRECT_TAG);
+}
+
+object make_input_port(FILE *in)
+{
+	*freeptr++ = PORT_TAG;
+	*freeptr++ = PORT_TYPE_INPUT;
+	*freeptr++ = (unsigned long) in;
+
+	return (object) ((unsigned long) (freeptr - 3) | INDIRECT_TAG);
+}
+
+object make_output_port(FILE *out)
+{
+	*freeptr++ = PORT_TAG;
+	*freeptr++ = PORT_TYPE_OUTPUT;
+	*freeptr++ = (unsigned long) out;
+
+	return (object) ((unsigned long) (freeptr - 3) | INDIRECT_TAG);
+}
+
 static inline object make_boolean(int val)
 {
 	*freeptr++ = BOOLEAN_TAG | (val << BOOLEAN_SHIFT);
@@ -139,6 +163,12 @@ object_type type_of(object o)
 	if (is_procedure(o))
 		return T_PROCEDURE;
 
+	if (is_end_of_file(o))
+		return T_EOF;
+
+	if (is_port(o))
+		return T_PORT;
+
 	error("Uknown object type -- TYPE-OF", o);
 	return T_NIL; /* not reached */
 }
@@ -152,6 +182,7 @@ void runtime_init()
 
 	/* make the empty list object */
 	nil = make_the_empty_list();
+	end_of_file = make_the_eof();
 
 	/* the booleans */
 	the_falsity = make_boolean(0);
@@ -159,6 +190,9 @@ void runtime_init()
 
 	/* uses nil */
 	symbol_table_init();
+
+	current_input_port  = make_input_port(stdin);
+	current_output_port = make_output_port(stdout);
 
 	/* expression keywords */
 	_quote            = make_symbol_c("quote");

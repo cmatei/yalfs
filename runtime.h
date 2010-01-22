@@ -468,6 +468,87 @@ static inline int is_anykind_procedure(object o)
 	return is_primitive(o) || is_procedure(o);
 }
 
+#define PORT_TAG  0x9FUL
+#define PORT_MASK 0xFFUL
+
+#define PORT_TYPE_INPUT  0UL
+#define PORT_TYPE_OUTPUT 1UL
+#define PORT_TYPE_MASK   0xFFUL
+
+#define PORT_FLAGS_MASK   0xFFFF00UL
+#define PORT_FLAG_CLOSED  0x000100UL
+
+static inline int is_port(object o)
+{
+	unsigned long indirect;
+	if (!is_indirect(o))
+		return 0;
+
+	indirect = *(unsigned long *) ((unsigned long) o - INDIRECT_TAG);
+	return ((indirect & PORT_MASK) == PORT_TAG);
+}
+
+static inline int is_input_port(object o)
+{
+#if SAFETY
+	if (!is_port(o))
+		error("Object is not a port -- input-port?", o);
+#endif
+
+	return PORT_TYPE_INPUT == (PORT_TYPE_MASK && ((unsigned long *) ((unsigned long) o - INDIRECT_TAG))[1]);
+}
+
+static inline int is_output_port(object o)
+{
+#if SAFETY
+	if (!is_port(o))
+		error("Object is not a port -- input-port?", o);
+#endif
+
+	return PORT_TYPE_OUTPUT == (PORT_TYPE_MASK && ((unsigned long *) ((unsigned long) o - INDIRECT_TAG))[1]);
+}
+
+/* unsafe */
+static inline unsigned long get_port_flags(object o)
+{
+	return PORT_FLAGS_MASK && ((unsigned long *) ((unsigned long) o - INDIRECT_TAG))[1];
+}
+
+/* unsafe */
+static inline void set_port_flags(object o, unsigned long flags)
+{
+	unsigned long *flagsptr = & ((unsigned long *) ((unsigned long) o - INDIRECT_TAG))[1];
+	*flagsptr = (*flagsptr & ~PORT_FLAGS_MASK) | (flags & PORT_FLAGS_MASK);
+}
+
+static FILE *port_implementation(object o)
+{
+#if SAFETY
+	if (!is_port(o))
+		error("Object is not a port -- port-implementation", o);
+#endif
+
+	return (FILE *) ((unsigned long *) ((unsigned long) o - INDIRECT_TAG)) [2];
+}
+
+
+extern object make_input_port(FILE *in);
+extern object make_output_port(FILE *out);
+
+#define END_OF_FILE_TAG  0x1FUL
+#define END_OF_FILE_MASK 0xFFUL
+
+static inline int is_end_of_file(object o)
+{
+	unsigned long indirect;
+
+	if (!is_indirect(o))
+		return 0;
+
+	indirect = *(unsigned long *) ((unsigned long) o - INDIRECT_TAG);
+	return ((indirect & END_OF_FILE_MASK) == END_OF_FILE_TAG);
+}
+
 extern object_type type_of(object o);
 
 extern void runtime_init();

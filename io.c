@@ -10,10 +10,16 @@
 #define STRING_MIN_BUFFER         128
 #define STRING_REALLOC_INCREMENT 1024
 
-static int peek(FILE *in)
+int peek_char(FILE *in)
 {
 	int c = fgetc(in);
 	ungetc(c, in);
+	return c;
+}
+
+int read_char(FILE *in)
+{
+	int c = fgetc(in);
 	return c;
 }
 
@@ -90,9 +96,9 @@ static object read_identifier(FILE *in)
 	return o;
 }
 
-static void peek_expect_delimiter(FILE *in)
+static void peek_char_expect_delimiter(FILE *in)
 {
-	if (!is_delimiter(peek(in)))
+	if (!is_delimiter(peek_char(in)))
 		error("Expecting delimiter -- READ", nil);
 }
 
@@ -120,24 +126,24 @@ static object read_character(FILE *in)
 
 	case 's':
 	case 'S':
-		if (tolower(peek(in)) == 'p') {
+		if (tolower(peek_char(in)) == 'p') {
 			expect_string(in, "pace");
-			peek_expect_delimiter(in);
+			peek_char_expect_delimiter(in);
 			return make_character(' ');
 		}
 	        break;
 
 	case 'n':
 	case 'N':
-		if (tolower(peek(in)) == 'e') {
+		if (tolower(peek_char(in)) == 'e') {
 			expect_string(in, "ewline");
-			peek_expect_delimiter(in);
+			peek_char_expect_delimiter(in);
 			return make_character('\n');
 		}
 	        break;
 	}
 
-	peek_expect_delimiter(in);
+	peek_char_expect_delimiter(in);
 	return make_character(c);
 }
 
@@ -178,7 +184,7 @@ static object read_string(FILE *in)
 		}
 
 		if (c == '\\') {
-			nextc = peek(in);
+			nextc = peek_char(in);
 
 			if (nextc == '\\' || nextc == '"') {
 				buffer[str_len++] = nextc;
@@ -199,7 +205,7 @@ static object read_string(FILE *in)
 		}
 	}
 
-	peek_expect_delimiter(in);
+	peek_char_expect_delimiter(in);
 	o = make_string_c(buffer, str_len);
 	xfree(buffer);
 
@@ -233,7 +239,7 @@ static object read_number(FILE *in)
 
 			radix_was_set = 1;
 
-			if (peek(in) == '#')
+			if (peek_char(in) == '#')
 				c = fgetc(in);
 			else
 				at_prefix = 0;
@@ -247,7 +253,7 @@ static object read_number(FILE *in)
 
 			exact = (c == 'e') ? 1 : 0;
 			exactness_was_set = 1;
-			if (peek(in) == '#')
+			if (peek_char(in) == '#')
 				c = fgetc(in);
 			else
 				at_prefix = 0;
@@ -385,8 +391,8 @@ object lisp_read(FILE *in)
 		}
 		/* number */
 		else if (isdigit(c) ||
-			 ((c == '-') && isdigit(peek(in))) ||
-			 ((c == '+') && isdigit(peek(in)))) {
+			 ((c == '-') && isdigit(peek_char(in))) ||
+			 ((c == '+') && isdigit(peek_char(in)))) {
 			ungetc(c, in);
 			return read_number(in);
 		}
@@ -400,7 +406,7 @@ object lisp_read(FILE *in)
 			return read_identifier(in);
 		}
 		/* peculiar identifier. FIXME for ... */
-		else if (((c == '+') || c == '-') && is_delimiter(peek(in))) {
+		else if (((c == '+') || c == '-') && is_delimiter(peek_char(in))) {
 			return make_symbol_c((c == '+' ? "+" : "-"));
 		}
 		/* pair */
@@ -417,7 +423,7 @@ object lisp_read(FILE *in)
 		}
 		/* unquote & unquote-splicing */
 		else if (c == ',') {
-			if (peek(in) == '@') {
+			if (peek_char(in) == '@') {
 				c = fgetc(in);
 				return cons(_unquote_splicing, cons(lisp_read(in), nil));
 			} else
@@ -427,7 +433,7 @@ object lisp_read(FILE *in)
 			error("Unexpected character -- READ", nil);
 	}
 
-	return 0;
+	return end_of_file;
 }
 
 
@@ -538,6 +544,16 @@ void lisp_print(FILE *out, object exp)
 		fprintf(out, "#<procedure ");
 		lisp_print(out, procedure_parameters(exp));
 		fprintf(out, ">");
+		break;
+
+	case T_EOF:
+		fprintf(out, "#<eof>");
+		break;
+
+	case T_PORT:
+		fprintf(out, "#<%s-port %p>",
+			is_input_port(exp) ? "input" : "output",
+			port_implementation(exp));
 		break;
 	}
 }

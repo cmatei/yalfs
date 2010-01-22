@@ -27,6 +27,7 @@ object _case, _let, _letx, _letrec, _do, _delay, _quasiquote;
 object _else, _implies, _define, _unquote, _unquote_splicing;
 
 object end_of_file;
+object current_input_port, current_output_port;
 
 object _break;
 

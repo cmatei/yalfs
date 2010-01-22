@@ -73,4 +73,5 @@ x11 - the others
 00111111 - foreign pointer
 11011111 - primitive procedure
 01011111 - interpreted procedure
-
+10011111 - port
+00011111 - end-of-file
