@@ -455,18 +455,22 @@ tail_call:
 	return nil;
 }
 
-void lisp_repl(object input_port, object output_port, object env)
+object lisp_repl(object input_port, object output_port, object env)
 {
-	object exp, val;
+	object exp, val = nil;
 
 	while ((exp = io_read(input_port)) != end_of_file) {
 
 		val = lisp_eval(exp, env);
 
-		io_display(result_prompt, output_port);
-		io_write(val, output_port);
-		io_newline(output_port);
+		if (output_port != nil) {
+			io_display(result_prompt, output_port);
+			io_write(val, output_port);
+			io_newline(output_port);
+		}
 	}
+
+	return val;
 }
 
 int main(int argc, char **argv)

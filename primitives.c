@@ -1431,9 +1431,7 @@ object impl_load(object args)
 	if (!is_string(car(args)))
 		error("Expecting a string -- load", car(args));
 
-	io_load(car(args));
-
-	return unspecified;
+	return io_load(car(args));
 }
 
 #define pair_fun_def(X) { #X, impl_##X }

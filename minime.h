@@ -45,7 +45,7 @@ extern object lisp_eval(object exp, object env);
 extern void   lisp_print(object exp, FILE *out);
 extern void   lisp_display(object exp, FILE *out);
 
-extern void   lisp_repl(object input_port, object output_port, object env);
+extern object lisp_repl(object input_port, object output_port, object env);
 
 /* a fake */
 extern object lisp_apply(object args);

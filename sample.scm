@@ -11,5 +11,10 @@
       1
       (* n (factorial (- n 1)))))
 
-(factorial 10)
+(display (list 10 'factorial '= (factorial 10)))
+(newline)
+
+
+42
+
 

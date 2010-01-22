@@ -682,12 +682,12 @@ void io_write_char(object chr, object port)
 	fputc(character_value(chr), port_implementation(port));
 }
 
-void io_load(object filename)
+object io_load(object filename)
 {
 	object in;
 
 	in = io_file_as_port(filename, PORT_TYPE_INPUT);
-	lisp_repl(in, current_output_port, user_environment);
+	return lisp_repl(in, nil, user_environment);
 }
 
 extern jmp_buf err_jump;
