@@ -24,6 +24,12 @@ static inline object make_the_eof()
 	return (object) ((unsigned long) (freeptr - 1) | INDIRECT_TAG);
 }
 
+static inline object make_the_unspecified_value()
+{
+	*freeptr++ = UNSPECIFIED_VALUE_TAG;
+	return (object) ((unsigned long) (freeptr - 1) | INDIRECT_TAG);
+}
+
 object make_port(FILE *in, unsigned long port_type)
 {
 	*freeptr++ = PORT_TAG;
@@ -160,6 +166,9 @@ object_type type_of(object o)
 	if (is_port(o))
 		return T_PORT;
 
+	if (is_unspecified(o))
+		return T_UNSPECIFIED;
+
 	error("Uknown object type -- TYPE-OF", o);
 	return T_NIL; /* not reached */
 }
@@ -174,6 +183,7 @@ void runtime_init()
 	/* make the empty list object */
 	nil = make_the_empty_list();
 	end_of_file = make_the_eof();
+	unspecified = make_the_unspecified_value();
 
 	/* the booleans */
 	the_falsity = make_boolean(0);
@@ -222,7 +232,6 @@ void runtime_init()
 void runtime_stats()
 {
 	fprintf(stderr, "Used %zd heap bytes.\n", (freeptr - heap) * sizeof(unsigned long));
-
 	symbol_table_stats();
 }
 

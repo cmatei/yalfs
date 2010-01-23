@@ -564,6 +564,11 @@ void lisp_print(object exp, FILE *out)
 			is_input_port(exp) ? "input" : "output",
 			port_implementation(exp));
 		break;
+
+	case T_UNSPECIFIED:
+		/* actually, I could read this back... */
+		fprintf(out, "#<unspecified>");
+		break;
 	}
 }
 

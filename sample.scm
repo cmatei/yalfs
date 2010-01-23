@@ -2,6 +2,8 @@
 ;;
 ;; Example scheme code that can run under minime
 ;;
+;; Run with: (load "sample.scm")
+;;
 
 (display "Hello, world!")
 (newline)

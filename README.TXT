@@ -75,3 +75,6 @@ x11 - the others
 01011111 - interpreted procedure
 10011111 - port
 00011111 - end-of-file
+11101111 - unspecified value
+
+

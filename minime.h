@@ -6,12 +6,13 @@ typedef void *object;
 typedef enum {
 	T_NIL = 0, T_BOOLEAN, T_FIXNUM, T_CHARACTER,
 	T_STRING, T_SYMBOL, T_PAIR, T_PRIMITIVE, T_PROCEDURE,
-	T_PORT, T_EOF, T_FOREIGN_PTR,
+	T_PORT, T_EOF, T_FOREIGN_PTR, T_UNSPECIFIED,
 
 } object_type;
 
 
 extern object nil;			     /* the empty list */
+extern object unspecified;		     /* unspecified, the return value */
 extern object the_falsity, the_truth; 	     /* the boolean values */
 extern object end_of_file;		     /* the end-of-file object */
 

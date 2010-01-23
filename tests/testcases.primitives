@@ -195,12 +195,12 @@
 y					; (a b c)
 (list? y)				; #t
 ;; unspecified
-(set-cdr! x 4)				; ()
+(set-cdr! x 4)				; #<unspecified>
 x					; (a . 4)
 (list? y)				; #f
 
 ;; unspecified
-(set-cdr! x x)				; ()
+(set-cdr! x x)				; #<unspecified>
 (list? x)				; #f
 
 (list? '(a b . c))			; #f
@@ -211,7 +211,7 @@ x					; (a . 4)
 (list? '())				; #t
 
 (define x (list 1 2 3))			; x
-(set-cdr! x x)				; ()
+(set-cdr! x x)				; #<unspecified>
 (list? x)				; #f
 
 (pair? '())				; #f
@@ -237,10 +237,10 @@ x					; (a . 4)
 (define (g) '(constant-list))		 ; g
 
 ;; unspecified
-(set-car! (f) 3)			; ()
+(set-car! (f) 3)			; #<unspecified>
 
 ;; r5rs says this is an error, but i don't have constant lists
-(set-car! (g) 3)			; ()
+(set-car! (g) 3)			; #<unspecified>
 
 (caar (list (list 1 2) (list 3 4)))		; 1
 (cadr (list (list 1 2) (list 3 4)))		; (3 4)
@@ -448,28 +448,28 @@ x					; (a . 4)
 (string-set! 0 0 0)			;Expecting a string
 (string-set! x #f 0)			;Expecting an integer
 (string-set! x 0 'z)			;Expecting a character
-(string-set! x 0 #\z)			; ()
+(string-set! x 0 #\z)			; #<unspecified>
 
 x					; "zbcdefghi"
 (string-set! x 9 #\Z)			;Not a valid index
-(string-set! x 8 #\Z)			; ()
+(string-set! x 8 #\Z)			; #<unspecified>
 x					; "zbcdefghZ"
 
 
 (define (f) (make-string 3 #\*))	; f
 (define (g) "***")			; g
 
-(string-set! (f) 0 #\?)			; ()
+(string-set! (f) 0 #\?)			; #<unspecified>
 
 ;; no immutable strings, sorry, so not an error
-(string-set! (g) 0 #\?)			; ()
-(string-set! (symbol->string 'immutable) 0 #\?) ; ()
+(string-set! (g) 0 #\?)			; #<unspecified>
+(string-set! (symbol->string 'immutable) 0 #\?) ; #<unspecified>
 'immutable					; immutable
 
 ;; these should bomb if symbol-strings ARE immutable
 (define x 'immutable)			; x
 x					; immutable
-(string-set! (symbol->string x) 0 #\Y)	; ()
+(string-set! (symbol->string x) 0 #\Y)	; #<unspecified>
 x					; immutable
 (eq? x 'immutable)			; #t
 
@@ -557,12 +557,12 @@ x					; immutable
 
 (define x "abcdef")			; x
 x					; "abcdef"
-(string-fill! x #\a)			; ()
+(string-fill! x #\a)			; #<unspecified>
 x					; "aaaaaa"
 
 (define x "")				; x
 x					; ""
-(string-fill! x #\a)			; ()
+(string-fill! x #\a)			; #<unspecified>
 x					; ""
 
 
@@ -613,7 +613,7 @@ x					; ""
 ;; symbol "side-effects"
 (define x (string->symbol "abcdef"))	; x
 (define y 'xxxxxx)			; y
-(string-fill! (symbol->string x) #\x)	; ()
+(string-fill! (symbol->string x) #\x)	; #<unspecified>
 
 (eqv? x y)				; #f
 

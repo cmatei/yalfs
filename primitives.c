@@ -9,7 +9,6 @@
 
 #include "minime.h"
 
-#define unspecified nil
 #define boolean(c_int) ((c_int) ? the_truth : the_falsity)
 
 static inline void check_args(long n, object args, char *name)

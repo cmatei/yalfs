@@ -11,6 +11,7 @@
 /* these should be packed somewhere */
 
 object nil;				     /* empty list */
+object unspecified;			     /* unspecified object, for return values */
 object user_environment;		     /* user-initial-environment */
 
 object the_truth, the_falsity;
@@ -324,10 +325,9 @@ object lisp_apply(object args)
 	exit(1);
 }
 
-static int is_apply_primitive(object proc)
+static int is_primitive_apply(object proc)
 {
-	return (is_primitive(proc) &&
-		primitive_implementation(proc) == lisp_apply);
+	return (is_primitive(proc) && primitive_implementation(proc) == lisp_apply);
 }
 
 #define is_breakpoint(exp) is_tagged(exp, _break)
@@ -419,7 +419,7 @@ tail_call:
 		proc = lisp_eval(operator(exp), env);
 
 		/* primitive apply is somewhat special */
-		if (is_apply_primitive(proc)) {
+		if (is_primitive_apply(proc)) {
 
 			if (length(operands(exp)) < 1)
 				error("Expecting at least 1 argument -- APPLY", exp);

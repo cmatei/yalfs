@@ -323,7 +323,7 @@ static inline int is_syntactic_keyword(object o)
 		is_expression_keyword(o);
 }
 
-#define BOOLEAN_TAG   0xEFULL
+#define BOOLEAN_TAG   0x7FULL
 #define BOOLEAN_SHIFT 0x08ULL
 #define BOOLEAN_MASK  0xFFULL
 
@@ -557,6 +557,20 @@ static inline int is_end_of_file(object o)
 
 	indirect = *(unsigned long *) ((unsigned long) o - INDIRECT_TAG);
 	return ((indirect & END_OF_FILE_MASK) == END_OF_FILE_TAG);
+}
+
+#define UNSPECIFIED_VALUE_TAG  0xEFUL
+#define UNSPECIFIED_VALUE_MASK 0xFFUL
+
+static inline int is_unspecified(object o)
+{
+	unsigned long indirect;
+
+	if (!is_indirect(o))
+		return 0;
+
+	indirect = *(unsigned long *) ((unsigned long) o - INDIRECT_TAG);
+	return ((indirect & UNSPECIFIED_VALUE_MASK) == UNSPECIFIED_VALUE_TAG);
 }
 
 extern object_type type_of(object o);
