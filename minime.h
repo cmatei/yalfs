@@ -51,8 +51,6 @@ extern object lisp_repl(object input_port, object output_port, object env);
 /* a fake */
 extern object lisp_apply(object args);
 
-extern object setup_environment();
-
-
+object setup_environment();
 
 #endif

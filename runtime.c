@@ -173,6 +173,7 @@ object_type type_of(object o)
 	return T_NIL; /* not reached */
 }
 
+
 void runtime_init()
 {
 	if (posix_memalign((void **) &heap, sizeof(unsigned long), heap_size))

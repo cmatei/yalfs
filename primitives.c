@@ -1427,10 +1427,7 @@ object impl_load(object args)
 
 #define pair_fun_def(X) { #X, impl_##X }
 
-static struct {
-	char *name;
-	primitive_proc proc;
-} the_primitives[] = {
+struct primitive the_primitives[] = {
 
 	/* Equivalence predicates */
 
@@ -1653,27 +1650,3 @@ static struct {
 
 	{ NULL, NULL }
 };
-
-object primitive_names()
-{
-	object names = nil;
-	unsigned long i;
-
-	for (i = 0; the_primitives[i].name; i++) {
-		names = cons(make_symbol_c(the_primitives[i].name), names);
-	}
-
-	return names;
-}
-
-object primitive_objects()
-{
-	object prims = nil;
-	unsigned long i;
-
-	for (i = 0; the_primitives[i].name; i++) {
-		prims = cons(make_primitive(the_primitives[i].proc), prims);
-	}
-
-	return prims;
-}

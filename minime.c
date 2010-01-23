@@ -125,7 +125,7 @@ static void set_variable_value(object var, object val, object env)
 	error("Unbound variable -- SET!", var);
 }
 
-static void define_variable(object var, object val, object env)
+void define_variable(object var, object val, object env)
 {
 	object frame = first_frame(env);
 	object vars, vals;
@@ -146,10 +146,15 @@ static void define_variable(object var, object val, object env)
 object setup_environment()
 {
 	object initial_env;
+	int i;
 
-	initial_env = extend_environment(primitive_names(),
-					 primitive_objects(),
-					 nil);
+	initial_env = extend_environment(nil, nil, nil);
+
+	for (i = 0; the_primitives[i].name != NULL; i++) {
+		define_variable(make_symbol_c(the_primitives[i].name),
+				make_primitive(the_primitives[i].proc),
+				initial_env);
+	}
 
 	define_variable(make_symbol_c("true"), the_truth, initial_env);
 	define_variable(make_symbol_c("false"), the_falsity, initial_env);
