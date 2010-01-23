@@ -15,6 +15,6 @@ extern void   io_write_char(object chr, object port);
 /* System interface */
 extern object io_file_as_port(object filename, unsigned long port_type);
 extern void   io_close_port(object port);
-extern object io_load(object filename);
+extern object io_load(object filename, object env);
 
 #endif

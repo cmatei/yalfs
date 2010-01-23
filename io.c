@@ -684,17 +684,24 @@ void io_write_char(object chr, object port)
 	fputc(character_value(chr), port_implementation(port));
 }
 
-object io_load(object filename)
+object io_load(object filename, object env)
 {
 	object in;
 
 	in = io_file_as_port(filename, PORT_TYPE_INPUT);
-	return lisp_repl(in, nil, user_environment);
+	return lisp_repl(in, nil, env);
 }
 
 extern jmp_buf err_jump;
 void error(char *msg, object o)
 {
+	/* error is unsafe before minime is fully initialized. It might
+	   recursively trigger itself, so play safe */
+	if (error_is_unsafe) {
+		fprintf(stderr, "FATAL: %s, irritating object at %p\n", msg, o);
+		exit(1);
+	}
+
 	fprintf(port_implementation(current_error_port), "%s, ", msg);
 
 	io_write(o, current_error_port);

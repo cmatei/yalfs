@@ -1,5 +1,9 @@
 
+## temp
+INSTALLDIR	= $(shell pwd)
+
 CC		= gcc -Wall -g -O0
+CFLAGS		= -DINSTALLDIR="$(INSTALLDIR)"
 MAKEDEP		= gcc -MM
 
 CFLAGS		+= -D_GNU_SOURCE -DSAFETY=1

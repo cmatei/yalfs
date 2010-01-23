@@ -1422,7 +1422,8 @@ object impl_load(object args)
 	if (!is_string(car(args)))
 		error("Expecting a string -- load", car(args));
 
-	return io_load(car(args));
+	/* does it ever make sense to load in a different environment ? */
+	return io_load(car(args), user_environment);
 }
 
 #define pair_fun_def(X) { #X, impl_##X }

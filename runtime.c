@@ -12,19 +12,19 @@ unsigned long heap_size = HEAP_SIZE;
 
 static unsigned long *heap, *freeptr;
 
-static inline object make_the_empty_list()
+object make_the_empty_list()
 {
 	*freeptr++ = EMPTY_LIST_TAG;
 	return (object) ((unsigned long) (freeptr - 1) | INDIRECT_TAG);
 }
 
-static inline object make_the_eof()
+object make_the_eof()
 {
 	*freeptr++ = END_OF_FILE_TAG;
 	return (object) ((unsigned long) (freeptr - 1) | INDIRECT_TAG);
 }
 
-static inline object make_the_unspecified_value()
+object make_the_unspecified_value()
 {
 	*freeptr++ = UNSPECIFIED_VALUE_TAG;
 	return (object) ((unsigned long) (freeptr - 1) | INDIRECT_TAG);
@@ -39,7 +39,7 @@ object make_port(FILE *in, unsigned long port_type)
 	return (object) ((unsigned long) (freeptr - 3) | INDIRECT_TAG);
 }
 
-static inline object make_boolean(int val)
+object make_boolean(int val)
 {
 	*freeptr++ = BOOLEAN_TAG | (val << BOOLEAN_SHIFT);
 	return (object) ((unsigned long) (freeptr - 1) | INDIRECT_TAG);
@@ -180,54 +180,6 @@ void runtime_init()
 		FATAL("failed to allocate heap");
 
 	freeptr = heap;
-
-	/* make the empty list object */
-	nil = make_the_empty_list();
-	end_of_file = make_the_eof();
-	unspecified = make_the_unspecified_value();
-
-	/* the booleans */
-	the_falsity = make_boolean(0);
-	the_truth   = make_boolean(1);
-
-	/* uses nil */
-	symbol_table_init();
-
-	current_input_port  = make_port(stdin,  PORT_TYPE_INPUT);
-	current_output_port = make_port(stdout, PORT_TYPE_OUTPUT);
-//	current_error_port  = make_port(stderr, PORT_TYPE_OUTPUT);
-	current_error_port  = current_output_port;
-
-	result_prompt = make_string_c("=> ", 3);
-
-	/* expression keywords */
-	_quote            = make_symbol_c("quote");
-	_lambda           = make_symbol_c("lambda");
-	_if               = make_symbol_c("if");
-	_set              = make_symbol_c("set!");
-	_begin            = make_symbol_c("begin");
-	_cond             = make_symbol_c("cond");
-	_and              = make_symbol_c("and");
-	_or               = make_symbol_c("or");
-	_case             = make_symbol_c("case");
-	_let              = make_symbol_c("let");
-	_letx             = make_symbol_c("let*");
-	_letrec           = make_symbol_c("letrec");
-	_do               = make_symbol_c("do");
-	_quasiquote       = make_symbol_c("quasiquote");
-
-        /* other syntactic keywords */
-	_else             = make_symbol_c("else");
-	_implies          = make_symbol_c("=>");
-	_define           = make_symbol_c("define");
-	_unquote          = make_symbol_c("unquote");
-	_unquote_splicing = make_symbol_c("unquote-splicing");
-
-	/* hacks */
-	_break            = make_symbol_c("break");
-
-	/* user-initial-environment */
-	user_environment = setup_environment();
 }
 
 void runtime_stats()

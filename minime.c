@@ -12,6 +12,9 @@
 
 object nil;				     /* empty list */
 object unspecified;			     /* unspecified object, for return values */
+
+object null_environment;		     /* the null environment */
+object initial_environment;		     /* initial environment */
 object user_environment;		     /* user-initial-environment */
 
 object the_truth, the_falsity;
@@ -34,6 +37,7 @@ object result_prompt;
 
 /*----------------------------------*/
 
+int error_is_unsafe = 1;
 
 jmp_buf err_jump;
 
@@ -141,26 +145,6 @@ void define_variable(object var, object val, object env)
 	}
 
 	add_binding_to_frame(var, val, frame);
-}
-
-object setup_environment()
-{
-	object initial_env;
-	int i;
-
-	initial_env = extend_environment(nil, nil, nil);
-
-	for (i = 0; the_primitives[i].name != NULL; i++) {
-		define_variable(make_symbol_c(the_primitives[i].name),
-				make_primitive(the_primitives[i].proc),
-				initial_env);
-	}
-
-	define_variable(make_symbol_c("true"), the_truth, initial_env);
-	define_variable(make_symbol_c("false"), the_falsity, initial_env);
-	define_variable(make_symbol_c("nil"), nil, initial_env);
-
-	return initial_env;
 }
 
 /* syntax functions */
@@ -478,14 +462,106 @@ object lisp_repl(object input_port, object output_port, object env)
 	return val;
 }
 
+
+object library_file_path(char *name)
+{
+	char file_path[256];
+	int len;
+
+	len = snprintf(file_path, 256, "%s/lib/%s", STRINGIFY(INSTALLDIR), name);
+	assert(len < 256);
+
+	return make_string_c(file_path, len);
+}
+
+object setup_initial_environment(object baseenv)
+{
+	object initial_env;
+	int i;
+
+	initial_env = extend_environment(nil, nil, baseenv);
+
+	for (i = 0; the_primitives[i].name != NULL; i++) {
+		define_variable(make_symbol_c(the_primitives[i].name),
+				make_primitive(the_primitives[i].proc),
+				initial_env);
+	}
+
+	define_variable(make_symbol_c("true"), the_truth, initial_env);
+	define_variable(make_symbol_c("false"), the_falsity, initial_env);
+	define_variable(make_symbol_c("nil"), nil, initial_env);
+
+	io_load(library_file_path("minime.scm"), initial_env);
+
+	return initial_env;
+}
+
+void scheme_init()
+{
+	/* make the empty list object */
+	nil = make_the_empty_list();
+	end_of_file = make_the_eof();
+	unspecified = make_the_unspecified_value();
+
+	/* the booleans */
+	the_falsity = make_boolean(0);
+	the_truth   = make_boolean(1);
+
+	/* uses nil */
+	symbol_table_init();
+
+	current_input_port  = make_port(stdin,  PORT_TYPE_INPUT);
+	current_output_port = make_port(stdout, PORT_TYPE_OUTPUT);
+//	current_error_port  = make_port(stderr, PORT_TYPE_OUTPUT);
+	current_error_port  = current_output_port;
+
+	result_prompt = make_string_c("=> ", 3);
+
+	/* expression keywords */
+	_quote            = make_symbol_c("quote");
+	_lambda           = make_symbol_c("lambda");
+	_if               = make_symbol_c("if");
+	_set              = make_symbol_c("set!");
+	_begin            = make_symbol_c("begin");
+	_cond             = make_symbol_c("cond");
+	_and              = make_symbol_c("and");
+	_or               = make_symbol_c("or");
+	_case             = make_symbol_c("case");
+	_let              = make_symbol_c("let");
+	_letx             = make_symbol_c("let*");
+	_letrec           = make_symbol_c("letrec");
+	_do               = make_symbol_c("do");
+	_quasiquote       = make_symbol_c("quasiquote");
+
+        /* other syntactic keywords */
+	_else             = make_symbol_c("else");
+	_implies          = make_symbol_c("=>");
+	_define           = make_symbol_c("define");
+	_unquote          = make_symbol_c("unquote");
+	_unquote_splicing = make_symbol_c("unquote-splicing");
+
+	/* hacks */
+	_break            = make_symbol_c("break");
+
+	/* environments */
+	null_environment    = extend_environment(nil, nil, nil);
+	initial_environment = setup_initial_environment(null_environment);
+	user_environment    = extend_environment(nil, nil, initial_environment);
+}
+
 int main(int argc, char **argv)
 {
+
+	error_is_unsafe = 1;
+
 	runtime_init();
+	scheme_init();
+
+	error_is_unsafe = 0;
 
 restart:
-	if (setjmp(err_jump)) {
+	if (setjmp(err_jump))
 		goto restart;
-	}
 
 	lisp_repl(current_input_port, current_output_port, user_environment);
 

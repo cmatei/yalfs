@@ -18,6 +18,11 @@ extern "C" {
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
+#ifndef STRINGIFY
+#define x__stringify(s) #s
+#define STRINGIFY(s) x__stringify(s)
+#endif
+
 extern void *xmalloc(size_t size);
 extern void *xrealloc(void *ptr, size_t size);
 extern void *xcalloc(size_t nmemb, size_t size);

@@ -33,6 +33,12 @@ sub run_tests
     open(my $fh, "$interp < testcases.$suite |") or die;
     my @actual = slurp($fh);
 
+    ## eat up greetings
+    while (@actual) {
+	my $line = shift @actual;
+	last if ($line =~ /Welcome to minime, happy hacking!/);
+    }
+
     my $total = 0, $fail = 0, $line = 0;
 
     open(my $fh, '<', "testcases.$suite") or die;

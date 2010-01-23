@@ -52,6 +52,8 @@ static inline int is_null(object o)
 	return (o == nil);
 }
 
+extern object make_the_empty_list();
+
 #define PAIR_TAG   2UL
 #define PAIR_MASK  3UL
 
@@ -349,6 +351,8 @@ static inline int is_boolean(object o)
 	return ((indirect & BOOLEAN_MASK) == BOOLEAN_TAG);
 }
 
+extern object make_boolean(int val);
+
 #define FOREIGN_PTR_TAG  0x3FULL
 #define FOREIGN_PTR_MASK 0xFFULL
 
@@ -559,6 +563,8 @@ static inline int is_end_of_file(object o)
 	return ((indirect & END_OF_FILE_MASK) == END_OF_FILE_TAG);
 }
 
+extern object make_the_eof();
+
 #define UNSPECIFIED_VALUE_TAG  0xEFUL
 #define UNSPECIFIED_VALUE_MASK 0xFFUL
 
@@ -572,6 +578,8 @@ static inline int is_unspecified(object o)
 	indirect = *(unsigned long *) ((unsigned long) o - INDIRECT_TAG);
 	return ((indirect & UNSPECIFIED_VALUE_MASK) == UNSPECIFIED_VALUE_TAG);
 }
+
+extern object make_the_unspecified_value();
 
 extern object_type type_of(object o);
 

@@ -16,7 +16,10 @@ extern object unspecified;		     /* unspecified, the return value */
 extern object the_falsity, the_truth; 	     /* the boolean values */
 extern object end_of_file;		     /* the end-of-file object */
 
+extern object null_environment;		     /* the null environment */
+extern object initial_environment;	     /* initial environment */
 extern object user_environment;		     /* user-initial-environment */
+
 extern object current_input_port;
 extern object current_output_port;
 extern object current_error_port;
@@ -32,6 +35,7 @@ extern object _break;
 extern object result_prompt;
 
 extern unsigned long heap_size;
+extern int  error_is_unsafe;
 extern void error(char *msg, object o);
 
 #include "runtime.h"
