@@ -1250,14 +1250,6 @@ object impl_open_output_file(object args)
 	return io_file_as_port(car(args), PORT_TYPE_OUTPUT);
 }
 
-static void close_port(object port)
-{
-	if (!is_port_closed(port)) {
-		close_file(port_implementation(port));
-		set_port_closed(port);
-	}
-}
-
 object impl_close_input_port(object args)
 {
 	object port;
@@ -1267,7 +1259,7 @@ object impl_close_input_port(object args)
 	if (!is_input_port(port))
 		error("Expecting an input port -- close-input-port", port);
 
-	close_port(port);
+	io_close_port(port);
 
 	return unspecified;
 }
@@ -1281,7 +1273,7 @@ object impl_close_output_port(object args)
 	if (!is_output_port(port))
 		error("Expecting an output port -- close-output-port", port);
 
-	close_port(port);
+	io_close_port(port);
 
 	return unspecified;
 }

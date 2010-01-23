@@ -11,23 +11,12 @@
 #define STRING_MIN_BUFFER         128
 #define STRING_REALLOC_INCREMENT 1024
 
-FILE *open_file(char *filename, char *mode)
-{
-	return fopen(filename, mode);
-}
-
 static int peek_char(FILE *in)
 {
 	int c = fgetc(in);
 	ungetc(c, in);
 	return c;
 }
-
-int close_file(FILE *file)
-{
-	return fclose(file);
-}
-
 
 static void skip_whitespace(FILE *in)
 {
@@ -637,7 +626,7 @@ object io_file_as_port(object filename, unsigned long port_type)
 	memcpy(name, string_value(filename), namelen);
 	name[namelen] = 0;
 
-	if ((f = open_file(name, (port_type == PORT_TYPE_INPUT) ? "r" : "w+")) == NULL) {
+	if ((f = fopen(name, (port_type == PORT_TYPE_INPUT) ? "r" : "w+")) == NULL) {
 		xfree(name);
 		error("Cannot open file -- io-file-as-port", filename);
 	}
@@ -645,6 +634,14 @@ object io_file_as_port(object filename, unsigned long port_type)
 	xfree(name);
 
 	return make_port(f, port_type);
+}
+
+void io_close_port(object port)
+{
+	if (!is_port_closed(port)) {
+		fclose(port_implementation(port));
+		set_port_closed(port);
+	}
 }
 
 object io_read(object port)
