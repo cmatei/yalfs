@@ -79,7 +79,7 @@ static object read_identifier(FILE *in)
 		}
 
 		if (!is_subsequent(c))
-			error("Symbol has bad name -- READ", nil);
+			error("Symbol has bad name -- read", nil);
 
 		/* we're a lower case scheme */
 		buffer[str_len++] = tolower(c);
@@ -94,7 +94,7 @@ static object read_identifier(FILE *in)
 static void peek_char_expect_delimiter(FILE *in)
 {
 	if (!is_delimiter(peek_char(in)))
-		error("Expecting delimiter -- READ", nil);
+		error("Expecting delimiter -- read", nil);
 }
 
 static void expect_string(FILE *in, char *str)
@@ -104,7 +104,7 @@ static void expect_string(FILE *in, char *str)
 	while (*str) {
 		c = fgetc(in);
 		if (tolower(c) != *str)
-			error("Unexpected character -- READ", nil);
+			error("Unexpected character -- read", nil);
 
 		str++;
 	}
@@ -116,7 +116,7 @@ static object read_character(FILE *in)
 
 	switch (c) {
 	case EOF:
-		error("Unexpected EOF -- READ", nil);
+		error("Unexpected EOF -- read", nil);
 		break;
 
 	case 's':
@@ -226,7 +226,7 @@ static object read_number(FILE *in)
 
 		if (at_prefix && strchr("bodx", c)) {
 			if (radix_was_set)
-				error("Ill-formed number -- READ", nil);
+				error("Ill-formed number -- read", nil);
 
 			base  = (c == 'b') ? 2 :
 				(c == 'o') ? 8 :
@@ -244,7 +244,7 @@ static object read_number(FILE *in)
 
 		if (at_prefix && (c == 'e' || c == 'i')) {
 			if (exactness_was_set)
-				error("Ill-formed number -- READ", nil);
+				error("Ill-formed number -- read", nil);
 
 			exact = (c == 'e') ? 1 : 0;
 			exactness_was_set = 1;
@@ -260,7 +260,7 @@ static object read_number(FILE *in)
 
 		if (c == '+' || c == '-') {
 			if (sign_was_set)
-				error("Ill-formed number -- READ", nil);
+				error("Ill-formed number -- read", nil);
 
 			sign = (c == '+') ? 1 : -1;
 			sign_was_set = 1;
@@ -279,7 +279,7 @@ static object read_number(FILE *in)
 			return make_fixnum(sign * number);
 		}
 
-		error("Ill-formed number -- READ", nil);
+		error("Ill-formed number -- read", nil);
 	}
 }
 
@@ -305,7 +305,7 @@ object read_pair(FILE *in)
 	if (c == '.') {
 		c = fgetc(in);
 		if (!isspace(c))
-			error("Missing delimiter in improper list -- READ", nil);
+			error("Missing delimiter in improper list -- read", nil);
 
 		the_cdr = lisp_read(in);
 		skip_whitespace(in);
@@ -314,7 +314,7 @@ object read_pair(FILE *in)
 		if (c == ')')
 			return cons(the_car, the_cdr);
 
-		error("Missing parenthesis -- READ", nil);
+		error("Missing parenthesis -- read", nil);
 	}
 	else {
 		ungetc(c, in);
@@ -378,10 +378,10 @@ object lisp_read(FILE *in)
 				continue;
 
 			case '<':
-				error("Object cannot be read back -- READ", nil);
+				error("Object cannot be read back -- read", nil);
 
 			default:
-				error("Unexpected character -- READ", nil);
+				error("Unexpected character -- read", nil);
 			}
 		}
 		/* number */
@@ -400,9 +400,24 @@ object lisp_read(FILE *in)
 			ungetc(c, in);
 			return read_identifier(in);
 		}
-		/* peculiar identifier. FIXME for ... */
+		/* peculiar identifiers */
 		else if (((c == '+') || c == '-') && is_delimiter(peek_char(in))) {
 			return make_symbol_c((c == '+' ? "+" : "-"));
+		}
+		/* stuff starting with dot, FIXME for floats */
+		else if (c == '.') {
+			if (is_delimiter(peek_char(in)))
+				error("Illegal use of . -- read", nil);
+
+			c = fgetc(in);
+			if (c != '.' || peek_char(in) != '.')
+				error("Symbol has bad name -- read", nil);
+
+			c = fgetc(in);
+			if (!is_delimiter(peek_char(in)))
+				error("Symbol has bad name -- read", nil);
+
+			return _ellipsis;
 		}
 		/* pair */
 		else if (c == '(') {
@@ -425,7 +440,7 @@ object lisp_read(FILE *in)
 				return cons(_unquote, cons(lisp_read(in), nil));
 		}
 		else
-			error("Unexpected character -- READ", nil);
+			error("Unexpected character -- read", nil);
 	}
 
 	return end_of_file;

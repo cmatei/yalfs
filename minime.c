@@ -26,6 +26,9 @@ object _case, _let, _letx, _letrec, _do, _delay, _quasiquote;
 /* other syntactic keywords */
 object _else, _implies, _define, _unquote, _unquote_splicing;
 
+/* the ellipsis symbol */
+object _ellipsis;
+
 object end_of_file;
 
 object current_input_port;
@@ -534,6 +537,8 @@ void scheme_init()
 	_define           = make_symbol_c("define");
 	_unquote          = make_symbol_c("unquote");
 	_unquote_splicing = make_symbol_c("unquote-splicing");
+
+	_ellipsis         = make_symbol_c("...");
 
 	/* hacks */
 	_break            = make_symbol_c("break");

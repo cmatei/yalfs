@@ -130,5 +130,15 @@ x					; 42
 '`'`'(foo bar ,baz)			; (quasiquote (quote (quasiquote (quote (foo bar (unquote baz))))))
 
 
+.					;Illegal use of .
+..					;Symbol has bad name
+...					;Unbound variable
+
+;; this fails to read ellipsis then errs on unbound d
+...d					;Symbol has bad name
+					;Unbound variable
+
+'...					; ...
+
 
 

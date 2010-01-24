@@ -31,6 +31,8 @@ extern object _case, _let, _letx, _letrec, _do, _delay, _quasiquote;
 /* other syntactic keywords */
 extern object _else, _implies, _define, _unquote, _unquote_splicing;
 
+extern object _ellipsis;
+
 extern object _break;
 extern object result_prompt;
 
