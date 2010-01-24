@@ -51,10 +51,11 @@ static int is_tagged(object exp, object tag)
 
 static int is_self_evaluating(object exp)
 {
-	return  is_boolean(exp) ||
-		is_number(exp)  ||
-		is_string(exp)  ||
-		is_character(exp);
+	return  is_boolean(exp)   ||
+		is_number(exp)    ||
+		is_string(exp)    ||
+		is_character(exp) ||
+		is_unspecified(exp);	     /* not sure this leads to right behaviour */
 }
 
 
@@ -123,6 +124,44 @@ static object if_alternate(object exp)
 #define is_last_exp(exp) is_null(cdr(exp))
 #define first_exp(seq) car(seq)
 #define rest_exps(seq) cdr(seq)
+
+#define is_let(exp) is_tagged(exp, _let)
+
+#define let_bindings(exp) cadr(exp)
+#define let_body(exp) cddr(exp)
+
+#define binding_name(exp) car(exp)
+
+static object binding_value(object exp)
+{
+	return is_null(cdr(exp)) ? unspecified : cadr(exp);
+}
+
+static object let_names(object exp)
+{
+	if (is_null(exp))
+		return nil;
+
+	return cons(binding_name(car(exp)),
+		    let_names(cdr(exp)));
+}
+
+static object let_values(object exp)
+{
+	if (is_null(exp))
+		return nil;
+
+	return cons(binding_value(car(exp)),
+		    let_values(cdr(exp)));
+}
+
+static object let_to_combination(object exp)
+{
+	object ret = cons(make_lambda(let_names(let_bindings(exp)), let_body(exp)),
+			  let_values(let_bindings(exp)));
+
+	return ret;
+}
 
 #define make_begin(seq) cons(_begin, seq)
 
@@ -306,6 +345,11 @@ tail_call:
 		return make_procedure(lambda_parameters(exp),
 				     lambda_body(exp),
 				     env);
+	}
+	/* let */
+	else if (is_let(exp)) {
+		exp = let_to_combination(exp);
+		goto tail_call;
 	}
 	/* begin */
 	else if (is_begin(exp)) {

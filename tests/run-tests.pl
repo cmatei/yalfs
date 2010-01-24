@@ -3,7 +3,7 @@
 use File::Slurp qw(slurp);
 
 my $interp = $ENV{"MINIME"} || "../minime 2>/dev/null";
-my $suites = $ENV{"SUITES"} || "simple primitives";
+my $suites = $ENV{"SUITES"} || "simple primitives syntax";
 
 
 ## expected: errors don't start with a space
