@@ -13,9 +13,9 @@
 object nil;				     /* empty list */
 object unspecified;			     /* unspecified object, for return values */
 
-object null_environment;		     /* the null environment */
-object initial_environment;		     /* initial environment */
-object user_environment;		     /* user-initial-environment */
+object empty_environment;		     /* the empty environment */
+object null_environment;		     /* initial environment */
+object interaction_environment;		     /* user initial environment */
 
 object the_truth, the_falsity;
 
@@ -57,95 +57,6 @@ static int is_self_evaluating(object exp)
 		is_character(exp);
 }
 
-/* environments */
-object make_frame(object vars, object vals)
-{
-	return cons(vars, vals);
-}
-
-#define frame_variables(frame) car(frame)
-#define frame_values(frame) cdr(frame)
-
-static void add_binding_to_frame(object var, object val, object frame)
-{
-	set_car(frame, cons(var, car(frame)));
-	set_cdr(frame, cons(val, cdr(frame)));
-}
-
-object extend_environment(object vars, object vals, object base_env)
-{
-	if (length(vars) == length(vals))
-		return cons(make_frame(vars, vals), base_env);
-
-	error("Extend environment has wrong number of args -- EXTEND-ENVIRONMENT", nil);
-	return nil; /* not reached */
-}
-
-#define enclosing_environment(env) cdr(env)
-#define first_frame(env) car(env)
-
-object lookup_variable_value(object var, object env)
-{
-	object frame, vars, vals;
-
-	while (env != nil) {
-		frame = first_frame(env);
-
-		for (vars = frame_variables(frame), vals = frame_values(frame);
-		     !is_null(vars);
-		     vars = cdr(vars), vals = cdr(vals)) {
-
-			if (var == car(vars))
-				return car(vals);
-		}
-
-		env = enclosing_environment(env);
-	}
-
-	error("Unbound variable", var);
-	return nil; 			     /* not reached */
-}
-
-static void set_variable_value(object var, object val, object env)
-{
-	object frame, vars, vals;
-
-	while (env != nil) {
-		frame = first_frame(env);
-
-		for (vars = frame_variables(frame), vals = frame_values(frame);
-		     !is_null(vars);
-		     vars = cdr(vars), vals = cdr(vals)) {
-
-			if (var == car(vars)) {
-				set_car(vals, val);
-				return;
-			}
-		}
-
-		env = enclosing_environment(env);
-	}
-
-	error("Unbound variable -- SET!", var);
-}
-
-void define_variable(object var, object val, object env)
-{
-	object frame = first_frame(env);
-	object vars, vals;
-
-	for (vars = frame_variables(frame), vals = frame_values(frame);
-	     !is_null(vars);
-	     vars = cdr(vars), vals = cdr(vals)) {
-
-		if (var == car(vars)) {
-			set_car(vals, val);
-			return;
-		}
-	}
-
-	add_binding_to_frame(var, val, frame);
-}
 
 /* syntax functions */
 
@@ -289,7 +200,7 @@ static object list_of_apply_values(object exps, object env)
 			tail = cdr(tail);
 		}
 
-		exps = cdr(exps);
+		exps = rest_operands(exps);
 	}
 
 	if (!is_null(exps)) {
@@ -308,7 +219,7 @@ static object list_of_apply_values(object exps, object env)
 }
 
 /* this is never called */
-object lisp_apply(object args)
+object lisp_primitive_apply(object args)
 {
 	fprintf(stderr, "internal error\n");
 	exit(1);
@@ -316,7 +227,29 @@ object lisp_apply(object args)
 
 static int is_primitive_apply(object proc)
 {
-	return (is_primitive(proc) && primitive_implementation(proc) == lisp_apply);
+	return is_primitive(proc) &&
+	       primitive_implementation(proc) == lisp_primitive_apply;
+}
+
+/* this is also never called */
+object lisp_primitive_eval(object args)
+{
+	fprintf(stderr, "internal error\n");
+	exit(1);
+}
+
+static int is_primitive_eval(object proc)
+{
+	return is_primitive(proc) &&
+		primitive_implementation(proc) == lisp_primitive_eval;
+}
+
+object maybe_unquote(object exp)
+{
+	if (is_quoted(exp))
+		return text_of_quotation(exp);
+
+	return exp;
 }
 
 #define is_breakpoint(exp) is_tagged(exp, _break)
@@ -329,6 +262,7 @@ object lisp_eval(object exp, object env)
 {
 	object actions;
 	object proc, args;
+	long nargs;
 
 tail_call:
 
@@ -407,7 +341,7 @@ tail_call:
 
 		proc = lisp_eval(operator(exp), env);
 
-		/* primitive apply is somewhat special */
+		/* these primitives are somewhat special */
 		if (is_primitive_apply(proc)) {
 
 			if (length(operands(exp)) < 1)
@@ -415,6 +349,23 @@ tail_call:
 
 			proc = lisp_eval(car(operands(exp)), env);
 			args = list_of_apply_values(cdr(operands(exp)), env);
+		}
+		else if (is_primitive_eval(proc)) {
+
+			nargs = length(operands(exp));
+
+			if (nargs < 1)
+				error("Expecting at least 1 argument -- EVAL", exp);
+
+			if (nargs > 1)
+				env = lisp_eval(cadr(operands(exp)), env);
+			else
+				env = interaction_environment;
+
+			/* "Expression must be a valid Scheme expression represented as data ..." */
+			exp = maybe_unquote(car(operands(exp)));
+
+			goto tail_call;
 		}
 		else {
 			args = list_of_values(operands(exp), env);
@@ -544,9 +495,9 @@ void scheme_init()
 	_break            = make_symbol_c("break");
 
 	/* environments */
-	null_environment    = extend_environment(nil, nil, nil);
-	initial_environment = setup_initial_environment(null_environment);
-	user_environment    = extend_environment(nil, nil, initial_environment);
+	empty_environment       = extend_environment(nil, nil, nil);
+	null_environment        = setup_initial_environment(empty_environment);
+	interaction_environment = extend_environment(nil, nil, null_environment);
 }
 
 int main(int argc, char **argv)
@@ -563,7 +514,7 @@ restart:
 	if (setjmp(err_jump))
 		goto restart;
 
-	lisp_repl(current_input_port, current_output_port, user_environment);
+	lisp_repl(current_input_port, current_output_port, interaction_environment);
 
 	runtime_stats();
 

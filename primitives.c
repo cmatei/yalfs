@@ -1195,10 +1195,22 @@ object impl_procedurep(object args)
 	return boolean(is_anykind_procedure(car(args)));
 }
 
+object impl_null_environment(object args)
+{
+	check_args(1, args, "null-environment");
+
+	if (!is_fixnum(car(args)) && fixnum_value(car(args)) != 5)
+		error("Give me five -- null-environment", car(args));
+
+	/* give back an "extended" null environment so the user can't muck
+	   with the actual null environment */
+	return extend_environment(nil, nil, null_environment);
+}
+
 object impl_interaction_environment(object args)
 {
 	check_args(0, args, "interaction-environment");
-	return user_environment;
+	return interaction_environment;
 }
 
 
@@ -1423,7 +1435,7 @@ object impl_load(object args)
 		error("Expecting a string -- load", car(args));
 
 	/* does it ever make sense to load in a different environment ? */
-	return io_load(car(args), user_environment);
+	return io_load(car(args), interaction_environment);
 }
 
 #define pair_fun_def(X) { #X, impl_##X }
@@ -1603,13 +1615,14 @@ struct primitive the_primitives[] = {
 	/* Control features */
 
 	{ "procedure?",    impl_procedurep                },
-	{ "apply",         lisp_apply                     },
+	{ "apply",         lisp_primitive_apply           },
 //	{ "map",           impl_map                       },
 //	{ "for-each",      impl_for_each                  },
 //	{ "force",         impl_force                     },
 //      { "delay",         impl_delay                     },
-//	{ "eval",          impl_eval                      },
+	{ "eval",          lisp_primitive_eval            },
 
+	{ "null-environment",        impl_null_environment },
 	{ "interaction-environment", impl_interaction_environment },
 
 	/* I/O */

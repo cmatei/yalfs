@@ -654,6 +654,22 @@ x					; ""
 
 (apply * 1 2 3 4 5 (cons 6 nil))	; 720
 
+(eval '(+ 1 2))				; 3
+(eval '(+ 1 2) (interaction-environment))	; 3
+(eval 3)				; 3
+
+;; if () is not self-evaluating, this is an error
+(eval '() (null-environment 5))		;Unknown expression type
+
+;; allow unquoted
+(eval (+ 2 3))				; 5
+
+;; even if unquoted, the expression will still be evaluated in the
+;; specified environment
+(define x 1)				; x
+(eval x (interaction-environment))	; 1
+(eval x (null-environment 5))		;Unbound variable
+
 
 (current-input-port)			; #<input-port
 (current-output-port)			; #<output-port

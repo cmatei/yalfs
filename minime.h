@@ -16,9 +16,9 @@ extern object unspecified;		     /* unspecified, the return value */
 extern object the_falsity, the_truth; 	     /* the boolean values */
 extern object end_of_file;		     /* the end-of-file object */
 
-extern object null_environment;		     /* the null environment */
-extern object initial_environment;	     /* initial environment */
-extern object user_environment;		     /* user-initial-environment */
+extern object empty_environment;	     /* the empty environment */
+extern object null_environment;		     /* initial environment */
+extern object interaction_environment;	     /* user initial environment */
 
 extern object current_input_port;
 extern object current_output_port;
@@ -38,11 +38,12 @@ extern unsigned long heap_size;
 extern int  error_is_unsafe;
 extern void error(char *msg, object o);
 
+#include "xutil.h"
 #include "runtime.h"
 #include "io.h"
 #include "symbols.h"
 #include "primitives.h"
-#include "xutil.h"
+#include "environments.h"
 
 
 extern object lisp_read(FILE *in);
@@ -52,9 +53,8 @@ extern void   lisp_display(object exp, FILE *out);
 
 extern object lisp_repl(object input_port, object output_port, object env);
 
-/* a fake */
-extern object lisp_apply(object args);
-
-object setup_environment();
+/* stubs */
+extern object lisp_primitive_apply(object args);
+extern object lisp_primitive_eval(object args);
 
 #endif
