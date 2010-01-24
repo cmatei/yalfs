@@ -144,7 +144,7 @@
 
 (define (definition-value exp)
   (if (symbol? (cadr exp))
-      (caddr exp) 
+      (caddr exp)
       (make-lambda (cdadr exp) ;; formal params
 		   (cddr exp)))) ;; body
 
@@ -277,7 +277,7 @@
 
 (define (let->combination exp)
   (append
-   (list 
+   (list
     (make-lambda (map let-variable-name (let-variables exp))
 		 (let-body exp)))
    (map let-variable-exp (let-variables exp))))
@@ -356,7 +356,7 @@
 	(if (null? the-vars)
 	    pbody
 	    (list (cons 'let (cons the-vars (append the-sets pbody)))))))
-	    
+
     (define (scan-body-exps exps)
       (cond ((null? exps) (scan-output))
 	    ((definition? (car exps))
@@ -414,7 +414,7 @@
 	(let ((frame (first-frame env)))
 	  (scan (frame-variables frame)
 		(frame-values frame)))))
-  
+
   (env-loop env))
 
 
@@ -445,7 +445,7 @@
 	    (else (scan (cdr vars) (cdr vals)))))
     (scan (frame-variables frame)
 	  (frame-values frame))))
-	    
+
 
 ;;; running the evaluator as a program
 
@@ -534,11 +534,11 @@
 ;;  	 (v '*unassigned*))
 ;;       (set! u <e1>)
 ;;       (set! v <e2>)
-;;  
+;;
 ;;       <e3>))
-;;  
+;;
 ;;  vs.
-;;  
+;;
 ;;    (lambda <vars>
 ;;      (let ((u '*unassigned*)
 ;;  	  (v '*unassigned*))
@@ -546,30 +546,30 @@
 ;;  	    (b <e2>))
 ;;  	(set! u a)
 ;;  	(set! v b))
-;;  
+;;
 ;;  	<e3>))
-;;  
+;;
 ;;  In the first case, e1 and e2 are evaluated sequentially, in the body
 ;;  where u and v are bound.
-;;  
+;;
 ;;    ((lambda (u v)
 ;;      (set! u <e1>)
 ;;      (set! v <e2>)
-;;  
+;;
 ;;      <e3>) '*unassigned* '*unassigned*)
-;;  
+;;
 ;;  This means that v (e2) can use the actual value of u (e1) by the time
 ;;  it is evaluated.
-;;  
+;;
 ;;  On the contrary, in the second case:
-;;  
+;;
 ;;    ((lambda (u v)
 ;;       ((lambda (a b)
 ;;  	(set! u a)
 ;;  	(set! v b)) <e1> <e2>)
-;;       
+;;
 ;;       <e3>) '*unassigned* '*unassigned*)
-;;  
+;;
 ;;  e1 and e2 are evaluated before the application of (lambda (a b) ...),
 ;;  which means that they see '*unassigned* for the values of u and v respectively, and
 ;;  an attempt to use such value will signal an error.
@@ -591,7 +591,7 @@
 	      1
 	      (* n (factorial (- n 1))))) the-global-environment)
 
-(display (eval '(factorial 8000) the-global-environment))
+'loaded
 
 
 
