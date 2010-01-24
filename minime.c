@@ -26,7 +26,7 @@ object _case, _let, _letx, _letrec, _do, _delay, _quasiquote;
 /* other syntactic keywords */
 object _else, _implies, _define, _unquote, _unquote_splicing;
 
-/* the ellipsis symbol */
+/* ... other useful symbols */
 object _ellipsis;
 
 object end_of_file;
@@ -260,6 +260,44 @@ static object list_of_apply_values(object exps, object env)
 	return head;
 }
 
+/* Assuming vars is an improper list (we do), cons a fresh proper list
+   with its contents and wrap the tail of *vals in a cons cell */
+static void fixup_varargs(object *names, object *values)
+{
+	object vars = *names, vals = *values;
+	object head = nil, tail = nil, vprec = nil;
+	object o;
+
+	// assert(!is_list(*vars));
+
+	while (is_pair(vars)) {
+
+		o = cons(car(vars), nil);
+
+		if (head == nil) {
+			head = tail = o;
+		} else {
+			set_cdr(tail, o);
+			tail = cdr(tail);
+		}
+
+		/* skip over vals */
+		if (is_null(vals))
+			error("Insufficient fixed arguments", nil);
+
+		vprec = vals;
+		vals  = cdr(vals);
+
+		vars = cdr(vars);
+	}
+
+	set_cdr(tail, cons(vars, nil));
+	set_cdr(vprec, cons(vals, nil));
+
+	*names = head;
+}
+
+
 /* this is never called */
 object lisp_primitive_apply(object args)
 {
@@ -303,7 +341,7 @@ static void breakpoint()
 object lisp_eval(object exp, object env)
 {
 	object actions;
-	object proc, args;
+	object proc, args, vars;
 	long nargs;
 
 tail_call:
@@ -423,10 +461,19 @@ tail_call:
 		}
 		else if (is_procedure(proc)) {
 
-			exp = sequence_to_exp(procedure_body(proc));
-			env = extend_environment(procedure_parameters(proc),
+			vars = procedure_parameters(proc);
+
+			/* If vars is an improper list, we're dealing with optional arguments.
+			   It's safe to mutate args, but must not mutate vars */
+			if (!is_list(vars)) {
+				fixup_varargs(&vars, &args);
+			}
+
+			env = extend_environment(vars,
 						 args,
 						 procedure_environment(proc));
+
+			exp = sequence_to_exp(procedure_body(proc));
 
 			/* r5rs: the first argument passed to apply
 			 * must be called via a tail call */

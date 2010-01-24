@@ -16,9 +16,12 @@
 (display (list 10 'factorial '= (factorial 10)))
 (newline)
 
+(define (foo x . rest)
+  (+ x (fold-left + 0 rest)))
+
+(display (foo 10 20 30))
+(newline)
 
 42
 
-
-(map (lambda (x) (if (= 100 x) (break))) '(1 2 3 4  6 7 8 9 100))
 

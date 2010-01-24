@@ -679,3 +679,11 @@ x					; ""
 
 (output-port? (current-output-port))	; #t
 (output-port? (current-input-port))	; #f
+
+
+(fold-left + 0 (list 1 2 3 4 5))	; 15
+(fold-right + 0 (list 1 2 3 4 5))	; 15
+
+(accumulate cons nil (list 1 2 3))	; (1 2 3)
+
+

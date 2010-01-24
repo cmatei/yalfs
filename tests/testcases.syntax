@@ -3,4 +3,15 @@
 
 (let ((x)) x)				; #<unspecified>
 
+(define (foo x . lst) lst)		; foo
+(foo 1)					; ()
+(foo 1 2)				; (2)
+(foo 1 2 3)				; (2 3)
+(foo)					;Insufficient fixed arguments
 
+
+(define (foo x . rest) (+ x (fold-left + 0 rest))) ; foo
+
+(foo 10)				; 10
+(foo 10 10)				; 20
+(foo 10 10 10 10)			; 40

@@ -128,6 +128,7 @@ x					; 42
 '`a					; (quasiquote a)
 '`'`'(foo bar baz)			; (quasiquote (quote (quasiquote (quote (foo bar baz)))))
 '`'`'(foo bar ,baz)			; (quasiquote (quote (quasiquote (quote (foo bar (unquote baz))))))
+'`'`'(foo bar ,@baz)			; (quasiquote (quote (quasiquote (quote (foo bar (unquote-splicing baz))))))
 
 
 .					;Illegal use of .
