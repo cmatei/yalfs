@@ -37,7 +37,8 @@ extern object _break;
 extern object result_prompt;
 
 extern unsigned long heap_size;
-extern int  error_is_unsafe;
+extern int emacs;
+extern int error_is_unsafe;
 extern void error(char *msg, object o);
 
 #include "xutil.h"
@@ -46,7 +47,7 @@ extern void error(char *msg, object o);
 #include "symbols.h"
 #include "primitives.h"
 #include "environments.h"
-
+#include "emacs.h"
 
 extern object lisp_read(FILE *in);
 extern object lisp_eval(object exp, object env);

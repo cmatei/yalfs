@@ -7,7 +7,7 @@
 (foo 1)					; ()
 (foo 1 2)				; (2)
 (foo 1 2 3)				; (2 3)
-(foo)					;Insufficient fixed arguments
+(foo)					;; Insufficient fixed arguments
 
 
 (define (foo x . rest) (+ x (fold-left + 0 rest))) ; foo

@@ -3,6 +3,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include <getopt.h>
+
 #include <setjmp.h>
 #include <assert.h>
 
@@ -41,6 +43,7 @@ object result_prompt;
 /*----------------------------------*/
 
 int error_is_unsafe = 1;
+int emacs = 0;
 
 jmp_buf err_jump;
 
@@ -493,14 +496,31 @@ object lisp_repl(object input_port, object output_port, object env)
 {
 	object exp, val = nil;
 
-	while ((exp = io_read(input_port)) != end_of_file) {
+	while (1) {
+
+		if (emacs && output_port != nil) {
+			emacs_prompt_for_command_expression(output_port);
+			emacs_read_start(output_port);
+		}
+
+		exp = io_read(input_port);
+		if (exp == end_of_file)
+			break;
+
+		if (emacs && output_port != nil)
+			emacs_read_finish(output_port);
 
 		val = lisp_eval(exp, env);
 
 		if (output_port != nil) {
-			io_display(result_prompt, output_port);
-			io_write(val, output_port);
-			io_newline(output_port);
+
+			if (emacs) {
+				emacs_write_result(val, output_port);
+			} else {
+				io_display(result_prompt, output_port);
+				io_write(val, output_port);
+				io_newline(output_port);
+			}
 		}
 	}
 
@@ -596,12 +616,43 @@ void scheme_init()
 	interaction_environment = extend_environment(nil, nil, null_environment);
 }
 
+
+static void parse_arguments(int argc, char **argv)
+{
+	struct option long_options[] = {
+		{ "emacs",     no_argument,       NULL, 'e' },
+		{ "heap-size", required_argument, NULL, 'h' },
+
+		{ 0, 0, 0, 0 }
+	};
+	int opt;
+
+	while ((opt = getopt_long_only(argc, argv, "eh:", long_options, NULL)) != -1) {
+		switch (opt) {
+		case 'e':
+			emacs = 1;
+			break;
+
+		case 'h':
+			heap_size = ((unsigned long) atoi(optarg)) * 1024 * 1024;
+			break;
+
+		default:
+			fprintf(stderr, "Usage: minime [-emacs] [-heap-size MB]\n");
+			exit(1);
+		}
+	}
+}
+
 int main(int argc, char **argv)
 {
+
+	parse_arguments(argc, argv);
 
 	error_is_unsafe = 1;
 
 	runtime_init();
+	emacs_init();
 	scheme_init();
 
 	error_is_unsafe = 0;
@@ -609,6 +660,9 @@ int main(int argc, char **argv)
 restart:
 	if (setjmp(err_jump))
 		goto restart;
+
+	if (emacs)
+		emacs_set_default_directory(current_output_port);
 
 	lisp_repl(current_input_port, current_output_port, interaction_environment);
 

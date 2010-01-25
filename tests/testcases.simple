@@ -22,8 +22,8 @@
 #\Newline				; #\newline
 
 ;; minime doesn't flush input so I get an additional oo unbound error
-#\foo					;Expecting delimiter
-					;Unbound variable
+#\foo					;; Expecting delimiter
+					;; Unbound variable
 
 #\A					; #\A
 '#\A					; #\A
@@ -55,7 +55,7 @@
 
 ;; pairs and lists
 '()					; ()
-()					;Unknown expression type
+()					;; Unknown expression type
 
 '(1 . 2)				; (1 . 2)
 '(a . 1)				; (a . 1)
@@ -131,13 +131,13 @@ x					; 42
 '`'`'(foo bar ,@baz)			; (quasiquote (quote (quasiquote (quote (foo bar (unquote-splicing baz))))))
 
 
-.					;Illegal use of .
-..					;Symbol has bad name
-...					;Unbound variable
+.					;; Illegal use of .
+..					;; Symbol has bad name
+...					;; Unbound variable
 
 ;; this fails to read ellipsis then errs on unbound d
-...d					;Symbol has bad name
-					;Unbound variable
+...d					;; Symbol has bad name
+					;; Unbound variable
 
 '...					; ...
 

@@ -1,9 +1,15 @@
-minime.o: minime.c minime.h runtime.h io.h symbols.h primitives.h xutil.h
-io.o: io.c minime.h runtime.h io.h symbols.h primitives.h xutil.h
-runtime.o: runtime.c minime.h runtime.h io.h symbols.h primitives.h \
- xutil.h
-symbols.o: symbols.c minime.h runtime.h io.h symbols.h primitives.h \
- xutil.h
-primitives.o: primitives.c minime.h runtime.h io.h symbols.h primitives.h \
- xutil.h
+minime.o: minime.c minime.h xutil.h runtime.h io.h symbols.h primitives.h \
+ environments.h emacs.h
+environments.o: environments.c minime.h xutil.h runtime.h io.h symbols.h \
+ primitives.h environments.h emacs.h
+io.o: io.c minime.h xutil.h runtime.h io.h symbols.h primitives.h \
+ environments.h emacs.h
+runtime.o: runtime.c minime.h xutil.h runtime.h io.h symbols.h \
+ primitives.h environments.h emacs.h
+symbols.o: symbols.c minime.h xutil.h runtime.h io.h symbols.h \
+ primitives.h environments.h emacs.h
+primitives.o: primitives.c minime.h xutil.h runtime.h io.h symbols.h \
+ primitives.h environments.h emacs.h
+emacs.o: emacs.c minime.h xutil.h runtime.h io.h symbols.h primitives.h \
+ environments.h emacs.h
 xutil.o: xutil.c xutil.h

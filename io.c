@@ -681,11 +681,13 @@ object io_peek_char(object port)
 void io_write(object obj, object port)
 {
 	lisp_print(obj, port_implementation(port));
+	fflush(port_implementation(port));
 }
 
 void io_display(object obj, object port)
 {
 	lisp_display(obj, port_implementation(port));
+	fflush(port_implementation(port));
 }
 
 void io_newline(object port)
@@ -697,6 +699,7 @@ void io_newline(object port)
 void io_write_char(object chr, object port)
 {
 	fputc(character_value(chr), port_implementation(port));
+	fflush(port_implementation(port));
 }
 
 object io_load(object filename, object env)
@@ -717,11 +720,12 @@ void error(char *msg, object o)
 		exit(1);
 	}
 
-	fprintf(port_implementation(current_error_port), "%s, ", msg);
-
+	fprintf(port_implementation(current_error_port), "; %s, ", msg);
 	io_write(o, current_error_port);
-
 	io_newline(current_error_port);
+
+	if (emacs)
+		emacs_error_decision(current_error_port, msg);
 
 	longjmp(err_jump, 1);
 }

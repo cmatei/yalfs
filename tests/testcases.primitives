@@ -39,16 +39,16 @@
 (>= 10 -10)				; #t
 (>= -10 10)				; #f
 
-(>= 'a)					;Expecting numbers
+(>= 'a)					;; Expecting numbers
 
 
 (zero? 0)				; #t
-(zero? #\a)				;Expecting a number
+(zero? #\a)				;; Expecting a number
 (zero? 5)				; #f
 (zero? -5)				; #f
 
-(positive?)				;Expecting 1 arguments but was sent 0
-(positive? 1 2)				;Expecting 1 arguments but was sent 2
+(positive?)				;; Expecting 1 arguments but was sent 0
+(positive? 1 2)				;; Expecting 1 arguments but was sent 2
 (positive? 0)				; #f
 (positive? 1)				; #t
 (positive? -1)				; #f
@@ -57,29 +57,29 @@
 (negative? 1)				; #f
 (negative? -1)				; #t
 
-(negative?)				;Expecting 1 arguments but was sent 0
-(negative? 1 2 3)		        ;Expecting 1 arguments but was sent 3
+(negative?)				;; Expecting 1 arguments but was sent 0
+(negative? 1 2 3)		        ;; Expecting 1 arguments but was sent 3
 
-(odd?)					;Expecting 1 arguments but was sent 0
+(odd?)					;; Expecting 1 arguments but was sent 0
 (odd? 1)				; #t
 (odd? -1)				; #t
 (odd? 0)				; #f
 
-(even?)					;Expecting 1 arguments but was sent 0
+(even?)					;; Expecting 1 arguments but was sent 0
 
 (even? 0)				; #t
 (even? 2)				; #t
 (even? 3)				; #f
 (even? -3)				; #f
 
-(even? #f)				;Expecting a number
+(even? #f)				;; Expecting a number
 
-(max)					;Expecting at least 1 argument
+(max)					;; Expecting at least 1 argument
 (max 1)					; 1
 (max 1 2 3 4 5 6 7 8 9 10)		; 10
 (max -1 -10000 10)			; 10
 
-(min)					;Expecting at least 1 argument
+(min)					;; Expecting at least 1 argument
 (min 1 2 3 4 5 6 7 8 9 10)		; 1
 (min -10 -9 -8 10 1)			; -10
 
@@ -89,7 +89,7 @@
 (+ 1 2 3 -3 -2 -1)			; 0
 (+ 10 10 10)				; 30
 
-(-)					;Expecting at least 1 argument
+(-)					;; Expecting at least 1 argument
 (- 0)					; 0
 (- 1)					; -1
 (- -1)					; 1
@@ -103,7 +103,7 @@
 (* -10 -10)				; 100
 (* -10 10)				; -100
 
-(/)					;Expecting at least 1 argument
+(/)					;; Expecting at least 1 argument
 (/ 1)					; 1
 (/ 2)					; 0
 (/ 4 2 1)				; 2
@@ -112,14 +112,14 @@
 (/ -4 -2)				; 2
 (/ -4 2)				; -2
 
-(abs)					;Expecting 1 arguments but was sent 0
+(abs)					;; Expecting 1 arguments but was sent 0
 (abs 0)					; 0
 (abs 100)				; 100
 (abs -100)				; 100
-(abs 1 1)				;Expecting 1 arguments but was sent 2
+(abs 1 1)				;; Expecting 1 arguments but was sent 2
 
 (quotient 0 3)				; 0
-(quotient 3 0)				;Will not divide by zero
+(quotient 3 0)				;; Will not divide by zero
 
 (quotient 6 2)				; 3
 (quotient 6 -2)				; -3
@@ -145,7 +145,7 @@
 (f -13 -4)				; #t
 (f 13 -4)				; #t
 
-(number->string)			;Expecting 1 or 2 arguments
+(number->string)			;; Expecting 1 or 2 arguments
 
 ;; fail these so I remember it's not implemented
 (number->string  2  2)			; "10"
@@ -224,12 +224,12 @@ x					; (a . 4)
 (cons 'a 3)				; (a . 3)
 (cons '(a b) 'c)			; ((a b) . c)
 
-(car '())				;Expecting a pair
+(car '())				;; Expecting a pair
 (car '(a b c))				; a
 (car '((a) b c d))			; (a)
 (car '(1 . 2))				; 1
 
-(cdr '())				;Expecting a pair
+(cdr '())				;; Expecting a pair
 (cdr '((a) b c d))			; (b c d)
 (cdr '(1 . 2))				; 2
 
@@ -262,7 +262,7 @@ x					; (a . 4)
 (length '(a (b) (c d e)))		; 3
 (length '())				; 0
 
-(length #f)				;Object is not a proper list
+(length #f)				;; Object is not a proper list
 
 (append)				; ()
 (append '(x) '(y))			; (x y)
@@ -275,25 +275,25 @@ x					; (a . 4)
 (append '(a b) 'a)			; (a b . a)
 (append '(a b) #f)			; (a b . #f)
 
-(append 3 3)				;Expecting lists
+(append 3 3)				;; Expecting lists
 
-(reverse)				;Expecting 1 arguments but was sent 0
+(reverse)				;; Expecting 1 arguments but was sent 0
 
 (reverse '(a b c))			; (c b a)
 (reverse '(a (b c) d (e (f))))		; ((e (f)) d (b c) a)
 
 
 (list-tail '() 0)			; ()
-(list-tail '() 1)			;List too short
-(list-tail '() -1)			;Expecting an index integer
+(list-tail '() 1)			;; List too short
+(list-tail '() -1)			;; Expecting an index integer
 
 (list-tail '(a b c d e) 0)		; (a b c d e)
 (list-tail '(a b c d e) 1)		; (b c d e)
 
-(list-ref '() 0)			;List is empty
+(list-ref '() 0)			;; List is empty
 (list-ref '(a b c d e) 3)		; d
-(list-ref '(a b c d . e) 3)		;Expecting a list
-(list-ref '(a b c d e) 6)		;List too short
+(list-ref '(a b c d . e) 3)		;; Expecting a list
+(list-ref '(a b c d e) 6)		;; List too short
 
 (memq 'a '(a b c))			; (a b c)
 (memq 'b '(a b c))			; (b c)
@@ -385,7 +385,7 @@ x					; (a . 4)
 (char-ci<=? #\b #\A)			; #f
 (char-ci>=? #\C #\C #\b #\A)		; #t
 
-(char-alphabetic?)			;Expecting 1 arguments but was sent 0
+(char-alphabetic?)			;; Expecting 1 arguments but was sent 0
 (char-alphabetic? #\A)			; #t
 (char-alphabetic? #\5)			; #f
 
@@ -408,7 +408,7 @@ x					; (a . 4)
 (char->integer #\A)			; 65
 
 (integer->char 97)			; #\a
-(integer->char 9999)			;Integer out of character range
+(integer->char 9999)			;; Integer out of character range
 
 (char->integer (integer->char 97))	; 97
 (integer->char (char->integer #\A))	; #\A
@@ -438,20 +438,20 @@ x					; (a . 4)
 
 (string-ref x 0)			; #\a
 (string-ref x 9)			; #\a
-(string-ref x 10)			;Not a valid index
-(string-ref x -1)			;Not a valid index
+(string-ref x 10)			;; Not a valid index
+(string-ref x -1)			;; Not a valid index
 
 (define x "abcdefghi")			; x
 (string-ref x 0)			; #\a
 
-(string-set!)				;Expecting 3 arguments
-(string-set! 0 0 0)			;Expecting a string
-(string-set! x #f 0)			;Expecting an integer
-(string-set! x 0 'z)			;Expecting a character
+(string-set!)				;; Expecting 3 arguments
+(string-set! 0 0 0)			;; Expecting a string
+(string-set! x #f 0)			;; Expecting an integer
+(string-set! x 0 'z)			;; Expecting a character
 (string-set! x 0 #\z)			; #<unspecified>
 
 x					; "zbcdefghi"
-(string-set! x 9 #\Z)			;Not a valid index
+(string-set! x 9 #\Z)			;; Not a valid index
 (string-set! x 8 #\Z)			; #<unspecified>
 x					; "zbcdefghZ"
 
@@ -475,8 +475,8 @@ x					; immutable
 
 
 ;; please test these thoroughly
-(string=?)				;Expecting at least 2 arguments
-(string=? #f #t)			;Expecting strings
+(string=?)				;; Expecting at least 2 arguments
+(string=? #f #t)			;; Expecting strings
 (string=? "aaaa" "aaaa")		; #t
 (string=? "aaaa" "a")			; #f
 
@@ -524,10 +524,10 @@ x					; immutable
 
 (string<=? "aab" "aabc")		; #t
 
-(substring)				;Expecting 3 arguments
+(substring)				;; Expecting 3 arguments
 (substring "" 0 0)			; ""
-(substring "" 0 1)			;Not a valid end index
-(substring "a" 1 0)			;Not a valid end index
+(substring "" 0 1)			;; Not a valid end index
+(substring "a" 1 0)			;; Not a valid end index
 (substring "a" 1 1)			; ""
 (substring "a" 0 1)			; "a"
 
@@ -644,11 +644,11 @@ x					; ""
 ;; (call-with-current-continuation procedure?) ; #t
 
 (procedure? apply)			; #t
-(apply)					;Expecting at least 1 argument
+(apply)					;; Expecting at least 1 argument
 (apply +)				; 0
 
 (apply + (list 1 2 3))			; 6
-(apply + 1 2)				;Last argument must be a list
+(apply + 1 2)				;; Last argument must be a list
 (apply + 1 2 (list 3))			; 6
 (apply equal? (list 1 2 3) (list (list 1 2 3))) ; #t
 
@@ -659,7 +659,7 @@ x					; ""
 (eval 3)				; 3
 
 ;; if () is not self-evaluating, this is an error
-(eval '() (null-environment 5))		;Unknown expression type
+(eval '() (null-environment 5))		;; Unknown expression type
 
 ;; allow unquoted
 (eval (+ 2 3))				; 5
@@ -668,7 +668,7 @@ x					; ""
 ;; specified environment
 (define x 1)				; x
 (eval x (interaction-environment))	; 1
-(eval x (null-environment 5))		;Unbound variable
+(eval x (null-environment 5))		;; Unbound variable
 
 
 (current-input-port)			; #<input-port
