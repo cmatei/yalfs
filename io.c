@@ -201,7 +201,7 @@ static object read_string(FILE *in)
 	}
 
 	peek_char_expect_delimiter(in);
-	o = make_string_c(buffer, str_len);
+	o = make_string_buffer(buffer, str_len);
 	xfree(buffer);
 
 	return o;
@@ -539,10 +539,8 @@ void lisp_print(object exp, FILE *out)
 		break;
 
 	case T_SYMBOL:
-		str = string_value(symbol_string(exp));
-		len = string_length(symbol_string(exp));
-		for (i = 0; i < len; i++)
-			fprintf(out, "%c", str[i]);
+		fprintf(out, "%.*s", (int) string_length(symbol_string(exp)),
+			string_value(symbol_string(exp)));
 		break;
 
 	case T_FOREIGN_PTR:
@@ -605,7 +603,7 @@ void lisp_display(object exp, FILE *out)
 	switch (type_of(exp)) {
 
 	case T_STRING:
-		fwrite(string_value(exp), 1, string_length(exp), out);
+		fprintf(out, "%.*s", (int) string_length(exp), string_value(exp));
 		break;
 
 	case T_CHARACTER:

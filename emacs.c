@@ -50,7 +50,7 @@ void emacs_set_default_directory(object port)
 	io_write_char(escape, port);
 	io_write_char(make_character('w'), port);
 
-	io_display(make_string_c(cwd, strlen(cwd)), port);
+	io_display(make_string_c(cwd), port);
 
 	io_write_char(escape, port);
 
@@ -84,7 +84,7 @@ void emacs_write_result(object val, object port)
 
 void emacs_init()
 {
-	emacs_eval_prompt  = make_string_c("[Evaluator]", strlen("[Evaluator]"));
+	emacs_eval_prompt  = make_string_c("[Evaluator]");
 
 	escape = make_character(ESC);
 }

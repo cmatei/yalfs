@@ -294,6 +294,10 @@ static void fixup_varargs(object *names, object *values)
 		vars = cdr(vars);
 	}
 
+	/* r5rs: there must be at least one formal before the period.
+	   otoh, i've seen (define (main . args) ...) so maybe i
+	   should allow it ?! */
+
 	set_cdr(tail, cons(vars, nil));
 	set_cdr(vprec, cons(vals, nil));
 
@@ -536,7 +540,7 @@ object library_file_path(char *name)
 	len = snprintf(file_path, 256, "%s/lib/%s", STRINGIFY(INSTALLDIR), name);
 	assert(len < 256);
 
-	return make_string_c(file_path, len);
+	return make_string_c(file_path);
 }
 
 object setup_initial_environment(object baseenv)
@@ -580,7 +584,7 @@ void scheme_init()
 //	current_error_port  = make_port(stderr, PORT_TYPE_OUTPUT);
 	current_error_port  = current_output_port;
 
-	result_prompt = make_string_c("=> ", 3);
+	result_prompt = make_string_c("=> ");
 
 	/* expression keywords */
 	_quote            = make_symbol_c("quote");

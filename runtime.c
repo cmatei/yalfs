@@ -77,18 +77,26 @@ object make_string(unsigned long length)
 
 	*freeptr++ = STRING_TAG | (length << STRING_SHIFT);
 
-	/* round to full word */
-	words = (length + sizeof(unsigned long) - 1) / sizeof(unsigned long);
+	/* null-terminate */
+	*((unsigned char *) freeptr + length) = 0;
+
+	/* round length + 1 to full word */
+	words = (length + sizeof(unsigned long)) / sizeof(unsigned long);
 	freeptr += words;
 
 	return (object) ((unsigned long) (freeptr - words - 1) | INDIRECT_TAG);
 }
 
-object make_string_c(char *str, unsigned long length)
+object make_string_buffer(char *str, unsigned long length)
 {
 	object o = make_string(length);
 	memcpy(string_value(o), str, length);
 	return o;
+}
+
+object make_string_c(char *str)
+{
+	return make_string_buffer(str, strlen(str));
 }
 
 object make_symbol(char *str, unsigned long len)

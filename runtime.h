@@ -239,7 +239,9 @@ static inline int is_string(object o)
 }
 
 extern object make_string(unsigned long length);
-extern object make_string_c(char *str, unsigned long length);
+
+extern object make_string_buffer(char *str, unsigned long length);
+extern object make_string_c(char *str);
 
 static inline unsigned long string_length(object o)
 {

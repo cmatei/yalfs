@@ -53,7 +53,7 @@ object symbol(char *str, unsigned long len)
 	}
 
 	/* not there, intern now */
-	o = make_string_c(str, len);
+	o = make_string_buffer(str, len);
 	el = make_symbol_with_string(o);
 	symbol_table.buckets[bucket] = cons(el, symbol_table.buckets[bucket]);
 

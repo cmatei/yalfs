@@ -364,7 +364,7 @@ object impl_number_string(object args)
 	}
 
 	snprintf(buffer, 64, "%ld", fixnum_value(car(args)));
-	return make_string_c(buffer, strlen(buffer));
+	return make_string_c(buffer);
 }
 
 object impl_string_number(object args)
