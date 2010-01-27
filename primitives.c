@@ -1438,6 +1438,12 @@ object impl_load(object args)
 	return io_load(car(args), interaction_environment);
 }
 
+object impl_gensym(object args)
+{
+	check_args(0, args, "gensym");
+	return gensym();
+}
+
 #define pair_fun_def(X) { #X, impl_##X }
 
 struct primitive the_primitives[] = {
@@ -1661,6 +1667,10 @@ struct primitive the_primitives[] = {
 	/* System interface */
 
 	{ "load",          impl_load                      },
+
+
+	/* Misc */
+	{ "gensym",        impl_gensym                    },
 
 	{ NULL, NULL }
 };

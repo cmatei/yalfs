@@ -16,6 +16,8 @@ static struct {
 	object *buckets;
 } symbol_table;
 
+static unsigned long gensym_counter = 1;
+
 /* djb hash */
 static unsigned long symbol_string_hash(char *str, unsigned long len)
 {
@@ -59,6 +61,16 @@ object symbol(char *str, unsigned long len)
 
 
 	return el;
+}
+
+object gensym()
+{
+	char sym[64];
+	int n;
+
+	n = snprintf(sym, 64, "#:G%lu", gensym_counter++);
+
+	return symbol(sym, n);
 }
 
 
