@@ -75,7 +75,7 @@ static int is_primitive_syntax(object proc, primitive_proc implementation)
 
 
 /* (quote exp) */
-#define is_quoted(proc) is_tagged(exp, _quote)
+#define is_quoted(exp) is_tagged(exp, _quote)
 
 #define is_quotation(proc) is_primitive_syntax(proc, lisp_primitive_quote)
 
