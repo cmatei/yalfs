@@ -88,8 +88,25 @@ static int is_equal(object o1, object o2)
 	return is_eqv(o1, o2);
 }
 
+/* Basic syntax */
+#define basic_syntax_fun(LISPNAME, CNAME)		\
+object CNAME(object args)			        \
+{							\
+        error("It is an error to call " #CNAME, nil);	\
+	exit(1);					\
+}
 
+basic_syntax_fun("quote",  lisp_primitive_quote)
+basic_syntax_fun("set!",   lisp_primitive_set)
+basic_syntax_fun("define", lisp_primitive_define)
+basic_syntax_fun("if",     lisp_primitive_if)
+basic_syntax_fun("lambda", lisp_primitive_lambda)
+basic_syntax_fun("let",    lisp_primitive_let)
+basic_syntax_fun("begin",  lisp_primitive_begin)
+basic_syntax_fun("cond",   lisp_primitive_cond)
 
+basic_syntax_fun("eval",   lisp_primitive_eval)
+basic_syntax_fun("apply",  lisp_primitive_apply)
 
 /* Numerical operations */
 
@@ -1446,7 +1463,23 @@ object impl_gensym(object args)
 
 #define pair_fun_def(X) { #X, impl_##X }
 
+
 struct primitive the_primitives[] = {
+
+	/* Basic syntactic primitives */
+
+	{ "quote",  lisp_primitive_quote  },
+	{ "set!",   lisp_primitive_set    },
+	{ "define", lisp_primitive_define },
+	{ "if",     lisp_primitive_if     },
+	{ "lambda", lisp_primitive_lambda },
+	{ "let",    lisp_primitive_let    },
+	{ "begin",  lisp_primitive_begin  },
+	{ "cond",   lisp_primitive_cond   },
+
+	{ "eval",   lisp_primitive_eval   },
+	{ "apply",  lisp_primitive_apply  },
+
 
 	/* Equivalence predicates */
 
@@ -1621,12 +1654,10 @@ struct primitive the_primitives[] = {
 	/* Control features */
 
 	{ "procedure?",    impl_procedurep                },
-	{ "apply",         lisp_primitive_apply           },
 //	{ "map",           impl_map                       },
 //	{ "for-each",      impl_for_each                  },
 //	{ "force",         impl_force                     },
 //      { "delay",         impl_delay                     },
-	{ "eval",          lisp_primitive_eval            },
 
 	{ "null-environment",        impl_null_environment },
 	{ "interaction-environment", impl_interaction_environment },

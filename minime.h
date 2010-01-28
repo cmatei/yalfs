@@ -56,8 +56,4 @@ extern void   lisp_display(object exp, FILE *out);
 
 extern object lisp_repl(object input_port, object output_port, object env);
 
-/* stubs */
-extern object lisp_primitive_apply(object args);
-extern object lisp_primitive_eval(object args);
-
 #endif

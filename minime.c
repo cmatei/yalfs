@@ -64,23 +64,31 @@ static int is_self_evaluating(object exp)
 		is_unspecified(exp);	     /* not sure this leads to right behaviour */
 }
 
+static int is_primitive_syntax(object proc, primitive_proc implementation)
+{
+	return is_primitive(proc) && primitive_implementation(proc) == implementation;
+}
 
 /* syntax functions */
 
 #define is_variable(exp) is_symbol(exp)
 
+
 /* (quote exp) */
-#define is_quoted(exp) is_tagged(exp, _quote)
+#define is_quoted(proc) is_tagged(exp, _quote)
+
+#define is_quotation(proc) is_primitive_syntax(proc, lisp_primitive_quote)
+
 #define text_of_quotation(exp) cadr(exp)
 
 /* (set! var val) */
-#define is_assignment(exp) is_tagged(exp, _set)
+#define is_assignment(proc) is_primitive_syntax(proc, lisp_primitive_set)
 #define assignment_variable(exp) cadr(exp)
 #define assignment_value(exp)    caddr(exp)
 
 /* (define v e)
    (define (v p1 p2 p3 ..) body) */
-#define is_definition(exp) is_tagged(exp, _define)
+#define is_definition(proc) is_primitive_syntax(proc, lisp_primitive_define)
 
 static object definition_variable(object exp)
 {
@@ -100,7 +108,7 @@ static object definition_value(object exp)
 		return make_lambda(cdadr(exp), cddr(exp));
 }
 
-#define is_if(exp) is_tagged(exp, _if)
+#define is_if(proc) is_primitive_syntax(proc, lisp_primitive_if)
 #define if_predicate(exp) cadr(exp)
 #define if_consequent(exp) caddr(exp)
 
@@ -114,7 +122,7 @@ static object if_alternate(object exp)
 
 #define make_if(predicate, consequent, alternate) cons(_if, cons(predicate, cons(consequent, cons(alternate, nil))))
 
-#define is_cond(exp) is_tagged(exp, _cond)
+#define is_cond(proc) is_primitive_syntax(proc, lisp_primitive_cond)
 
 #define cond_clauses(exp) cdr(exp)
 
@@ -125,13 +133,14 @@ static object if_alternate(object exp)
 
 #define cond_to_ifs(exp) expand_cond_clauses(cond_clauses(exp))
 
-#define is_begin(exp) is_tagged(exp, _begin)
+#define is_begin(proc) is_primitive_syntax(proc, lisp_primitive_begin)
+
 #define begin_actions(exp) cdr(exp)
 #define is_last_exp(exp) is_null(cdr(exp))
 #define first_exp(seq) car(seq)
 #define rest_exps(seq) cdr(seq)
 
-#define is_let(exp) is_tagged(exp, _let)
+#define is_let(proc) is_primitive_syntax(proc, lisp_primitive_let)
 
 #define let_bindings(exp) cadr(exp)
 #define let_body(exp) cddr(exp)
@@ -204,7 +213,7 @@ static object expand_cond_clauses(object clauses)
 }
 
 
-#define is_lambda(exp) is_tagged(exp, _lambda)
+#define is_lambda(proc) is_primitive_syntax(proc, lisp_primitive_lambda)
 #define lambda_parameters(exp) cadr(exp)
 #define lambda_body(exp) cddr(exp)
 
@@ -305,31 +314,8 @@ static void fixup_varargs(object *names, object *values)
 }
 
 
-/* this is never called */
-object lisp_primitive_apply(object args)
-{
-	fprintf(stderr, "internal error\n");
-	exit(1);
-}
-
-static int is_primitive_apply(object proc)
-{
-	return is_primitive(proc) &&
-	       primitive_implementation(proc) == lisp_primitive_apply;
-}
-
-/* this is also never called */
-object lisp_primitive_eval(object args)
-{
-	fprintf(stderr, "internal error\n");
-	exit(1);
-}
-
-static int is_primitive_eval(object proc)
-{
-	return is_primitive(proc) &&
-		primitive_implementation(proc) == lisp_primitive_eval;
-}
+#define is_eval(proc) is_primitive_syntax(proc, lisp_primitive_eval)
+#define is_apply(proc) is_primitive_syntax(proc, lisp_primitive_apply)
 
 object maybe_unquote(object exp)
 {
@@ -337,12 +323,6 @@ object maybe_unquote(object exp)
 		return text_of_quotation(exp);
 
 	return exp;
-}
-
-#define is_breakpoint(exp) is_tagged(exp, _break)
-static void breakpoint()
-{
-	/* break here in gdb */
 }
 
 object lisp_eval(object exp, object env)
@@ -361,19 +341,28 @@ tail_call:
 	else if (is_variable(exp)) {
 		return lookup_variable_value(exp, env);
 	}
+	/* everything else must be application-like */
+	else if (!is_pair(exp)) {
+		error("Unknown expression type -- EVAL", exp);
+	}
+
+	/* language syntax, unless the symbols are bound to something else */
+
+	proc = lisp_eval(operator(exp), env);
+
 	/* quote */
-	else if (is_quoted(exp)) {
+	if (is_quotation(proc)) {
 		return text_of_quotation(exp);
 	}
 	/* assignment */
-	else if (is_assignment(exp)) {
+	else if (is_assignment(proc)) {
 		set_variable_value(assignment_variable(exp),
 				   lisp_eval(assignment_value(exp), env),
 				   env);
 		return assignment_variable(exp);
 	}
 	/* definition */
-	else if (is_definition(exp)) {
+	else if (is_definition(proc)) {
 		define_variable(definition_variable(exp),
 				lisp_eval(definition_value(exp), env),
 				env);
@@ -381,7 +370,7 @@ tail_call:
 		return definition_variable(exp);
 	}
 	/* if, tail recursive */
-	else if (is_if(exp)) {
+	else if (is_if(proc)) {
 		exp = is_true(lisp_eval(if_predicate(exp), env)) ?
 			if_consequent(exp) :
 			if_alternate(exp);
@@ -389,18 +378,18 @@ tail_call:
 		goto tail_call;
 	}
 	/* lambda */
-	else if (is_lambda(exp)) {
+	else if (is_lambda(proc)) {
 		return make_procedure(lambda_parameters(exp),
 				     lambda_body(exp),
 				     env);
 	}
 	/* let */
-	else if (is_let(exp)) {
+	else if (is_let(proc)) {
 		exp = let_to_combination(exp);
 		goto tail_call;
 	}
 	/* begin */
-	else if (is_begin(exp)) {
+	else if (is_begin(proc)) {
 
 		actions = begin_actions(exp);
 
@@ -419,78 +408,74 @@ tail_call:
 		return nil;
 	}
 	/* cond */
-	else if (is_cond(exp)) {
+	else if (is_cond(proc)) {
 		exp = cond_to_ifs(exp);
 		goto tail_call;
 	}
-	/* breakpoint hook */
-	else if (is_breakpoint(exp)) {
-		breakpoint();
-		return nil;
+	/* eval */
+	else if (is_eval(proc)) {
+		nargs = length(operands(exp));
+
+		if (nargs < 1)
+			error("Expecting at least 1 argument -- EVAL", exp);
+
+		if (nargs > 1)
+			env = lisp_eval(cadr(operands(exp)), env);
+		else
+			env = interaction_environment;
+
+		/* "Expression must be a valid Scheme expression represented as data ..." */
+		exp = maybe_unquote(car(operands(exp)));
+
+		goto tail_call;
+	}
+	/* apply */
+	else if (is_apply(proc)) {
+
+		if (length(operands(exp)) < 1)
+			error("Expecting at least 1 argument -- APPLY", exp);
+
+		proc = lisp_eval(car(operands(exp)), env);
+		args = list_of_apply_values(cdr(operands(exp)), env);
+
+		goto apply;
 	}
 	/* application */
-	else if (is_application(exp)) {
+	else {
 
-		proc = lisp_eval(operator(exp), env);
+		args = list_of_values(operands(exp), env);
+		goto apply;
+	}
 
-		/* these primitives are somewhat special */
-		if (is_primitive_apply(proc)) {
+	/* not reached */
+	return nil;
 
-			if (length(operands(exp)) < 1)
-				error("Expecting at least 1 argument -- APPLY", exp);
+apply:
+	if (is_primitive(proc)) {
+		return apply_primitive(proc, args);
+	}
+	else if (is_procedure(proc)) {
 
-			proc = lisp_eval(car(operands(exp)), env);
-			args = list_of_apply_values(cdr(operands(exp)), env);
-		}
-		else if (is_primitive_eval(proc)) {
+		vars = procedure_parameters(proc);
 
-			nargs = length(operands(exp));
-
-			if (nargs < 1)
-				error("Expecting at least 1 argument -- EVAL", exp);
-
-			if (nargs > 1)
-				env = lisp_eval(cadr(operands(exp)), env);
-			else
-				env = interaction_environment;
-
-			/* "Expression must be a valid Scheme expression represented as data ..." */
-			exp = maybe_unquote(car(operands(exp)));
-
-			goto tail_call;
-		}
-		else {
-			args = list_of_values(operands(exp), env);
+		/* If vars is an improper list, we're dealing with optional arguments.
+		   It's safe to mutate args, but must not mutate vars */
+		if (!is_list(vars)) {
+			fixup_varargs(&vars, &args);
 		}
 
-		if (is_primitive(proc)) {
-			return apply_primitive(proc, args);
-		}
-		else if (is_procedure(proc)) {
+		env = extend_environment(vars,
+					 args,
+					 procedure_environment(proc));
 
-			vars = procedure_parameters(proc);
+		exp = sequence_to_exp(procedure_body(proc));
 
-			/* If vars is an improper list, we're dealing with optional arguments.
-			   It's safe to mutate args, but must not mutate vars */
-			if (!is_list(vars)) {
-				fixup_varargs(&vars, &args);
-			}
-
-			env = extend_environment(vars,
-						 args,
-						 procedure_environment(proc));
-
-			exp = sequence_to_exp(procedure_body(proc));
-
-			/* r5rs: the first argument passed to apply
-			 * must be called via a tail call */
-			goto tail_call;
-		}
-		else
-			error("Unknown procedure type -- APPLY", proc);
+		/* r5rs: the first argument passed to apply
+		 * must be called via a tail call */
+		goto tail_call;
 	}
 	else
-		error("Unknown expression type -- EVAL", exp);
+		error("Unknown procedure type -- APPLY", proc);
 
 	/* not reached */
 	return nil;

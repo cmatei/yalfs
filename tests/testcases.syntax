@@ -15,3 +15,13 @@
 (foo 10)				; 10
 (foo 10 10)				; 20
 (foo 10 10 10 10)			; 40
+
+(define x-eval eval)			; x-eval
+(x-eval '(+ 10 20))			; 30
+
+(define x-lambda lambda)		; x-lambda
+(x-lambda (x) x)			; #<procedure
+
+(x-eval '((x-lambda (x) x) 10))		; 10
+
+
