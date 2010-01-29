@@ -93,7 +93,7 @@ static int is_equal(object o1, object o2)
 object CNAME(object args)			        \
 {							\
         error("It is an error to call " #CNAME, nil);	\
-	exit(1);					\
+	return unspecified;				\
 }
 
 basic_syntax_fun("quote",  lisp_primitive_quote)
@@ -101,6 +101,8 @@ basic_syntax_fun("set!",   lisp_primitive_set)
 basic_syntax_fun("define", lisp_primitive_define)
 basic_syntax_fun("if",     lisp_primitive_if)
 basic_syntax_fun("lambda", lisp_primitive_lambda)
+basic_syntax_fun("and",    lisp_primitive_and)
+basic_syntax_fun("or",     lisp_primitive_or)
 basic_syntax_fun("let",    lisp_primitive_let)
 basic_syntax_fun("begin",  lisp_primitive_begin)
 basic_syntax_fun("cond",   lisp_primitive_cond)
@@ -1473,6 +1475,8 @@ struct primitive the_primitives[] = {
 	{ "define", lisp_primitive_define },
 	{ "if",     lisp_primitive_if     },
 	{ "lambda", lisp_primitive_lambda },
+	{ "and",    lisp_primitive_and    },
+	{ "or",     lisp_primitive_or     },
 	{ "let",    lisp_primitive_let    },
 	{ "begin",  lisp_primitive_begin  },
 	{ "cond",   lisp_primitive_cond   },

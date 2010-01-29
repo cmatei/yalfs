@@ -24,4 +24,20 @@
 
 (x-eval '((x-lambda (x) x) 10))		; 10
 
+(let ((lambda 1)) (x-lambda () lambda)) ; #<procedure
+
+(define foo (let ((lambda 1)) (x-lambda () lambda))) ; foo
+
+(foo)					; 1
+
+(and)					; #t
+(and 1 2)				; 2
+(and 1 2 3 #f 5)			; #f
+
+
+(or)					; #f
+(or 1)					; 1
+(or #f 1 2)				; 1
+(or #f #f '() #f #f)			; ()
+
 

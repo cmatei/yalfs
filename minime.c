@@ -217,6 +217,9 @@ static object expand_cond_clauses(object clauses)
 #define lambda_parameters(exp) cadr(exp)
 #define lambda_body(exp) cddr(exp)
 
+#define is_and(proc) is_primitive_syntax(proc, lisp_primitive_and)
+#define is_or(proc) is_primitive_syntax(proc, lisp_primitive_or)
+
 
 #define is_application(exp) is_pair(exp)
 
@@ -327,7 +330,7 @@ object maybe_unquote(object exp)
 
 object lisp_eval(object exp, object env)
 {
-	object actions;
+	object exps, val;
 	object proc, args, vars;
 	long nargs;
 
@@ -383,6 +386,45 @@ tail_call:
 				     lambda_body(exp),
 				     env);
 	}
+	/* and */
+	else if (is_and(proc)) {
+		exps = operands(exp);
+
+		while (!is_null(exps)) {
+
+			if (is_last_exp(exps)) {
+				exp = first_exp(exps);
+				goto tail_call;
+			}
+
+			if (lisp_eval(first_exp(exps), env) == the_falsity)
+				return the_falsity;
+
+			exps = rest_exps(exps);
+		}
+
+		return the_truth;
+	}
+	/* or */
+	else if (is_or(proc)) {
+		exps = operands(exp);
+
+		while (!is_null(exps)) {
+
+			if (is_last_exp(exps)) {
+				exp = first_exp(exps);
+				goto tail_call;
+			}
+
+			val = lisp_eval(first_exp(exps), env);
+			if (val != the_falsity)
+				return val;
+
+			exps = rest_exps(exps);
+		}
+
+		return the_falsity;
+	}
 	/* let */
 	else if (is_let(proc)) {
 		exp = let_to_combination(exp);
@@ -391,18 +433,18 @@ tail_call:
 	/* begin */
 	else if (is_begin(proc)) {
 
-		actions = begin_actions(exp);
+		exps = begin_actions(exp);
 
-		while (!is_null(actions)) {
+		while (!is_null(exps)) {
 			/* tail call for last expression in a sequence */
-			if (is_last_exp(actions)) {
-				exp = first_exp(actions);
+			if (is_last_exp(exps)) {
+				exp = first_exp(exps);
 				goto tail_call;
 			}
 
-			lisp_eval(first_exp(actions), env);
+			lisp_eval(first_exp(exps), env);
 
-			actions = rest_exps(actions);
+			exps = rest_exps(exps);
 		}
 
 		return nil;

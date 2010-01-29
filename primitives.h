@@ -15,6 +15,8 @@ extern object lisp_primitive_set(object args);
 extern object lisp_primitive_define(object args);
 extern object lisp_primitive_if(object args);
 extern object lisp_primitive_lambda(object args);
+extern object lisp_primitive_and(object args);
+extern object lisp_primitive_or(object args);
 extern object lisp_primitive_let(object args);
 extern object lisp_primitive_begin(object args);
 extern object lisp_primitive_cond(object args);
