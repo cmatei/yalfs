@@ -78,3 +78,49 @@ x11 - the others
 11101111 - unspecified value
 
 
+Syntactic Extensions (Macros)
+=============================
+
+There are only a few primitive expression types in R5RS: variables,
+literal expressions, procedure calls, lambda, if, set! and define.
+Everything else is derived syntax and can be defined using macros
+(cond, let, and, or, etc). There are also no reserved keywords.
+
+Implementing syntactic expressions (primitive or derived) straight
+into the interpreter as special evaluation rules has the problem that
+it forever "fixes" their meaning, and does not allow them to be
+rebound.
+
+My solution is to bind the identifiers used as syntactic keywords in
+the initial environment as primitive procedures, which are however not
+meant to be ever actually applied. Instead, when the evaluator sees
+such a binding for an "application", it knows it must apply the
+special evaluation rules.
+
+When the evaluator sees an expression, it follows these rules:
+
+ - is it a constant ? return it
+ - is it a variable ? look it up in the environment
+ - it must be an application-thingie then.
+      evaluate the operator in the environment
+
+      is it bound to primitive_if?
+      	 evaluate if_predicate, then tail call for the consequent/alternate
+
+      is it bound to primitive_cond?
+         transform the expression to nested ifs, then tail call for them
+
+      [...]
+
+      is it a macro?
+         TBD (macroexand then tail call to eval it)
+
+      is it really an application?
+      	 apply it
+
+
+Lexical scoping should then take care of potential redefinitions.
+
+What this also allows me is to actually use a proper scheme as
+implementation language for the macro facilities.
+
