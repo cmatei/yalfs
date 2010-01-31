@@ -193,7 +193,7 @@ static object letx_to_combination_rec(object bindings, object body)
 static object letx_to_combination(object exp)
 {
 	if (is_null(let_bindings(exp)))
-		return cons( make_lambda(nil, let_body(exp)), nil);
+		return list(1, make_lambda(nil, let_body(exp)));
 
 	return letx_to_combination_rec(let_bindings(exp), let_body(exp));
 }
@@ -255,45 +255,26 @@ static object list_of_values(object exps, object env)
 	if (is_null(exps))
 		return nil;
 
-	return cons(lisp_eval(first_operand(exps), env),
-		    list_of_values(rest_operands(exps), env));
+	return cons( lisp_eval(first_operand(exps), env),
+		     list_of_values(rest_operands(exps), env));
 }
 
 static object list_of_apply_values(object exps, object env)
 {
-	object head = nil, tail = nil;
 	object o;
 
 	if (is_null(exps))
 		return nil;
 
-	while (!is_last_exp(exps)) {
+	if (is_last_exp(exps)) {
+		if (!is_list((o = lisp_eval(first_operand(exps), env))))
+			error("Last argument must be a list -- apply", o);
 
-		o = cons(lisp_eval(first_operand(exps), env), nil);
-
-		if (head == nil) {
-			head = tail = o;
-		} else {
-			set_cdr(tail, o);
-			tail = cdr(tail);
-		}
-
-		exps = rest_operands(exps);
+		return o;
 	}
 
-	if (!is_null(exps)) {
-		o = lisp_eval(first_operand(exps), env);
-
-		if (!is_list(o))
-			error("Last argument must be a list -- APPLY", o);
-
-		if (head == nil)
-			head = o;
-		else
-			set_cdr(tail, o);
-	}
-
-	return head;
+	return cons( lisp_eval(first_operand(exps), env),
+		     list_of_apply_values(rest_operands(exps), env));
 }
 
 /* Assuming vars is an improper list (we do), cons a fresh proper list
@@ -451,7 +432,7 @@ tail_call:
 		exp = let_to_combination(exp);
 		goto tail_call;
 	}
-	/* let */
+	/* let* */
 	else if (is_letx(proc)) {
 		exp = letx_to_combination(exp);
 		goto tail_call;
