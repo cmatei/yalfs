@@ -18,6 +18,8 @@ extern object lisp_primitive_lambda(object args);
 extern object lisp_primitive_and(object args);
 extern object lisp_primitive_or(object args);
 extern object lisp_primitive_let(object args);
+extern object lisp_primitive_letx(object args);
+extern object lisp_primitive_letrec(object args);
 extern object lisp_primitive_begin(object args);
 extern object lisp_primitive_cond(object args);
 

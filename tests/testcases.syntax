@@ -41,3 +41,10 @@
 (or #f #f '() #f #f)			; ()
 
 
+(let* ((a 1)) a)			; 1
+(let* () 1)				; 1
+(let* ((a 1) (b a)) b)			; 1
+(let* ((a b) (b 1)) a)			;; Unbound variable, b
+(let* ((a 2) (b (* a a))) b)		; 4
+
+

@@ -141,6 +141,7 @@ static object if_alternate(object exp)
 #define rest_exps(seq) cdr(seq)
 
 #define is_let(proc) is_primitive_syntax(proc, lisp_primitive_let)
+#define is_letx(proc) is_primitive_syntax(proc, lisp_primitive_letx)
 
 #define let_bindings(exp) cadr(exp)
 #define let_body(exp) cddr(exp)
@@ -177,6 +178,29 @@ static object let_to_combination(object exp)
 
 	return ret;
 }
+
+
+static object letx_to_combination_rec(object bindings, object body)
+{
+	/* ((lambda (name) body) value) */
+	if (is_last_exp(bindings))
+		return cons( make_lambda( cons( binding_name(car(bindings)), nil), body),
+			     cons( binding_value(car(bindings)), nil));
+
+	/* ((lambda (name) ... recurse) value) */
+	return cons( make_lambda( cons(binding_name(car(bindings)),  nil),
+				  letx_to_combination_rec( cdr(bindings), body)),
+		     cons( binding_value( car(bindings)),  nil));
+}
+
+static object letx_to_combination(object exp)
+{
+	if (is_null(let_bindings(exp)))
+		return cons( make_lambda(nil, let_body(exp)), nil);
+
+	return letx_to_combination_rec(let_bindings(exp), let_body(exp));
+}
+
 
 #define make_begin(seq) cons(_begin, seq)
 
@@ -428,6 +452,11 @@ tail_call:
 	/* let */
 	else if (is_let(proc)) {
 		exp = let_to_combination(exp);
+		goto tail_call;
+	}
+	/* let */
+	else if (is_letx(proc)) {
+		exp = letx_to_combination(exp);
 		goto tail_call;
 	}
 	/* begin */

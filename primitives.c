@@ -104,6 +104,8 @@ basic_syntax_fun("lambda", lisp_primitive_lambda)
 basic_syntax_fun("and",    lisp_primitive_and)
 basic_syntax_fun("or",     lisp_primitive_or)
 basic_syntax_fun("let",    lisp_primitive_let)
+basic_syntax_fun("let*",   lisp_primitive_letx)
+basic_syntax_fun("letrec", lisp_primitive_letrec)
 basic_syntax_fun("begin",  lisp_primitive_begin)
 basic_syntax_fun("cond",   lisp_primitive_cond)
 
@@ -1478,6 +1480,7 @@ struct primitive the_primitives[] = {
 	{ "and",    lisp_primitive_and    },
 	{ "or",     lisp_primitive_or     },
 	{ "let",    lisp_primitive_let    },
+	{ "let*",   lisp_primitive_letx   },
 	{ "begin",  lisp_primitive_begin  },
 	{ "cond",   lisp_primitive_cond   },
 
