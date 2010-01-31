@@ -48,3 +48,14 @@
 (let* ((a 2) (b (* a a))) b)		; 4
 
 
+(letrec () 1)				; 1
+(letrec ((a 1)) a)			; 1
+
+;; this should be an error, but isn't (pg. 12, restriction on letrec)
+(letrec ((a 1) (b a)) b)		; 1
+
+(letrec ((even? (lambda (n) (if (zero? n) #t (odd? (- n 1))))) (odd? (lambda (n) (if (zero? n) #f (even? (- n 1)))))) (even? 88)) ; #t
+(letrec ((even? (lambda (n) (if (zero? n) #t (odd? (- n 1))))) (odd? (lambda (n) (if (zero? n) #f (even? (- n 1)))))) (even? 87)) ; #f
+
+
+

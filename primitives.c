@@ -1483,6 +1483,7 @@ struct primitive the_primitives[] = {
 	{ "or",     lisp_primitive_or     },
 	{ "let",    lisp_primitive_let    },
 	{ "let*",   lisp_primitive_letx   },
+	{ "letrec", lisp_primitive_letrec },
 	{ "begin",  lisp_primitive_begin  },
 	{ "cond",   lisp_primitive_cond   },
 

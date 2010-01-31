@@ -571,6 +571,10 @@ void lisp_print(object exp, FILE *out)
 		/* actually, I could read this back... */
 		fprintf(out, "#<unspecified>");
 		break;
+
+	case T_MAX_TYPE:
+	default:
+		break;
 	}
 }
 

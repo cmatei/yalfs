@@ -142,6 +142,7 @@ static object if_alternate(object exp)
 
 #define is_let(proc) is_primitive_syntax(proc, lisp_primitive_let)
 #define is_letx(proc) is_primitive_syntax(proc, lisp_primitive_letx)
+#define is_letrec(proc) is_primitive_syntax(proc, lisp_primitive_letrec)
 
 #define let_bindings(exp) cadr(exp)
 #define let_body(exp) cddr(exp)
@@ -196,6 +197,62 @@ static object letx_to_combination(object exp)
 		return list(1, make_lambda(nil, let_body(exp)));
 
 	return letx_to_combination_rec(let_bindings(exp), let_body(exp));
+}
+
+
+static object make_letrec_body(object bindings, object body)
+{
+	object head = nil, tail = nil;
+	object setexp, lambda;
+
+	while (!is_null(bindings)) {
+
+		setexp = list(3, _set, binding_name(car(bindings)), binding_value(car(bindings)));
+
+		if (is_null(head)) {
+			head = tail = cons(setexp, nil);
+		} else {
+			set_cdr(tail, cons(setexp, nil));
+			tail = cdr(tail);
+		}
+
+		bindings = cdr(bindings);
+	}
+
+	/* FIXME: I don't think I really need to wrap the body in a lambda */
+	lambda = make_lambda(nil, body);
+
+	if (is_null(head))
+		return list(1, list(1, lambda));
+
+	set_cdr(tail, list(1, list(1, lambda)));
+	return head;
+}
+
+static object letrec_undefineds_for_bindings(object bindings)
+{
+	object head = nil, tail = nil;
+	long i, len = length(bindings);
+
+	for (i = 0; i < len; i++) {
+		if (is_null(head)) {
+			head = tail = cons(undefined, nil);
+		} else {
+			set_cdr(tail, cons(undefined, nil));
+			tail = cdr(tail);
+		}
+	}
+
+	return head;
+}
+
+static object letrec_to_combination(object exp)
+{
+	object bindings = let_bindings(exp);
+
+	return cons( make_lambda( let_names(bindings),
+				  make_letrec_body(bindings, let_body(exp))),
+		     letrec_undefineds_for_bindings(bindings));
 }
 
 
@@ -436,6 +493,11 @@ tail_call:
 	/* let* */
 	else if (is_letx(proc)) {
 		exp = letx_to_combination(exp);
+		goto tail_call;
+	}
+	/* letrec */
+	else if (is_letrec(proc)) {
+		exp = letrec_to_combination(exp);
 		goto tail_call;
 	}
 	/* begin */

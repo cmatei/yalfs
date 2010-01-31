@@ -8,6 +8,7 @@ typedef enum {
 	T_STRING, T_SYMBOL, T_PAIR, T_PRIMITIVE, T_PROCEDURE,
 	T_PORT, T_EOF, T_FOREIGN_PTR, T_UNSPECIFIED,
 
+	T_MAX_TYPE
 } object_type;
 
 
@@ -23,6 +24,8 @@ extern object interaction_environment;	     /* user initial environment */
 extern object current_input_port;
 extern object current_output_port;
 extern object current_error_port;
+
+#define undefined unspecified
 
 /* expression keyword symbols */
 extern object _quote, _lambda, _if, _set, _begin, _cond, _and, _or;
