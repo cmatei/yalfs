@@ -321,6 +321,7 @@ static void fixup_varargs(object *names, object *values)
 
 #define is_eval(proc) is_primitive_syntax(proc, lisp_primitive_eval)
 #define is_apply(proc) is_primitive_syntax(proc, lisp_primitive_apply)
+#define is_timecall(proc) is_primitive_syntax(proc, lisp_primitive_timecall)
 
 object maybe_unquote(object exp)
 {
@@ -488,6 +489,20 @@ tail_call:
 		args = list_of_apply_values(cdr(operands(exp)), env);
 
 		goto apply;
+	}
+	/* time-call */
+	else if (is_timecall(proc)) {
+		unsigned long h_start, h_end, t_start, t_end;
+
+		h_start = runtime_current_heap_usage();
+		t_start = runtime_current_timestamp();
+
+		val = lisp_eval(car(operands(exp)), env);
+
+		h_end = runtime_current_heap_usage();
+		t_end = runtime_current_timestamp();
+
+		return list(3, val, make_fixnum(t_end - t_start), make_fixnum(h_end - h_start));
 	}
 	/* application */
 	else {

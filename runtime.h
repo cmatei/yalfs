@@ -590,6 +590,8 @@ extern object_type type_of(object o);
 extern void runtime_init();
 extern void runtime_stats();
 
+extern unsigned long runtime_current_heap_usage();
+extern unsigned long runtime_current_timestamp();
 
 #endif
 

@@ -26,4 +26,6 @@ extern object lisp_primitive_cond(object args);
 extern object lisp_primitive_eval(object args);
 extern object lisp_primitive_apply(object args);
 
+extern object lisp_primitive_timecall(object args);
+
 #endif

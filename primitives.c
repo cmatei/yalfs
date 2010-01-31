@@ -112,6 +112,8 @@ basic_syntax_fun("cond",   lisp_primitive_cond)
 basic_syntax_fun("eval",   lisp_primitive_eval)
 basic_syntax_fun("apply",  lisp_primitive_apply)
 
+basic_syntax_fun("time-call", lisp_primitive_timecall)
+
 /* Numerical operations */
 
 object impl_integerp(object args)
@@ -1707,8 +1709,10 @@ struct primitive the_primitives[] = {
 	{ "load",          impl_load                      },
 
 
-	/* Misc */
+	/* Misc extensions */
 	{ "gensym",        impl_gensym                    },
+
+	{ "time-call",     lisp_primitive_timecall        },
 
 	{ NULL, NULL }
 };

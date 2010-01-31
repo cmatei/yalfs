@@ -4,6 +4,7 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <sys/time.h>
 #include <assert.h>
 
 #include "minime.h"
@@ -140,16 +141,18 @@ object safe_cdr(object o)
 object list(unsigned long elem, ...)
 {
 	unsigned long i;
-	object head = nil;
+	object head = nil, tail = nil;
 	va_list ap;
 
 	va_start(ap, elem);
 
 	for (i = 0; i < elem; i++) {
-		if (is_null(head))
-			head = cons(va_arg(ap, object), nil);
-		else
-			set_cdr(head, cons(va_arg(ap, object), nil));
+		if (is_null(head)) {
+			head = tail = cons(va_arg(ap, object), nil);
+		} else {
+			set_cdr(tail, cons(va_arg(ap, object), nil));
+			tail = cdr(tail);
+		}
 	}
 
 	va_end(ap);
@@ -217,4 +220,17 @@ void runtime_stats()
 	symbol_table_stats();
 }
 
+unsigned long runtime_current_heap_usage()
+{
+	return (freeptr - heap) * sizeof(unsigned long);
+}
 
+/* as a fixnum, this will wrap in about 3 days on 32 bit */
+unsigned long runtime_current_timestamp()
+{
+	struct timeval tv;
+
+	gettimeofday(&tv, NULL);
+
+	return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+}
