@@ -155,28 +155,22 @@ static object binding_value(object exp)
 
 static object let_names(object exp)
 {
-	if (is_null(exp))
-		return nil;
-
-	return cons(binding_name(car(exp)),
-		    let_names(cdr(exp)));
+	return is_null(exp) ? nil :
+		cons( binding_name(first_exp(exp)), let_names(rest_exps(exp)));
 }
 
 static object let_values(object exp)
 {
-	if (is_null(exp))
-		return nil;
-
-	return cons(binding_value(car(exp)),
-		    let_values(cdr(exp)));
+	return is_null(exp) ? nil :
+		cons( binding_value(first_exp(exp)), let_values(rest_exps(exp)));
 }
 
 static object let_to_combination(object exp)
 {
-	object ret = cons(make_lambda(let_names(let_bindings(exp)), let_body(exp)),
-			  let_values(let_bindings(exp)));
+	object bindings = let_bindings(exp);
 
-	return ret;
+	return cons( make_lambda(let_names(bindings), let_body(exp)),
+		     let_values(bindings));
 }
 
 
@@ -184,13 +178,16 @@ static object letx_to_combination_rec(object bindings, object body)
 {
 	/* ((lambda (name) body) value) */
 	if (is_last_exp(bindings))
-		return cons( make_lambda( cons( binding_name(car(bindings)), nil), body),
-			     cons( binding_value(car(bindings)), nil));
+		return list(2,
+			    make_lambda(list(1, binding_name(first_exp(bindings))),
+					body),
+			    binding_value(first_exp(bindings)));
 
 	/* ((lambda (name) ... recurse) value) */
-	return cons( make_lambda( cons(binding_name(car(bindings)),  nil),
-				  letx_to_combination_rec( cdr(bindings), body)),
-		     cons( binding_value( car(bindings)),  nil));
+	return list(2,
+		    make_lambda( list(1, binding_name(first_exp(bindings)) ),
+				 letx_to_combination_rec( rest_exps(bindings), body)),
+		    binding_value(first_exp(bindings)));
 }
 
 static object letx_to_combination(object exp)

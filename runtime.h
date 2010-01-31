@@ -214,6 +214,8 @@ static inline int is_list(object o)
 	return 0;
 }
 
+extern object list(unsigned long elems, ...);
+
 #define INDIRECT_TAG   3UL
 #define INDIRECT_SHIFT 2UL
 #define INDIRECT_MASK  3UL

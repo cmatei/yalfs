@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
@@ -134,6 +135,26 @@ object safe_cdr(object o)
 		error("Object is not a pair -- CDR", o);
 
 	return fast_cdr(o);
+}
+
+object list(unsigned long elem, ...)
+{
+	unsigned long i;
+	object head = nil;
+	va_list ap;
+
+	va_start(ap, elem);
+
+	for (i = 0; i < elem; i++) {
+		if (is_null(head))
+			head = cons(va_arg(ap, object), nil);
+		else
+			set_cdr(head, cons(va_arg(ap, object), nil));
+	}
+
+	va_end(ap);
+
+	return head;
 }
 
 object_type type_of(object o)
