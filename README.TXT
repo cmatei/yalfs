@@ -76,7 +76,7 @@ x11 - the others
 10011111 - port
 00011111 - end-of-file
 11101111 - unspecified value
-
+01101111 - macro
 
 Syntactic Extensions (Macros)
 =============================

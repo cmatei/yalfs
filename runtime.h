@@ -585,6 +585,54 @@ static inline int is_unspecified(object o)
 
 extern object make_the_unspecified_value();
 
+
+#define MACRO_TAG  0x6FUL
+#define MACRO_MASK 0xFFUL
+
+static inline int is_macro(object o)
+{
+	unsigned long indirect;
+
+	if (!is_indirect(o))
+		return 0;
+
+	indirect = *(unsigned long *) ((unsigned long) o - INDIRECT_TAG);
+	return ((indirect & MACRO_MASK) == MACRO_TAG);
+}
+
+extern object make_macro(object parameters, object body, object environment);
+
+static inline object macro_parameters(object o)
+{
+#if SAFETY
+	if (!is_macro(o))
+		error("Object is not a macro", o);
+#endif
+
+	return (object) ((unsigned long *) ((unsigned long) o - INDIRECT_TAG)) [1];
+}
+
+
+static inline object macro_body(object o)
+{
+#if SAFETY
+	if (!is_macro(o))
+		error("Object is not a macro", o);
+#endif
+
+	return (object) ((unsigned long *) ((unsigned long) o - INDIRECT_TAG)) [2];
+}
+
+static inline object macro_environment(object o)
+{
+#if SAFETY
+	if (!is_macro(o))
+		error("Object is not a macro", o);
+#endif
+
+	return (object) ((unsigned long *) ((unsigned long) o - INDIRECT_TAG)) [3];
+}
+
 extern object_type type_of(object o);
 
 extern void runtime_init();

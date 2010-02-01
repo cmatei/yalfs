@@ -388,6 +388,11 @@ object maybe_unquote(object exp)
 	return exp;
 }
 
+object macroexpand(object macro, object exp)
+{
+	return nil;
+}
+
 object lisp_eval(object exp, object env)
 {
 	object exps, val;
@@ -565,6 +570,10 @@ tail_call:
 		t_end = runtime_current_timestamp();
 
 		return list(3, val, make_fixnum(t_end - t_start), make_fixnum(h_end - h_start));
+	}
+	else if (is_macro(proc)) {
+		exp = macroexpand(proc, exp);
+		goto tail_call;
 	}
 	/* application */
 	else {

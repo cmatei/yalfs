@@ -73,6 +73,16 @@ object make_procedure(object parameters, object body, object environment)
 	return (object) ((unsigned long) (freeptr - 4) | INDIRECT_TAG);
 }
 
+object make_macro(object parameters, object body, object environment)
+{
+	*freeptr++ = MACRO_TAG;
+	*freeptr++ = (unsigned long) parameters;
+	*freeptr++ = (unsigned long) body;
+	*freeptr++ = (unsigned long) environment;
+
+	return (object) ((unsigned long) (freeptr - 4) | INDIRECT_TAG);
+}
+
 object make_string(unsigned long length)
 {
 	unsigned long words;
@@ -200,6 +210,9 @@ object_type type_of(object o)
 
 	if (is_unspecified(o))
 		return T_UNSPECIFIED;
+
+	if (is_macro(o))
+		return T_MACRO;
 
 	error("Uknown object type -- TYPE-OF", o);
 	return T_NIL; /* not reached */

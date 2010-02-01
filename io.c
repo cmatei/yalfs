@@ -572,8 +572,13 @@ void lisp_print(object exp, FILE *out)
 		fprintf(out, "#<unspecified>");
 		break;
 
+	case T_MACRO:
+		fprintf(out, "#<macro ");
+		lisp_print(macro_parameters(exp), out);
+		fprintf(out, ">");
+		break;
+
 	case T_MAX_TYPE:
-	default:
 		break;
 	}
 }
