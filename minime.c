@@ -378,7 +378,10 @@ static void fixup_varargs(object *names, object *values)
 
 #define is_eval(proc) is_primitive_syntax(proc, lisp_primitive_eval)
 #define is_apply(proc) is_primitive_syntax(proc, lisp_primitive_apply)
+
 #define is_timecall(proc) is_primitive_syntax(proc, lisp_primitive_timecall)
+#define is_pmacro(proc) is_primitive_syntax(proc, lisp_primitive_pmacro)
+#define is_macroexpand(proc) is_primitive_syntax(proc, lisp_primitive_macroexpand)
 
 object maybe_unquote(object exp)
 {
@@ -390,8 +393,20 @@ object maybe_unquote(object exp)
 
 object macroexpand(object macro, object exp)
 {
-	return nil;
+	object env;
+
+	env = extend_environment( list(1, make_symbol_c("exp")),
+				  list(1, exp),
+				  macro_environment(macro));
+
+	return lisp_eval( macro_body(macro), env);
 }
+
+void breakpoint()
+{
+}
+
+#define is_breakpoint(proc) is_primitive_syntax(proc, lisp_primitive_break)
 
 object lisp_eval(object exp, object env)
 {
@@ -538,8 +553,8 @@ tail_call:
 
 		if (nargs > 1)
 			env = lisp_eval(cadr(operands(exp)), env);
-		else
-			env = interaction_environment;
+//		else
+//			env = interaction_environment;
 
 		/* "Expression must be a valid Scheme expression represented as data ..." */
 		exp = maybe_unquote(car(operands(exp)));
@@ -571,6 +586,35 @@ tail_call:
 
 		return list(3, val, make_fixnum(t_end - t_start), make_fixnum(h_end - h_start));
 	}
+	/* break */
+	else if (is_breakpoint(proc)) {
+		breakpoint();
+	}
+	/* primitive macro */
+	else if (is_pmacro(proc)) {
+		return make_macro( cadr(exp),
+				   cons( cons( _lambda,
+					       cons( nil,
+						     is_last_exp(cddr(exp)) ? cons(caddr(exp), nil) : cddr(exp))),
+					 nil),
+				   null_environment );
+	}
+	/* macroexpand */
+	else if (is_macroexpand(proc)) {
+
+		if (length(operands(exp)) != 1)
+			error("Expecting 1 argument -- macroexpand", exp);
+
+		val = car(car(operands(exp)));
+
+		proc = lisp_eval(val, env);
+		if (!is_macro(proc))
+			error("Not a macro -- macroexpand", car(operands(exp)));
+
+		val = macroexpand(proc, car(operands(exp)));
+		return val;
+	}
+	/* macro */
 	else if (is_macro(proc)) {
 		exp = macroexpand(proc, exp);
 		goto tail_call;

@@ -114,6 +114,11 @@ basic_syntax_fun("apply",  lisp_primitive_apply)
 
 basic_syntax_fun("time-call", lisp_primitive_timecall)
 
+basic_syntax_fun("break", lisp_primitive_break)
+basic_syntax_fun("pmacro", lisp_primitive_pmacro)
+basic_syntax_fun("macroexpand", lisp_primitive_macroexpand)
+
+
 /* Numerical operations */
 
 object impl_integerp(object args)
@@ -1713,7 +1718,10 @@ struct primitive the_primitives[] = {
 	/* Misc extensions */
 	{ "gensym",        impl_gensym                    },
 
+	{ "break",         lisp_primitive_break           },
 	{ "time-call",     lisp_primitive_timecall        },
+	{ "pmacro",        lisp_primitive_pmacro          },
+	{ "macroexpand",   lisp_primitive_macroexpand     },
 
 	{ NULL, NULL }
 };

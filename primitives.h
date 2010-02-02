@@ -28,4 +28,8 @@ extern object lisp_primitive_apply(object args);
 
 extern object lisp_primitive_timecall(object args);
 
+extern object lisp_primitive_break(object args);
+extern object lisp_primitive_pmacro(object args);
+extern object lisp_primitive_macroexpand(object args);
+
 #endif
