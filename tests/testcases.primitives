@@ -659,7 +659,7 @@ x					; ""
 (eval 3)				; 3
 
 ;; if () is not self-evaluating, this is an error
-(eval '() (null-environment 5))		;; Unknown expression type
+(eval '() (null-environment 5))		; ()
 
 ;; allow unquoted
 (eval (+ 2 3))				; 5

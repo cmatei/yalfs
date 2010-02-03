@@ -55,7 +55,7 @@
 
 ;; pairs and lists
 '()					; ()
-()					;; Unknown expression type
+()					; ()
 
 '(1 . 2)				; (1 . 2)
 '(a . 1)				; (a . 1)

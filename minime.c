@@ -57,7 +57,8 @@ static int is_tagged(object exp, object tag)
 
 static int is_self_evaluating(object exp)
 {
-	return  is_boolean(exp)   ||
+	return  is_null(exp)      ||
+		is_boolean(exp)   ||
 		is_number(exp)    ||
 		is_string(exp)    ||
 		is_character(exp) ||
@@ -391,15 +392,17 @@ object maybe_unquote(object exp)
 	return exp;
 }
 
-object macroexpand(object macro, object exp)
+/* very dirty */
+object macroexpand(object macro, object exp, object env)
 {
-	object env;
+	object menv;
 
-	env = extend_environment( list(1, make_symbol_c("exp")),
+	menv = extend_environment( list(1, make_symbol_c("exp")),
 				  list(1, exp),
-				  macro_environment(macro));
+				  env);
+//				  macro_environment(macro));
 
-	return lisp_eval( macro_body(macro), env);
+	return lisp_eval( macro_body(macro), menv);
 }
 
 void breakpoint()
@@ -611,12 +614,12 @@ tail_call:
 		if (!is_macro(proc))
 			error("Not a macro -- macroexpand", car(operands(exp)));
 
-		val = macroexpand(proc, car(operands(exp)));
+		val = macroexpand(proc, car(operands(exp)), env);
 		return val;
 	}
 	/* macro */
 	else if (is_macro(proc)) {
-		exp = macroexpand(proc, exp);
+		exp = macroexpand(proc, exp, env);
 		goto tail_call;
 	}
 	/* application */
