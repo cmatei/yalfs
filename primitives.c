@@ -32,12 +32,12 @@ static inline int is_last_elt(object lst)
 
 
 
-static int is_eq(object o1, object o2)
+int is_eq(object o1, object o2)
 {
 	return (o1 == o2);
 }
 
-static int is_eqv(object o1, object o2)
+int is_eqv(object o1, object o2)
 {
 	/* In the current implementation, eqv? is the same as eq?
 	   FIXME: This will need revisiting if I add floats as indirect
@@ -62,7 +62,7 @@ static int is_eqv(object o1, object o2)
 	*/
 }
 
-static int is_string_equal(object o1, object o2)
+int is_string_equal(object o1, object o2)
 {
 	if (o1 == o2)
 		return 1;
@@ -76,7 +76,7 @@ static int is_string_equal(object o1, object o2)
 	return 0;
 }
 
-static int is_equal(object o1, object o2)
+int is_equal(object o1, object o2)
 {
 	if (is_string(o1) && is_string(o2))
 		return is_string_equal(o1, o2);
@@ -112,10 +112,11 @@ basic_syntax_fun("cond",   lisp_primitive_cond)
 basic_syntax_fun("eval",   lisp_primitive_eval)
 basic_syntax_fun("apply",  lisp_primitive_apply)
 
-basic_syntax_fun("time-call", lisp_primitive_timecall)
+basic_syntax_fun("quasiquote", lisp_primitive_quasiquote)
+basic_syntax_fun("time-call",  lisp_primitive_timecall)
 
-basic_syntax_fun("break", lisp_primitive_break)
-basic_syntax_fun("pmacro", lisp_primitive_pmacro)
+basic_syntax_fun("break",       lisp_primitive_break)
+basic_syntax_fun("pmacro",      lisp_primitive_pmacro)
 basic_syntax_fun("macroexpand", lisp_primitive_macroexpand)
 
 
@@ -1495,6 +1496,7 @@ struct primitive the_primitives[] = {
 	{ "eval",   lisp_primitive_eval   },
 	{ "apply",  lisp_primitive_apply  },
 
+	{ "quasiquote", lisp_primitive_quasiquote },
 
 	/* Equivalence predicates */
 

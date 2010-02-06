@@ -29,6 +29,7 @@ object _case, _let, _letx, _letrec, _do, _delay, _quasiquote;
 object _else, _implies, _define, _unquote, _unquote_splicing;
 
 /* ... other useful symbols */
+object _cons, _list, _append;
 object _ellipsis;
 
 object end_of_file;
@@ -79,6 +80,7 @@ static int is_primitive_syntax(object proc, primitive_proc implementation)
 #define is_quoted(exp) is_tagged(exp, _quote)
 
 #define is_quotation(proc) is_primitive_syntax(proc, lisp_primitive_quote)
+#define is_quasiquotation(proc) is_primitive_syntax(proc, lisp_primitive_quasiquote)
 
 #define text_of_quotation(exp) cadr(exp)
 
@@ -392,6 +394,75 @@ object maybe_unquote(object exp)
 	return exp;
 }
 
+/* quasiquotation */
+int qq_is_constant(object exp)
+{
+	return is_pair(exp) ? is_quoted(exp) : !is_symbol(exp);
+}
+
+object qq_combine_parts(object left, object right, object exp, object env)
+{
+	object leval, reval;
+
+	if (qq_is_constant(left) && qq_is_constant(right)) {
+		leval = lisp_eval(left, env);
+		reval = lisp_eval(right, env);
+
+		if (is_eqv(leval, car(exp)) && is_eqv(reval, cdr(exp)))
+			return list(2, _quote, exp);
+		else
+			return list(2, _quote, cons(leval, reval));
+	}
+	else if (is_null(right)) {
+		return list(2, _list, left);
+	}
+	else if (is_pair(right) && car(right) == _list) {
+		return cons(_list, cons(left, cdr(right)));
+	}
+
+	return list(3, _cons, left, right);
+}
+
+object qq_expand(object exp, unsigned long nesting, object env)
+{
+	if (!is_pair(exp)) {
+		if (qq_is_constant(exp))
+			return exp;
+		else
+			return list(2, _quote, exp);
+	}
+	else if (is_tagged(exp, _unquote) && length(exp) == 2) {
+		if (nesting == 0)
+			return cadr(exp);
+
+		return qq_combine_parts( cons(_quote, cons(_quote, cons(_unquote, nil))),
+					 qq_expand( cdr(exp), nesting - 1, env),
+					 exp,
+					 env);
+	}
+	else if (is_tagged(exp, _quasiquote) && length(exp) == 2) {
+
+		return qq_combine_parts( cons(_quote, cons(_quote, cons(_quasiquote, nil))),
+					 qq_expand( cdr(exp), nesting + 1, env),
+					 exp,
+					 env);
+	}
+	else if (is_pair(car(exp)) && caar(exp) == _unquote_splicing && length(car(exp)) == 2) {
+		if (nesting == 0)
+			return list(2, _append, cadr(car(exp)));
+
+		return qq_combine_parts( qq_expand( car(exp), nesting - 1, env),
+					 qq_expand( cdr(exp), nesting, env),
+					 exp,
+					 env);
+	}
+
+	return qq_combine_parts( qq_expand( car(exp), nesting, env),
+				 qq_expand( cdr(exp), nesting, env),
+				 exp,
+				 env);
+}
+
 /* very dirty */
 object macroexpand(object macro, object exp, object env)
 {
@@ -439,6 +510,11 @@ tail_call:
 	/* quote */
 	if (is_quotation(proc)) {
 		return text_of_quotation(exp);
+	}
+	/* quasiquotation */
+	else if (is_quasiquotation(proc)) {
+		exp = qq_expand(cadr(exp), 0, env);
+		goto tail_call;
 	}
 	/* assignment */
 	else if (is_assignment(proc)) {
@@ -776,6 +852,9 @@ void scheme_init()
 	_unquote          = make_symbol_c("unquote");
 	_unquote_splicing = make_symbol_c("unquote-splicing");
 
+	_cons             = make_symbol_c("cons");
+	_list             = make_symbol_c("list");
+	_append           = make_symbol_c("append");
 	_ellipsis         = make_symbol_c("...");
 
 	/* hacks */
