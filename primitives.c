@@ -1473,6 +1473,21 @@ object impl_gensym(object args)
 	return gensym();
 }
 
+object impl_error(object args)
+{
+	long nargs = length(args);
+
+	if (nargs == 0)
+		error("Unknown error", nil);
+
+	if (is_string(car(args)))
+		error(string_value(car(args)), (nargs > 1) ? cadr(args) : nil);
+	else
+		error("Unknown error", car(args));
+
+	return unspecified;
+}
+
 #define pair_fun_def(X) { #X, impl_##X }
 
 
@@ -1718,6 +1733,7 @@ struct primitive the_primitives[] = {
 
 
 	/* Misc extensions */
+	{ "error",         impl_error                     },
 	{ "gensym",        impl_gensym                    },
 
 	{ "break",         lisp_primitive_break           },
