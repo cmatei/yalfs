@@ -420,12 +420,20 @@ static void fixup_varargs(object *names, object *values)
 
 	/* r5rs: there must be at least one formal before the period.
 	   otoh, i've seen (define (main . args) ...) so maybe i
-	   should allow it ?! */
+	   should allow it ?!
 
-	set_cdr(tail, cons(vars, nil));
-	set_cdr(vprec, cons(vals, nil));
+	   Ok, allow it.
+	*/
 
-	*names = head;
+	if (is_null(head)) {
+		*names  = cons(vars, nil);
+		*values = cons(*values, nil);
+	} else {
+		set_cdr(tail, cons(vars, nil));
+		set_cdr(vprec, cons(vals, nil));
+
+		*names = head;
+	}
 }
 
 

@@ -66,3 +66,8 @@
 
 ;; not eqv
 (case #(1 2 3) ((#(1 2 3)) 'ok) (else 'fail))			; fail
+
+(case (* 2 3) ((2 3 5 7) 'prime) ((1 4 6 8 9) 'composite)) ; composite
+(case (car '(c d)) ((a) 'a) ((b) 'b))			   ; #<unspecified>
+(case (car '(c d)) ((a e i o u) 'vowel) ((w y) 'semivowel) (else 'consonant)) ; consonant
+
