@@ -1,0 +1,16 @@
+
+cond with =>
+do ()
+
+scan out defines in binding constructs (internal definitions)
+
+
+call-with-*-file, with-*-file
+
+delay & force ?!
+
+revisit quasiquote
+
+lowlevel unhygienic lisp-like macros that i actually understand
+
+

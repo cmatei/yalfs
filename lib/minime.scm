@@ -5,14 +5,29 @@
 (newline)
 
 
-;; simple version of map until optional arguments are in
-(define (map proc lst)
-  (if (null? lst)
-      '()
-      (cons (proc (car lst))
-	    (map proc (cdr lst)))))
+(define (map proc . lst)
+  (define (map-one proc lst)
+    (if (null? lst)
+	'()
+	(cons (proc (car lst))
+	      (map-one proc (cdr lst)))))
 
+  (define (map-many proc lst)
+    (cond ((memq '() lst) '())
+	  (else
+	   (cons (apply proc (map-one car lst))
+		 (map-many proc (map-one cdr lst))))))
 
+  (map-many proc lst))
+
+(define (for-each proc . lst)
+  (define (for-each-many proc lst)
+    (cond ((memq '() lst) '())
+	  (else
+	   (apply proc (map car lst))
+	   (for-each-many proc (map cdr lst)))))
+
+  (for-each-many proc lst))
 
 (define (fold-left op initial sequence)
   (define (iter result rest)

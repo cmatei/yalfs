@@ -712,4 +712,17 @@ x					; #("a" "a" "a" "a" "a")
 
 (accumulate cons nil (list 1 2 3))	; (1 2 3)
 
+(map car '((a b c) (d e f) (g h i)))	; (a d g)
+(map + '(1 2) '(3 4) '(5 6))		; (9 12)
 
+(map + '(1 2) '(3 4) '(5))		; (9)
+
+(map + '(1 2) '(3 4) 'a)		;; Expecting a pair
+
+(map + '())				; ()
+(map + '() '() '(1))			; ()
+
+
+(define x 1)				; x
+(for-each (lambda (a b) (set! x (+ a b))) '(1 2 3 4) '(5 6 7 8)) ; ()
+x					; 12
