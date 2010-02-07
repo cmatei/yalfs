@@ -111,6 +111,18 @@ object make_string_c(char *str)
 	return make_string_buffer(str, strlen(str));
 }
 
+object make_vector(unsigned long length, object fill)
+{
+	unsigned long i;
+
+	*freeptr++ = VECTOR_TAG | (length << VECTOR_SHIFT);
+
+	for (i = 0; i < length; i++)
+		*freeptr++ = (unsigned long) fill;
+
+	return (object) ((unsigned long) (freeptr - length - 1) | INDIRECT_TAG);
+}
+
 object make_symbol(char *str, unsigned long len)
 {
 	return symbol(str, len);
@@ -189,6 +201,9 @@ object_type type_of(object o)
 
 	if (is_string(o))
 		return T_STRING;
+
+	if (is_vector(o))
+		return T_VECTOR;
 
 	if (is_boolean(o))
 		return T_BOOLEAN;

@@ -62,8 +62,17 @@ static int is_self_evaluating(object exp)
 		is_boolean(exp)   ||
 		is_number(exp)    ||
 		is_string(exp)    ||
+		is_vector(exp)    ||
 		is_character(exp) ||
 		is_unspecified(exp);	     /* not sure this leads to right behaviour */
+
+	/* Re: vectors, 'Note that this is the external representation
+	   of a vector, not an expression evaluating to a vector. Like
+	   list constants, vector constants must be quoted.'
+
+	   mit-scheme and mzscheme also happily eval #(a b c).
+	   Leaving as is until I figure it out.
+	*/
 }
 
 static int is_primitive_syntax(object proc, primitive_proc implementation)

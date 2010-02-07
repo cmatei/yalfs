@@ -281,6 +281,103 @@ static inline int string_equal(object s1, object s2)
 		(memcmp(string_value(s1), string_value(s2), string_length(s1)) == 0));
 }
 
+
+#define VECTOR_TAG   1UL
+#define VECTOR_MASK  3UL
+#define VECTOR_SHIFT 2UL
+
+static inline int is_vector(object o)
+{
+	unsigned long indirect;
+
+	if (!is_indirect(o))
+		return 0;
+
+	indirect = *(unsigned long *) ((unsigned long) o - INDIRECT_TAG);
+	return ((indirect & VECTOR_MASK) == VECTOR_TAG);
+}
+
+extern object make_vector(unsigned long length, object fill);
+
+static inline unsigned long vector_length(object vec)
+{
+	unsigned long indirect;
+
+#if SAFETY
+	if (!is_vector(vec))
+		error("Object is not a vector -- vector-length", vec);
+#endif
+	indirect = *(unsigned long *) ((unsigned long) vec - INDIRECT_TAG);
+	return (indirect - VECTOR_TAG) >> VECTOR_SHIFT;
+}
+
+static inline object *vector_ptr(object vec)
+{
+#if SAFETY
+	if (!is_vector(vec))
+		error("Object is not a vector -- vector-ref", vec);
+#endif
+
+	return (object *) ((unsigned long *) ((unsigned long) vec - INDIRECT_TAG) + 1);
+}
+
+static inline object *vector_ptr_ref(object vec, long k)
+{
+#if SAFETY
+	if (!is_vector(vec))
+		error("Object is not a vector -- vector-ref", vec);
+
+	if (k < 0 || k > vector_length(vec))
+		error("Need a valid vector index -- vector-ref", make_fixnum(k));
+#endif
+
+	return (vector_ptr(vec) + k);
+}
+
+static inline object vector_ref(object vec, long k)
+{
+	return *(vector_ptr_ref(vec, k));
+}
+
+
+static inline void vector_fill(object vec, object fill)
+{
+	unsigned long i, length;
+	object *vptr;
+#if SAFETY
+	if (!is_vector(vec))
+		error("Object is not a vector -- vector-fill", vec);
+#endif
+
+	length = vector_length(vec);
+	vptr   = vector_ptr(vec);
+
+	for (i = 0; i < length; i++)
+		*vptr++ = fill;
+}
+
+
+static inline object list_to_vector(object lst)
+{
+	object vec;
+	object *vptr;
+
+#if SAFETY
+	if (!is_list(lst))
+		error("Object is not a list", lst);
+#endif
+
+	vec  = make_vector(length(lst), nil);
+	vptr = vector_ptr(vec);
+
+	while (!is_null(lst)) {
+		*vptr++ = car(lst);
+		lst = cdr(lst);
+	}
+
+	return vec;
+}
+
 #define SYMBOL_TAG  0xBFUL
 #define SYMBOL_MASK 0xFFUL
 

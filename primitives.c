@@ -78,12 +78,26 @@ int is_string_equal(object o1, object o2)
 
 int is_equal(object o1, object o2)
 {
+	long i;
+
 	if (is_string(o1) && is_string(o2))
 		return is_string_equal(o1, o2);
 
 	if (is_pair(o1) && is_pair(o2))
 		return  is_equal(car(o1), car(o2)) &&
 			is_equal(cdr(o1), cdr(o2));
+
+	if (is_vector(o1) && is_vector(o2)) {
+		if (vector_length(o1) != vector_length(o2))
+			return 0;
+
+		for (i = 0; i < vector_length(o1); i++) {
+			if (!is_equal(vector_ref(o1, i), vector_ref(o2, i)))
+				return 0;
+		}
+
+		return 1;
+	}
 
 	return is_eqv(o1, o2);
 }
@@ -1150,6 +1164,146 @@ object impl_string_fill(object args)
 	return unspecified;
 }
 
+object impl_vectorp(object args)
+{
+	check_args(1, args, "vector?");
+	return boolean(is_vector(car(args)));
+}
+
+object impl_make_vector(object args)
+{
+	long nargs = length(args);
+
+	if ((nargs < 1) || !is_fixnum(car(args)))
+		error("Expecting a vector length -- make-vector", args);
+
+	return (nargs > 1) ?
+		make_vector(fixnum_value(car(args)), cadr(args)) :
+		make_vector(fixnum_value(car(args)), nil);
+}
+
+object impl_vector(object args)
+{
+	long nargs = length(args);
+	object vec, *vptr;
+
+	if (nargs < 1)
+		error("Expecting at least 1 argument -- vector", args);
+
+	vec = make_vector(nargs, nil);
+	vptr = vector_ptr(vec);
+
+	while (!is_null(args)) {
+		*vptr++ = car(args);
+		args = cdr(args);
+	}
+
+	return vec;
+}
+
+object impl_vector_length(object args)
+{
+	check_args(1, args, "vector-length");
+
+	if (!is_vector(car(args)))
+		error("Expecting a vector -- vector-length", car(args));
+
+	return make_fixnum(vector_length(car(args)));
+}
+
+object impl_vector_ref(object args)
+{
+	object vec, k;
+	long idx;
+
+	check_args(2, args, "vector-ref");
+
+	if (!is_vector((vec = car(args))))
+		error("Expecting a vector -- vector-ref", vec);
+
+	if (!is_fixnum((k = cadr(args))))
+		error("Expecting a vector index -- vector-ref", k);
+
+	idx = fixnum_value(k);
+	if (idx < 0 || idx >= vector_length(vec))
+		error("Expecting a valid vector index -- vector-ref", k);
+
+	return *(vector_ptr_ref(vec, idx));
+}
+
+object impl_vector_set(object args)
+{
+	object vec, k;
+	long idx;
+
+	check_args(3, args, "vector-ref");
+
+	if (!is_vector((vec = car(args))))
+		error("Expecting a vector -- vector-set!", vec);
+
+	if (!is_fixnum((k = cadr(args))))
+		error("Expecting a vector index -- vector-set!", k);
+
+	idx = fixnum_value(k);
+	if (idx < 0 || idx >= vector_length(vec))
+		error("Expecting a valid vector index -- vector-set!", k);
+
+	*(vector_ptr_ref(vec, idx)) = caddr(args);
+	return unspecified;
+}
+
+object impl_vector_list(object args)
+{
+	object head = nil, tail = nil;
+	unsigned long i, len;
+	object vec;
+	object *vptr;
+
+	check_args(1, args, "vector->list");
+
+	if (!is_vector((vec = car(args))))
+		error("Expecting a vector -- vector->list", vec);
+
+	len  = vector_length(vec);
+	vptr = vector_ptr(vec);
+
+	for (i = 0; i < len; i++) {
+		if (is_null(head)) {
+			head = tail = cons(*vptr++, nil);
+		} else {
+			set_cdr(tail, cons(*vptr++, nil));
+			tail = cdr(tail);
+		}
+	}
+	return head;
+}
+
+object impl_list_vector(object args)
+{
+	object lst;
+
+	check_args(1, args, "list->vector");
+
+	if (!is_list((lst = car(args))))
+		error("Expecting a list -- list->vector", lst);
+
+	return list_to_vector(lst);
+}
+
+object impl_vector_fill(object args)
+{
+	object vec;
+
+	check_args(2, args, "vector-fill!");
+
+	if (!is_vector((vec = car(args))))
+		error("Expecting a vector -- vector-fill!", vec);
+
+	vector_fill(vec, cadr(args));
+
+	return unspecified;
+}
+
 object impl_symbolp(object args)
 {
 	check_args(1, args, "symbol?");
@@ -1682,6 +1836,18 @@ struct primitive the_primitives[] = {
 	{ "string-copy",   impl_string_copy               },
 	{ "string-fill!",  impl_string_fill               },
 
+
+	/* Vectors */
+
+	{ "vector?",       impl_vectorp                   },
+	{ "make-vector",   impl_make_vector               },
+	{ "vector",        impl_vector                    },
+	{ "vector-length", impl_vector_length             },
+	{ "vector-ref",    impl_vector_ref                },
+	{ "vector-set!",   impl_vector_set                },
+	{ "vector->list",  impl_vector_list               },
+	{ "list->vector",  impl_list_vector               },
+	{ "vector-fill!",  impl_vector_fill               },
 
 	/* Control features */
 

@@ -565,6 +565,32 @@ x					; ""
 (string-fill! x #\a)			; #<unspecified>
 x					; ""
 
+(vector? #(1 2 3))			; #t
+(vector? #f)				; #f
+
+(define x (make-vector 5 'a))		; x
+(vector? x)				; #t
+
+(equal? x #(a a a a a))			; #t
+(vector-length x)			; 5
+
+(vector-length #((a a) (b b) (c c)))	; 3
+
+(vector-ref x 0)			; a
+(vector-ref x 6)			;; Expecting a valid vector index
+
+(vector-set! x 0 'b)			; #<unspecified>
+(vector-ref x 0)			; b
+
+(vector->list x)			; (b a a a a)
+(vector-fill! x "a")			; #<unspecified>
+x					; #("a" "a" "a" "a" "a")
+
+(list->vector '(1 2 3 4 5))		; #(1 2 3 4 5)
+
+(vector 'a 'b 'c)			; #(a b c)
+
+(symbol? (vector-ref #(a b c) 0))	; #t
 
 ;; Equality predicates
 

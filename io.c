@@ -283,6 +283,7 @@ static object read_number(FILE *in)
 	}
 }
 
+
 object read_pair(FILE *in)
 {
 	object the_car, the_cdr;
@@ -325,6 +326,16 @@ object read_pair(FILE *in)
 	/* notreached */
 	assert(0);
 	return nil;
+}
+
+object read_vector(FILE *in)
+{
+	object the_list;
+
+	if (!is_list((the_list = lisp_read(in))))
+		error("Cannot read vector -- read", the_list);
+
+	return list_to_vector(the_list);
 }
 
 object lisp_read(FILE *in)
@@ -372,6 +383,11 @@ object lisp_read(FILE *in)
 			case '\\':
 				return read_character(in);
 
+			/* vectors */
+			case '(':
+				ungetc(c, in);
+				return read_vector(in);
+
 			/* commented form, read and discard */
 			case ';':
 				lisp_read(in);
@@ -379,6 +395,7 @@ object lisp_read(FILE *in)
 
 			case '<':
 				error("Object cannot be read back -- read", nil);
+
 
 			default:
 				error("Unexpected character -- read", nil);
@@ -477,6 +494,7 @@ void lisp_print(object exp, FILE *out)
 	unsigned long i, len;
 	char c;
 	char *str;
+	object *vptr;
 
 	switch (type_of(exp)) {
 	case T_NIL:
@@ -537,6 +555,20 @@ void lisp_print(object exp, FILE *out)
 		}
 		fprintf(out, "\"");
 		break;
+
+	case T_VECTOR:
+		fprintf(out, "#(");
+		len  = vector_length(exp);
+		vptr = vector_ptr(exp);
+		for (i = 0; i < len; i++) {
+			if (i)
+				fputc(' ', out);
+
+			lisp_print(*vptr++, out);
+		}
+		fprintf(out, ")");
+		break;
+
 
 	case T_SYMBOL:
 		fprintf(out, "%.*s", (int) string_length(symbol_string(exp)),
