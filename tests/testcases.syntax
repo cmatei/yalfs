@@ -28,6 +28,10 @@
 
 (define foo (let ((lambda 1)) (x-lambda () lambda))) ; foo
 
+;; named let
+(let foo ((x 1)) x)			; 1
+(let foo ((x 10)) (cond ((zero? x) 42) (else (foo (- x 1))))) ; 42
+
 (foo)					; 1
 
 (and)					; #t

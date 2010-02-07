@@ -171,10 +171,35 @@ static object let_values(object exp)
 
 static object let_to_combination(object exp)
 {
-	object bindings = let_bindings(exp);
+	object name = nil, bindings, body;
+	object o;
 
-	return cons( make_lambda(let_names(bindings), let_body(exp)),
-		     let_values(bindings));
+	/* named let ? */
+	if (is_symbol(cadr(exp))) {
+
+		name     = cadr(exp);
+		bindings = let_bindings(cdr(exp));
+		body     = let_body(cdr(exp));
+	} else {
+		bindings = let_bindings(exp);
+		body     = let_body(exp);
+	}
+
+	o = make_lambda(let_names(bindings), body);
+
+	if (is_null(name))
+		o = cons( o, let_values(bindings));
+	else {
+
+		/* (letrec ((name (lambda (<binding-names>) <body>)))
+		       (name <binding-values>)) */
+		o = list(3,
+			 _letrec,
+			 list(1, list(2, name, o)),
+			 cons( name, let_values(bindings)));
+	}
+
+	return o;
 }
 
 
