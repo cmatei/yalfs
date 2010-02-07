@@ -122,6 +122,7 @@ basic_syntax_fun("let*",   lisp_primitive_letx)
 basic_syntax_fun("letrec", lisp_primitive_letrec)
 basic_syntax_fun("begin",  lisp_primitive_begin)
 basic_syntax_fun("cond",   lisp_primitive_cond)
+basic_syntax_fun("case",   lisp_primitive_case)
 
 basic_syntax_fun("eval",   lisp_primitive_eval)
 basic_syntax_fun("apply",  lisp_primitive_apply)
@@ -1661,6 +1662,7 @@ struct primitive the_primitives[] = {
 	{ "letrec", lisp_primitive_letrec },
 	{ "begin",  lisp_primitive_begin  },
 	{ "cond",   lisp_primitive_cond   },
+	{ "case",   lisp_primitive_case   },
 
 	{ "eval",   lisp_primitive_eval   },
 	{ "apply",  lisp_primitive_apply  },

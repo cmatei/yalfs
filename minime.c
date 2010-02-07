@@ -145,6 +145,22 @@ static object if_alternate(object exp)
 
 #define cond_to_ifs(exp) expand_cond_clauses(cond_clauses(exp))
 
+#define is_case(proc) is_primitive_syntax(proc, lisp_primitive_case)
+
+#define case_key(exp) cadr(exp)
+#define case_clauses(exp) cddr(exp)
+
+static inline int case_clause_matches(object key, object values)
+{
+	while (!is_null(values)) {
+		if (is_eqv(key, car(values)))
+			return 1;
+
+		values = cdr(values);
+	}
+	return 0;
+}
+
 #define is_begin(proc) is_primitive_syntax(proc, lisp_primitive_begin)
 
 #define begin_actions(exp) cdr(exp)
@@ -656,6 +672,29 @@ tail_call:
 	else if (is_cond(proc)) {
 		exp = cond_to_ifs(exp);
 		goto tail_call;
+	}
+	/* case */
+	else if (is_case(proc)) {
+
+		object key = lisp_eval(case_key(exp), env);
+		object clauses = case_clauses(exp);
+
+		while (!is_null(clauses)) {
+			if (caar(clauses) == _else && is_last_exp(clauses)) {
+				exp = sequence_to_exp(cdar(clauses));
+				goto tail_call;
+			} else if (is_list(caar(clauses))) {
+				if (case_clause_matches(key, caar(clauses))) {
+					exp = sequence_to_exp(cdar(clauses));
+					goto tail_call;
+				}
+			} else
+				error("Invalid syntax in case -- eval", exp);
+
+			clauses = cdr(clauses);
+		}
+
+		return unspecified;
 	}
 	/* eval */
 	else if (is_eval(proc)) {
