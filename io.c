@@ -18,10 +18,24 @@ static int peek_char(FILE *in)
 	return c;
 }
 
-static void skip_whitespace(FILE *in)
+static void skip_atmospheric(FILE *in)
 {
 	int c;
-	while (isspace(c = fgetc(in)));
+
+	while ((c = fgetc(in)) != EOF) {
+
+		if (isspace(c))
+			continue;
+
+		if (c == ';') {
+			while (c != EOF && c != '\n') {
+				c = fgetc(in);
+			}
+			continue;
+		}
+
+		break;
+	}
 	ungetc(c, in);
 }
 
@@ -289,7 +303,7 @@ object read_pair(FILE *in)
 	object the_car, the_cdr;
 	int c;
 
-	skip_whitespace(in);
+	skip_atmospheric(in);
 
 	/* the empty list */
 	c = fgetc(in);
@@ -299,7 +313,7 @@ object read_pair(FILE *in)
 
 	the_car = lisp_read(in);
 
-	skip_whitespace(in);
+	skip_atmospheric(in);
 
 	c = fgetc(in);
 	/* improper list */
@@ -309,7 +323,7 @@ object read_pair(FILE *in)
 			error("Missing delimiter in improper list -- read", nil);
 
 		the_cdr = lisp_read(in);
-		skip_whitespace(in);
+		skip_atmospheric(in);
 
 		c = fgetc(in);
 		if (c == ')')
