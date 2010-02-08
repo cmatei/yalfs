@@ -182,6 +182,41 @@ object list(unsigned long elem, ...)
 	return head;
 }
 
+object list_append(unsigned long numlists, ...)
+{
+	object head = nil, tail = nil;
+	object lst;
+	va_list ap;
+
+	va_start(ap, numlists);
+
+	while (numlists > 1) {
+		lst = va_arg(ap, object);
+
+		while (!is_null(lst)) {
+			if (head == nil) {
+				head = tail = cons(car(lst), nil);
+			} else {
+				set_cdr(tail, cons(car(lst), nil));
+				tail = cdr(tail);
+			}
+			lst = cdr(lst);
+		}
+
+		numlists--;
+	}
+
+	lst = va_arg(ap, object);
+
+	if (head == nil)
+		head = lst;
+	else
+		set_cdr(tail, lst);
+
+	va_end(ap);
+	return head;
+}
+
 object_type type_of(object o)
 {
 	if (is_null(o))

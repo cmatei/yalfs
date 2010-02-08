@@ -13,4 +13,4 @@ revisit quasiquote
 
 lowlevel unhygienic lisp-like macros that i actually understand
 
-
+call it quits and move on to the compiler

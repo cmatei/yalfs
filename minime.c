@@ -168,6 +168,14 @@ static inline int case_clause_matches(object key, object values)
 #define first_exp(seq) car(seq)
 #define rest_exps(seq) cdr(seq)
 
+#define is_do(proc) is_primitive_syntax(proc, lisp_primitive_do)
+
+#define do_bindings(exp) cadr(exp)
+#define do_test(exp) caddr(exp)
+#define do_test_predicate(exp) car(do_test(exp))
+#define do_test_expressions(exp) cdr(do_test(exp))
+#define do_commands(exp) cdddr(exp)
+
 #define is_let(proc) is_primitive_syntax(proc, lisp_primitive_let)
 #define is_letx(proc) is_primitive_syntax(proc, lisp_primitive_letx)
 #define is_letrec(proc) is_primitive_syntax(proc, lisp_primitive_letrec)
@@ -316,6 +324,66 @@ static object sequence_to_exp(object seq)
 	return  is_null(seq) ? seq :
 		is_last_exp(seq) ? first_exp(seq) :
 		make_begin(seq);
+}
+
+static object do_binding_names(object bindings)
+{
+	if (is_null(bindings))
+		return nil;
+
+	return cons(caar(bindings), do_binding_names(cdr(bindings)));
+}
+
+static object do_binding_inits(object bindings)
+{
+	if (is_null(bindings))
+		return nil;
+
+	return cons(cadar(bindings), do_binding_inits(cdr(bindings)));
+}
+
+static object do_binding_steps(object bindings)
+{
+	object step;
+
+	if (is_null(bindings))
+		return nil;
+
+	step = is_null(cddar(bindings)) ? caar(bindings) : caddar(bindings);
+
+	return cons(step, do_binding_steps(cdr(bindings)));
+}
+/*
+  (letrec ((gensym-loop-name
+             (lambda (var1 ...)
+	       (if (test)
+	           expressions.....
+		   (begin
+		     commands ...
+		     (gensym-loop-name step1 ...))))))
+
+    (gensym-loop-name init1 ....)
+*/
+
+static object do_to_combination(object exp)
+{
+	object bindings = do_bindings(exp);
+
+	object vars  = do_binding_names(bindings);
+	object inits = do_binding_inits(bindings);
+	object steps = do_binding_steps(bindings);
+
+	object loop_name = gensym();
+
+	/* iteration step */
+	object iter = make_if( do_test_predicate(exp),
+			       sequence_to_exp( do_test_expressions(exp) ),
+			       make_begin( list(2,
+						sequence_to_exp( do_commands(exp) ),
+						cons(loop_name, steps))));
+
+	return list(3, _letrec, list(1, list(2, loop_name, make_lambda(vars, cons(iter, nil)))),
+		       cons(loop_name, inits));
 }
 
 static object expand_cond_clauses(object clauses)
@@ -675,6 +743,11 @@ tail_call:
 		}
 
 		return nil;
+	}
+	/* do */
+	else if (is_do(proc)) {
+		exp = do_to_combination(exp);
+		goto tail_call;
 	}
 	/* cond */
 	else if (is_cond(proc)) {

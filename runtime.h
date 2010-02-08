@@ -215,6 +215,7 @@ static inline int is_list(object o)
 }
 
 extern object list(unsigned long elems, ...);
+extern object list_append(unsigned long numlists, ...);
 
 #define INDIRECT_TAG   3UL
 #define INDIRECT_SHIFT 2UL
