@@ -2,7 +2,7 @@
 ## temp
 INSTALLDIR	= $(shell pwd)
 
-CC		= gcc -Wall -g -O0
+CC		= gcc -Wall -g -O2
 CFLAGS		= -DINSTALLDIR="$(INSTALLDIR)"
 MAKEDEP		= gcc -MM
 
