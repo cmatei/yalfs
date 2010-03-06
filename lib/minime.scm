@@ -46,3 +46,24 @@
 (define accumulate fold-right)
 
 
+;; delay & force. delay is syntax for
+;; (delay <exp>) => (make-promise (lambda () <exp>))
+
+(define (force object)
+  (object))
+
+(define (make-promise proc)
+  (let ((result-ready? #f)
+	(result #f))
+    (lambda ()
+      (if result-ready?
+	  result
+	  (let ((x (proc)))
+	    (if result-ready?
+		result
+		(begin (set! result-ready? #t)
+		       (set! result x)
+		       result)))))))
+
+
+

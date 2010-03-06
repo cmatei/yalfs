@@ -23,7 +23,8 @@ object the_truth, the_falsity;
 
 /* expression keyword symbols */
 object _quote, _lambda, _if, _set, _begin, _cond, _and, _or;
-object _case, _let, _letx, _letrec, _do, _delay, _quasiquote;
+object _case, _let, _letx, _letrec, _do, _delay, _force, _make_promise;
+object _quasiquote;
 
 /* other syntactic keywords */
 object _else, _implies, _define, _unquote, _unquote_splicing;
@@ -532,6 +533,8 @@ static void fixup_varargs(object *names, object *values)
 #define is_eval(proc) is_primitive_syntax(proc, lisp_primitive_eval)
 #define is_apply(proc) is_primitive_syntax(proc, lisp_primitive_apply)
 
+#define is_delay(proc) is_primitive_syntax(proc, lisp_primitive_delay)
+
 #define is_timecall(proc) is_primitive_syntax(proc, lisp_primitive_timecall)
 #define is_pmacro(proc) is_primitive_syntax(proc, lisp_primitive_pmacro)
 #define is_macroexpand(proc) is_primitive_syntax(proc, lisp_primitive_macroexpand)
@@ -829,6 +832,14 @@ tail_call:
 
 		goto apply;
 	}
+	/* delay */
+	else if (is_delay(proc)) {
+		exp = list(2,
+			   _make_promise,
+			   cons(_lambda, cons(nil, operands(exp))));
+
+		goto tail_call;
+	}
 	/* time-call */
 	else if (is_timecall(proc)) {
 		unsigned long h_start, h_end, t_start, t_end;
@@ -1022,13 +1033,16 @@ void scheme_init()
 	_letrec           = make_symbol_c("letrec");
 	_do               = make_symbol_c("do");
 	_quasiquote       = make_symbol_c("quasiquote");
+	_delay            = make_symbol_c("delay");
+	_force            = make_symbol_c("force");
+	_make_promise     = make_symbol_c("make-promise");
+	_define           = make_symbol_c("define");
+	_unquote          = make_symbol_c("unquote");
+	_unquote_splicing = make_symbol_c("unquote-splicing");
 
         /* other syntactic keywords */
 	_else             = make_symbol_c("else");
 	_implies          = make_symbol_c("=>");
-	_define           = make_symbol_c("define");
-	_unquote          = make_symbol_c("unquote");
-	_unquote_splicing = make_symbol_c("unquote-splicing");
 
 	_cons             = make_symbol_c("cons");
 	_list             = make_symbol_c("list");

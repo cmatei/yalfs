@@ -128,6 +128,8 @@ basic_syntax_fun("case",   lisp_primitive_case)
 basic_syntax_fun("eval",   lisp_primitive_eval)
 basic_syntax_fun("apply",  lisp_primitive_apply)
 
+basic_syntax_fun("delay",  lisp_primitive_delay)
+
 basic_syntax_fun("quasiquote", lisp_primitive_quasiquote)
 basic_syntax_fun("time-call",  lisp_primitive_timecall)
 
@@ -1669,6 +1671,8 @@ struct primitive the_primitives[] = {
 	{ "eval",   lisp_primitive_eval   },
 	{ "apply",  lisp_primitive_apply  },
 
+	{ "delay",  lisp_primitive_delay  },
+
 	{ "quasiquote", lisp_primitive_quasiquote },
 
 	/* Equivalence predicates */
@@ -1858,8 +1862,6 @@ struct primitive the_primitives[] = {
 	{ "procedure?",    impl_procedurep                },
 //	{ "map",           impl_map                       },
 //	{ "for-each",      impl_for_each                  },
-//	{ "force",         impl_force                     },
-//      { "delay",         impl_delay                     },
 
 	{ "null-environment",        impl_null_environment },
 	{ "interaction-environment", impl_interaction_environment },

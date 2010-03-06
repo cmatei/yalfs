@@ -1,9 +1,5 @@
 
-cond with =>
-
 scan out defines in binding constructs (internal definitions)
-
-delay & force. Needed by some macro systems.
 
 call-with-*-file, with-*-file
 

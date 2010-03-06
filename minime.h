@@ -30,7 +30,8 @@ extern object current_error_port;
 
 /* expression keyword symbols */
 extern object _quote, _lambda, _if, _set, _begin, _cond, _and, _or;
-extern object _case, _let, _letx, _letrec, _do, _delay, _quasiquote;
+extern object _case, _let, _letx, _letrec, _do, _delay, _force, _make_promise;
+extern object _quasiquote;
 
 /* other syntactic keywords */
 extern object _else, _implies, _define, _unquote, _unquote_splicing;

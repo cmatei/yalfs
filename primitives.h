@@ -36,6 +36,8 @@ extern object lisp_primitive_case(object args);
 extern object lisp_primitive_eval(object args);
 extern object lisp_primitive_apply(object args);
 
+extern object lisp_primitive_delay(object args);
+
 extern object lisp_primitive_quasiquote(object args);
 
 extern object lisp_primitive_timecall(object args);
