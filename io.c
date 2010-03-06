@@ -316,8 +316,13 @@ object read_pair(FILE *in)
 	skip_atmospheric(in);
 
 	c = fgetc(in);
-	/* improper list */
+	/* improper list ? */
 	if (c == '.') {
+
+		/* ... */
+		if (peek_char(in) == '.')
+			goto proper_pair;
+
 		c = fgetc(in);
 		if (!isspace(c))
 			error("Missing delimiter in improper list -- read", nil);
@@ -331,15 +336,12 @@ object read_pair(FILE *in)
 
 		error("Missing parenthesis -- read", nil);
 	}
-	else {
-		ungetc(c, in);
-		the_cdr = read_pair(in);
-		return cons(the_car, the_cdr);
-	}
 
-	/* notreached */
-	assert(0);
-	return nil;
+proper_pair:
+
+	ungetc(c, in);
+	the_cdr = read_pair(in);
+	return cons(the_car, the_cdr);
 }
 
 object read_vector(FILE *in)
