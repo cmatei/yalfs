@@ -404,22 +404,32 @@ static object expand_cond_clauses(object clauses)
 			error("ELSE clause is not last -- COND->IF", clauses);
 		}
 	} else {
-		object temp = gensym();
 		object actions = cond_actions(first);
+		object temp = nil;
 
 		if (is_null(actions)) {
+			temp = gensym();
 			actions = temp;
 		} else if (is_tagged(actions, _implies)) {
+			temp = gensym();
 			actions = list(2, cadr(actions), temp);
 		} else {
 			actions = sequence_to_exp(actions);
 		}
 
-		return list(3, _let,
-			       list(1, list(2, temp, cond_predicate(first))),
-			       make_if(temp,
+		if (!is_null(temp)) {
+			return list(3,
+				    _let,
+				    list(1, list(2, temp, cond_predicate(first))),
+				    make_if(temp,
+					    actions,
+					    expand_cond_clauses(rest)));
+		} else {
+			return make_if(cond_predicate(first),
 				       actions,
-				       expand_cond_clauses(rest)));
+				       expand_cond_clauses(rest));
+		}
+
 	}
 
 	return nil;			     /* not reached */

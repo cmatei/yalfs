@@ -132,6 +132,9 @@ x					; 42
 
 (cond ((list 1 2 3) => (lambda (x) (car x)))) ; 1
 
+(cond (#f => +) (else (cons 1 2)))	; (1 . 2)
+(cond (1 => +) (2 => +))		; 1
+
 ;; sequencing
 (begin)					; ()
 (begin (+ 1 2))				; 3
