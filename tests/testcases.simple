@@ -126,6 +126,11 @@ x					; 42
 (cond)					; #f
 (cond (else #t))			; #t
 (cond (#f 1))				; #f
+(cond (#t))				; #t
+
+(cond ((list 1 2 3) => car))		; 1
+
+(cond ((list 1 2 3) => (lambda (x) (car x)))) ; 1
 
 ;; sequencing
 (begin)					; ()

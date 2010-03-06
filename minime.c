@@ -382,7 +382,8 @@ static object do_to_combination(object exp)
 						sequence_to_exp( do_commands(exp) ),
 						cons(loop_name, steps))));
 
-	return list(3, _letrec, list(1, list(2, loop_name, make_lambda(vars, cons(iter, nil)))),
+	return list(3, _letrec,
+		       list(1, list(2, loop_name, make_lambda(vars, cons(iter, nil)))),
 		       cons(loop_name, inits));
 }
 
@@ -403,9 +404,22 @@ static object expand_cond_clauses(object clauses)
 			error("ELSE clause is not last -- COND->IF", clauses);
 		}
 	} else {
-		return make_if(cond_predicate(first),
-			       sequence_to_exp(cond_actions(first)),
-			       expand_cond_clauses(rest));
+		object temp = gensym();
+		object actions = cond_actions(first);
+
+		if (is_null(actions)) {
+			actions = temp;
+		} else if (is_tagged(actions, _implies)) {
+			actions = list(2, cadr(actions), temp);
+		} else {
+			actions = sequence_to_exp(actions);
+		}
+
+		return list(3, _let,
+			       list(1, list(2, temp, cond_predicate(first))),
+			       make_if(temp,
+				       actions,
+				       expand_cond_clauses(rest)));
 	}
 
 	return nil;			     /* not reached */
