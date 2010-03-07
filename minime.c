@@ -323,8 +323,7 @@ static object letrec_to_combination(object exp)
 static object sequence_to_exp(object seq)
 {
 	return  is_null(seq) ? seq :
-		is_last_exp(seq) ? first_exp(seq) :
-		make_begin(seq);
+		is_last_exp(seq) ? first_exp(seq) : make_begin(seq);
 }
 
 static object do_binding_names(object bindings)
@@ -440,6 +439,37 @@ static object expand_cond_clauses(object clauses)
 #define is_lambda(proc) is_primitive_syntax(proc, lisp_primitive_lambda)
 #define lambda_parameters(exp) cadr(exp)
 #define lambda_body(exp) cddr(exp)
+
+static object scan_out_defines(object body)
+{
+	object bindings = nil;
+	object nbody_head = nil, nbody_tail = nil;
+	object exp;
+
+	while (!is_null(body)) {
+		exp = car(body);
+
+		/* FIXME: this makes 'define' magic again :-( */
+		if (is_tagged(exp, _define)) {
+			bindings = cons(list(2, definition_variable(exp), definition_value(exp)), bindings);
+		} else {
+
+			if (is_null(nbody_head)) {
+				nbody_head = nbody_tail = cons(exp, nil);
+			} else {
+				set_cdr(nbody_tail, cons(exp, nil));
+				nbody_tail = cdr(nbody_tail);
+			}
+		}
+
+		body = cdr(body);
+	}
+
+	if (!is_null(bindings))
+		nbody_head = list(1, cons(_letrec, cons(bindings, nbody_head)));
+
+	return nbody_head;
+}
 
 #define is_and(proc) is_primitive_syntax(proc, lisp_primitive_and)
 #define is_or(proc) is_primitive_syntax(proc, lisp_primitive_or)
@@ -694,9 +724,10 @@ tail_call:
 	}
 	/* lambda */
 	else if (is_lambda(proc)) {
-		return make_procedure(lambda_parameters(exp),
-				     lambda_body(exp),
-				     env);
+
+		object body = scan_out_defines(lambda_body(exp));
+
+		return make_procedure(lambda_parameters(exp), body, env);
 	}
 	/* and */
 	else if (is_and(proc)) {

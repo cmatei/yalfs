@@ -1,6 +1,4 @@
 
-scan out defines in binding constructs (internal definitions)
-
 call-with-*-file, with-*-file
 
 revisit quasiquote
